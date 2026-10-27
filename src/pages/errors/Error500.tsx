@@ -17,13 +17,13 @@ export default function Error500({ resetErrorBoundary }: Error500Props) {
     <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
       <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
         <div
-          className="rounded-circle d-flex align-items-center justify-content-center text-slate-dark mx-auto mb-3"
-          style={{ width: '48px', height: '48px', backgroundColor: '#fee2e2' }}
+          className="rounded-circle d-flex align-items-center justify-content-center bg-danger-subtle text-danger mx-auto mb-3"
+          style={{ width: '48px', height: '48px' }}
         >
-          <AlertTriangle size={22} style={{ color: '#991b1b' }} />
+          <AlertTriangle size={22} className="text-danger" />
         </div>
 
-        <span className="badge bg-light border font-monospace text-uppercase mb-2" style={{ fontSize: '10px', color: '#991b1b' }}>
+        <span className="badge bg-danger-subtle text-danger border font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
           Estado HTTP 500 · Error Interno
         </span>
 

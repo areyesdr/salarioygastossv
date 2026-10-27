@@ -517,21 +517,21 @@ export function MonthlyLedgerView({
               </div>
             </form>
 
-            {/* Saldo Remanente Final Q1 (Estilo celda destacada de Excel) */}
             {/* Saldo Sobrante Final Q1 (Estilo celda destacada de Excel) */}
             <div
-              className="p-3 border-top d-flex justify-content-between align-items-center"
-              style={{ backgroundColor: q1Sobrante >= 0 ? '#fef08a' : '#fee2e2' }}
+              className={`p-3 border-top d-flex justify-content-between align-items-center ${
+                q1Sobrante >= 0 ? 'highlight-surplus-box' : 'highlight-deficit-box'
+              }`}
             >
               <div>
-                <span className="fw-bold text-dark font-sans d-block" style={{ fontSize: '13px' }}>
+                <span className="fw-bold font-sans d-block surplus-title" style={{ fontSize: '13px' }}>
                   Sobrante de la 1.ª Quincena (Pago del 15)
                 </span>
-                <span className="text-dark small font-sans" style={{ fontSize: '11px', opacity: 0.9 }}>
+                <span className="small font-sans surplus-subtitle" style={{ fontSize: '11px', opacity: 0.9 }}>
                   Te sobran {formatUSD(q1Sobrante)} de {formatUSD(q1Available)} disponibles ({q1SobrantePct}% libre)
                 </span>
               </div>
-              <span className="fs-3 fw-bold font-monospace text-dark">
+              <span className="fs-3 fw-bold font-monospace surplus-amount">
                 {formatUSD(q1Sobrante)}
               </span>
             </div>
@@ -739,18 +739,19 @@ export function MonthlyLedgerView({
 
             {/* Saldo Sobrante Final Q2 (Estilo celda destacada de Excel) */}
             <div
-              className="p-3 border-top d-flex justify-content-between align-items-center"
-              style={{ backgroundColor: q2Sobrante >= 0 ? '#fef08a' : '#fee2e2' }}
+              className={`p-3 border-top d-flex justify-content-between align-items-center ${
+                q2Sobrante >= 0 ? 'highlight-surplus-box' : 'highlight-deficit-box'
+              }`}
             >
               <div>
-                <span className="fw-bold text-dark font-sans d-block" style={{ fontSize: '13px' }}>
+                <span className="fw-bold font-sans d-block surplus-title" style={{ fontSize: '13px' }}>
                   Sobrante de la 2.ª Quincena (Pago del 30)
                 </span>
-                <span className="text-dark small font-sans" style={{ fontSize: '11px', opacity: 0.9 }}>
+                <span className="small font-sans surplus-subtitle" style={{ fontSize: '11px', opacity: 0.9 }}>
                   Te sobran {formatUSD(q2Sobrante)} de {formatUSD(q2Available)} disponibles ({q2SobrantePct}% libre)
                 </span>
               </div>
-              <span className="fs-3 fw-bold font-monospace text-dark">
+              <span className="fs-3 fw-bold font-monospace surplus-amount">
                 {formatUSD(q2Sobrante)}
               </span>
             </div>

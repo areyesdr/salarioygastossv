@@ -670,7 +670,7 @@ function AppShell() {
   const isCalculatorRoute = location.pathname === '/';
 
   return (
-    <div className="min-h-screen d-flex flex-column" style={{ backgroundColor: '#f8fafc' }}>
+    <div className="min-h-screen d-flex flex-column app-root-layout">
       {/* Header Institucional Minimalista */}
       <nav className="navbar navbar-expand navbar-dark navbar-institutional py-2.5 px-3">
         <div className="container-constrained d-flex justify-content-between align-items-center">
@@ -1065,7 +1065,7 @@ function AppShell() {
 
                     <div className="pt-3 border-top border-emerald-200 mt-3 d-flex justify-content-between align-items-center small font-monospace">
                       <span className="text-muted" style={{ fontSize: '12px' }}>Total Deducciones:</span>
-                      <span className="fw-semibold" style={{ color: '#991b1b', fontSize: '13px' }}>
+                      <span className="fw-semibold text-terracotta" style={{ fontSize: '13px' }}>
                         -{formatUSD(activePayroll.totalEmployeeDeductions)} ({activePayroll.effectiveDeductionPct}%)
                       </span>
                     </div>

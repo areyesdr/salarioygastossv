@@ -8,8 +8,8 @@ export default function Error404() {
     <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
       <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
         <div
-          className="rounded-circle d-flex align-items-center justify-content-center text-slate-dark mx-auto mb-3"
-          style={{ width: '48px', height: '48px', backgroundColor: '#f1f5f9' }}
+          className="rounded-circle d-flex align-items-center justify-content-center bg-slate-100 text-slate-dark mx-auto mb-3"
+          style={{ width: '48px', height: '48px' }}
         >
           <FileQuestion size={22} className="text-secondary" />
         </div>

@@ -640,11 +640,11 @@ export function ExpensesView({
                         {formatUSD(amt)} ({pct}%)
                       </span>
                     </div>
-                    <div className="progress" style={{ height: '5px', backgroundColor: '#e2e8f0' }}>
+                    <div className="progress" style={{ height: '5px' }}>
                       <div
                         className="progress-bar"
                         role="progressbar"
-                        style={{ width: `${pct}%`, backgroundColor: '#334155' }}
+                        style={{ width: `${pct}%` }}
                       />
                     </div>
                   </div>

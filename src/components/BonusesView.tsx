@@ -472,10 +472,10 @@ export function BonusesView({
                     </tr>
                     {aguinaldoResult.taxableExcess > 0 ? (
                       <tr>
-                        <td className="text-muted" style={{ color: '#991b1b' }}>
+                        <td className="text-terracotta">
                           ISR s/excedente ({formatUSD(aguinaldoResult.taxableExcess)}):
                         </td>
-                        <td className="text-end font-monospace" style={{ color: '#991b1b' }}>
+                        <td className="text-end font-monospace text-terracotta">
                           -{formatUSD(aguinaldoResult.isrWithheld)}
                         </td>
                       </tr>

@@ -218,7 +218,7 @@ export function PayrollView({
                       </div>
                     )}
                   </td>
-                  <td className="text-end font-monospace" style={{ color: '#991b1b' }}>
+                  <td className="text-end font-monospace text-terracotta">
                     -{formatUSD(activePayroll.isr)}
                   </td>
                 </tr>
@@ -321,7 +321,7 @@ export function PayrollView({
                   <span className="badge bg-secondary font-monospace">Tramo {activePayroll.isrDetail.bracketId}</span>
                   <strong className="text-slate-dark">{activePayroll.isrDetail.bracketLabel}</strong>
                 </div>
-                <span className="font-monospace fw-bold" style={{ color: '#991b1b' }}>
+                <span className="font-monospace fw-bold text-terracotta">
                   -{formatUSD(activePayroll.isr)}
                 </span>
               </div>
@@ -344,13 +344,12 @@ export function PayrollView({
                 <span>20% ({period === 'monthly' ? '$895.24 - $2,038.10' : '$447.62 - $1,019.05'})</span>
                 <span>30% (&gt; {period === 'monthly' ? '$2,038.10' : '$1,019.05'})</span>
               </div>
-              <div className="progress" style={{ height: '7px', backgroundColor: '#e2e8f0' }}>
+              <div className="progress" style={{ height: '7px' }}>
                 <div
                   className="progress-bar"
                   role="progressbar"
                   style={{
                     width: `${isrMarkerPercent}%`,
-                    backgroundColor: '#475569',
                     transition: 'width 0.2s ease',
                   }}
                 />
