@@ -65,7 +65,7 @@ export default function PrivacidadPage() {
             Política de Privacidad y Ejercicio de Derechos ARCO
           </h4>
           <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
-            Transparencia sobre el tratamiento de datos personales y financieros en Salario SV.
+            Transparencia sobre el tratamiento de datos personales y financieros en MiNominaSV.
           </p>
         </div>
 

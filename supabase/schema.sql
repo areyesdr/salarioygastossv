@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Schema para Salario SV en Supabase con Row Level Security (RLS)
+-- Schema para MiNominaSV en Supabase con Row Level Security (RLS)
 -- Cifrado en tránsito (TLS/HTTPS) y en reposo (AES-256 nativo de Supabase)
 -- ==============================================================================
 

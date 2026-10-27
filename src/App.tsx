@@ -910,7 +910,7 @@ function AppShell() {
             >
               SV
             </div>
-            <span className="fs-6 fw-semibold text-white tracking-tight">Salario SV</span>
+            <span className="fs-6 fw-semibold text-white tracking-tight">MiNominaSV</span>
           </Link>
 
           {/* Enlaces de Navegación Secundarios Centrales */}
@@ -2124,7 +2124,7 @@ function AppShell() {
 
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small text-muted">
             <div>
-              <strong className="text-slate-dark">© 2026 Salario SV</strong> · Plataforma independiente de cálculo laboral y presupuestario para El Salvador.
+              <strong className="text-slate-dark">© 2026 MiNominaSV</strong> · Plataforma independiente de cálculo laboral y presupuestario para El Salvador.
             </div>
             <div className="d-flex flex-wrap gap-3">
               <Link to="/terminos" className="text-decoration-none text-muted">

@@ -1,4 +1,4 @@
-# Salario y Gastos SV
+# MiNominaSV
 
 Aplicación web en React 19, TypeScript, React Router, Motion y Tailwind CSS para el cálculo exacto de descuentos de ley, prestaciones laborales, costo real por hora trabajada y control de gastos personales en El Salvador (normativa vigente 2026 y obligatoriedad de Quincena 25 en 2027).
 

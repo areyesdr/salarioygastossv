@@ -27,7 +27,7 @@ export default function TerminosPage() {
             Términos y Condiciones de Uso (TyC)
           </h4>
           <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
-            Condiciones legales que regulan el acceso y uso de la plataforma Salario SV.
+            Condiciones legales que regulan el acceso y uso de la plataforma MiNominaSV.
           </p>
         </div>
 
@@ -42,7 +42,7 @@ export default function TerminosPage() {
           <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
             Todos los cálculos de deducciones de ley (ISSS, AFP, Renta), prestaciones laborales (Vacación 30%,
             Aguinaldo, Quincena 25), costos por hora y proyecciones presupuestarias generados por{' '}
-            <strong className="text-slate-dark">Salario SV</strong> son de carácter estrictamente{' '}
+            <strong className="text-slate-dark">MiNominaSV</strong> son de carácter estrictamente{' '}
             <strong>informativo, ilustrativo y referencial</strong>. Esta herramienta no constituye ni
             sustituye la asesoría legal, contable, tributaria ni el dictamen oficial de un especialista en
             Derecho Laboral o Recursos Humanos.
@@ -75,7 +75,7 @@ export default function TerminosPage() {
           </div>
           <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
             El diseño visual, interfaz de usuario, estructura de código y algoritmos de cálculo tributario de{' '}
-            <strong className="text-slate-dark">Salario SV</strong> se encuentran protegidos por la legislación aplicable.
+            <strong className="text-slate-dark">MiNominaSV</strong> se encuentran protegidos por la legislación aplicable.
             Queda prohibida su reproducción no autorizada o explotación comercial sin el consentimiento expreso del titular.
           </p>
         </section>
@@ -108,9 +108,9 @@ export default function TerminosPage() {
               En cumplimiento con la <strong>Ley de Comercio Electrónico de la República de El Salvador</strong>, se detallan los datos de contacto del responsable:
             </p>
             <ul className="list-unstyled mb-2 font-monospace space-y-1">
-              <li><strong>Titular del Proyecto:</strong> Salario SV</li>
+              <li><strong>Titular del Proyecto:</strong> MiNominaSV</li>
               <li><strong>Jurisdicción:</strong> San Salvador, República de El Salvador</li>
-              <li><strong>Contacto:</strong> contacto@salariosv.com</li>
+              <li><strong>Contacto:</strong> contacto@minominasv.com</li>
             </ul>
             <p className="mb-0">
               Cualquier controversia se regirá bajo las leyes de la <strong>República de El Salvador</strong>, con competencia exclusiva en los tribunales de San Salvador.
