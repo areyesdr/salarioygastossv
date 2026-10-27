@@ -211,7 +211,7 @@ export function HourlyView({
               <button
                 type="button"
                 onClick={() => onSimulateOvertimeInPayroll(totalSimulatedOvertimeUsd)}
-                className="btn btn-dark btn-sm d-flex align-items-center gap-1.5 py-1 px-2.5"
+                className="btn btn-dark btn-sm d-inline-flex align-items-center gap-2 py-1 px-2.5"
                 style={{ fontSize: '12px' }}
               >
                 <span>Simular en Planilla</span>

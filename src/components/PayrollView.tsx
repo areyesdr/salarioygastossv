@@ -2,19 +2,19 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Calculator,
-  Building,
   ShieldCheck,
+  Building,
   ChevronDown,
   ChevronUp,
   Info,
   ChevronRight,
 } from 'lucide-react';
 import {
+  PayrollBreakdown,
+  PayPeriod,
   ISR_TABLES,
   round2,
-  type PayPeriod,
-  type PayrollBreakdown,
-} from '../lib/svLaborLaw.ts';
+} from '../lib/svLaborLaw';
 
 interface PayrollViewProps {
   period: PayPeriod;
@@ -26,8 +26,6 @@ interface PayrollViewProps {
   formatUSD: (val: number) => string;
 }
 
-type DetailTab = 'boleta' | 'renta' | 'patronal';
-
 export function PayrollView({
   period,
   activePayroll,
@@ -37,21 +35,20 @@ export function PayrollView({
   isrMarkerPercent,
   formatUSD,
 }: PayrollViewProps) {
-  const [activeDetailTab, setActiveDetailTab] = useState<DetailTab>('boleta');
+  const [activeDetailTab, setActiveDetailTab] = useState<'boleta' | 'renta' | 'patronal'>('boleta');
   const [showLegalDetails, setShowLegalDetails] = useState<boolean>(false);
   const [showAllBrackets, setShowAllBrackets] = useState<boolean>(false);
 
   return (
     <motion.div
-      key="tab-payroll"
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
-      className="container-fluid px-0"
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.15 }}
+      className="w-100"
     >
-      {/* Selector de Pestañas Inferiores para Desglose Progresivo */}
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      {/* Pestañas de detalle analítico sobrias */}
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div className="segmented-control">
           <button
             type="button"
@@ -65,7 +62,7 @@ export function PayrollView({
             onClick={() => setActiveDetailTab('renta')}
             className={activeDetailTab === 'renta' ? 'active' : ''}
           >
-            Cálculo de Renta (Tramos)
+            Retención de Renta (ISR)
           </button>
           <button
             type="button"
@@ -80,11 +77,11 @@ export function PayrollView({
           <button
             type="button"
             onClick={() => setShowLegalDetails((prev) => !prev)}
-            className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1.5"
+            className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
             style={{ fontSize: '13px' }}
           >
             <Info size={14} className="text-secondary" />
-            <span>{showLegalDetails ? 'Ocultar detalles legales' : 'Ver detalles legales y fórmulas'}</span>
+            <span>{showLegalDetails ? 'Ocultar bases legales' : 'Ver bases legales de cálculo'}</span>
           </button>
         )}
       </div>
@@ -107,13 +104,13 @@ export function PayrollView({
             </span>
           </div>
 
+          {/* Tabla de 2 columnas estrictas para evitar desbordamiento horizontal */}
           <div className="table-responsive">
-            <table className="table table-minimal align-middle">
+            <table className="table table-minimal align-middle" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th>Concepto / Deducción</th>
-                  {showLegalDetails && <th className="text-muted">Base de Ley</th>}
-                  <th className="text-end">Monto (USD)</th>
+                  <th style={{ width: '68%' }}>Concepto / Deducción</th>
+                  <th className="text-end" style={{ width: '32%' }}>Monto (USD)</th>
                 </tr>
               </thead>
               <tbody className="font-monospace small">
@@ -122,12 +119,11 @@ export function PayrollView({
                   <td className="font-sans">
                     <span className="fw-semibold text-slate-dark">Salario Base</span>
                     {showLegalDetails && (
-                      <span className="text-muted d-block" style={{ fontSize: '11px' }}>
-                        Nominal estipulado en contrato
-                      </span>
+                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
+                        Base legal: Salario contractual ordinario (Art. 119 C.T.)
+                      </div>
                     )}
                   </td>
-                  {showLegalDetails && <td className="text-muted">Base contractual</td>}
                   <td className="text-end fw-semibold text-slate-dark">{formatUSD(activePayroll.grossBase)}</td>
                 </tr>
 
@@ -135,17 +131,27 @@ export function PayrollView({
                 {activePayroll.bonuses > 0 && (
                   <tr>
                     <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Bono / Comisión</span>
+                      <span className="fw-semibold text-emerald">+ Bono / Comisión Mensual</span>
+                      {showLegalDetails && (
+                        <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
+                          Base legal: Gravado para cotizaciones de ISSS, AFP y cómputo de Renta
+                        </div>
+                      )}
                     </td>
-                    {showLegalDetails && <td className="text-muted">Gravado para ISSS, AFP y Renta</td>}
                     <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.bonuses)}</td>
                   </tr>
                 )}
 
                 {/* Total Bruto */}
                 <tr className="bg-light">
-                  <td className="font-sans fw-semibold text-slate-dark">Total Ingreso Bruto</td>
-                  {showLegalDetails && <td className="text-muted">Base + Comisiones</td>}
+                  <td className="font-sans fw-semibold text-slate-dark">
+                    <span>Total Ingreso Bruto</span>
+                    {showLegalDetails && (
+                      <div className="text-muted small mt-1 font-monospace fw-normal" style={{ fontSize: '11px' }}>
+                        Suma de salario ordinario más bonificaciones percibidas
+                      </div>
+                    )}
+                  </td>
                   <td className="text-end fw-bold text-slate-dark fs-6">{formatUSD(activePayroll.grossTotal)}</td>
                 </tr>
 
@@ -154,21 +160,18 @@ export function PayrollView({
                   <td className="font-sans">
                     <span className="text-slate-dark">AFP Trabajador (7.25%)</span>
                     {showLegalDetails && (
-                      <span className="text-muted d-block" style={{ fontSize: '11px' }}>
-                        Fondo de pensiones obligatorio (sin techo salarial)
-                      </span>
+                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
+                        Base legal: {formatUSD(activePayroll.grossTotal)} × 7.25% (Fondo obligatorio sin techo salarial)
+                      </div>
                     )}
                   </td>
-                  {showLegalDetails && (
-                    <td className="text-muted">{formatUSD(activePayroll.grossTotal)} × 7.25%</td>
-                  )}
                   <td className="text-end text-muted font-monospace">-{formatUSD(activePayroll.afpEmployee)}</td>
                 </tr>
 
                 {/* ISSS */}
                 <tr>
                   <td className="font-sans">
-                    <div className="d-flex align-items-center gap-1.5">
+                    <div className="d-flex align-items-center gap-2">
                       <span className="text-slate-dark">ISSS Trabajador (3.00%)</span>
                       {activePayroll.isssCapped && (
                         <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
@@ -177,14 +180,11 @@ export function PayrollView({
                       )}
                     </div>
                     {showLegalDetails && (
-                      <span className="text-muted d-block" style={{ fontSize: '11px' }}>
-                        Techo cotizable: {period === 'monthly' ? '$1,000.00/mes' : '$500.00/quincena'}
-                      </span>
+                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
+                        Base legal: 3% hasta techo cotizable de {period === 'monthly' ? '$1,000.00/mes ($30.00)' : '$500.00/quincena ($15.00)'}
+                      </div>
                     )}
                   </td>
-                  {showLegalDetails && (
-                    <td className="text-muted">3% hasta tope {period === 'monthly' ? '$1,000' : '$500'}</td>
-                  )}
                   <td className="text-end text-muted font-monospace">-{formatUSD(activePayroll.isssEmployee)}</td>
                 </tr>
 
@@ -193,33 +193,31 @@ export function PayrollView({
                   <td className="font-sans">
                     <span className="fw-semibold text-slate-dark">Renta Gravada (Base Imponible)</span>
                     {showLegalDetails && (
-                      <span className="text-muted d-block" style={{ fontSize: '11px' }}>
-                        Ingreso bruto menos deducciones de AFP e ISSS
-                      </span>
+                      <div className="text-muted small mt-1 font-monospace fw-normal" style={{ fontSize: '11px' }}>
+                        Base legal: Total bruto menos deducciones obligatorias de AFP e ISSS
+                      </div>
                     )}
                   </td>
-                  {showLegalDetails && <td className="text-muted">Bruto - AFP - ISSS</td>}
                   <td className="text-end fw-semibold text-slate-dark">{formatUSD(activePayroll.taxableIncome)}</td>
                 </tr>
 
                 {/* Retención Renta ISR */}
                 <tr>
                   <td className="font-sans">
-                    <div className="d-flex align-items-center gap-1.5">
+                    <div className="d-flex align-items-center gap-2">
                       <span className="text-slate-dark">Retención de Renta (ISR)</span>
                       <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
                         {activePayroll.isrDetail.bracketLabel}
                       </span>
                     </div>
                     {showLegalDetails && (
-                      <span className="text-muted d-block" style={{ fontSize: '11px' }}>
-                        {activePayroll.isrDetail.bracketId === 'I'
-                          ? `Exento (base imponible ≤ ${period === 'monthly' ? '$550.00' : '$275.00'})`
-                          : `Cuota fija $${activePayroll.isrDetail.fixedFee} + ${Math.round(activePayroll.isrDetail.rate * 100)}% sobre exceso de $${activePayroll.isrDetail.excessOver}`}
-                      </span>
+                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
+                        Base legal: {activePayroll.isrDetail.bracketId === 'I'
+                          ? `Exento (base gravada ≤ ${period === 'monthly' ? '$550.00' : '$275.00'})`
+                          : `Cuota fija de ${formatUSD(activePayroll.isrDetail.fixedFee)} + ${Math.round(activePayroll.isrDetail.rate * 100)}% sobre excedente de ${formatUSD(activePayroll.isrDetail.excessOver)}`}
+                      </div>
                     )}
                   </td>
-                  {showLegalDetails && <td className="text-muted">Tabla Decreto 254</td>}
                   <td className="text-end font-monospace" style={{ color: '#991b1b' }}>
                     -{formatUSD(activePayroll.isr)}
                   </td>
@@ -263,7 +261,7 @@ export function PayrollView({
             <button
               type="button"
               onClick={() => setShowAllBrackets((prev) => !prev)}
-              className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2"
               style={{ fontSize: '12px' }}
             >
               <span>{showAllBrackets ? 'Ocultar escala' : 'Ver los 4 tramos'}</span>
@@ -297,18 +295,19 @@ export function PayrollView({
             {/* Escala Visual Discreta en tonos neutros */}
             <div className="mb-3">
               <div className="d-flex justify-content-between small text-muted font-monospace mb-1" style={{ fontSize: '11px' }}>
-                <span>Exento ($0 - {period === 'monthly' ? '$550' : '$275'})</span>
-                <span>10% ({period === 'monthly' ? '$550 - $895' : '$275 - $447'})</span>
-                <span>20% ({period === 'monthly' ? '$895 - $2,038' : '$447 - $1,019'})</span>
-                <span>30% (&gt; {period === 'monthly' ? '$2,038' : '$1,019'})</span>
+                <span>Exento ($0 - {period === 'monthly' ? '$550.00' : '$275.00'})</span>
+                <span>10% ({period === 'monthly' ? '$550.00 - $895.24' : '$275.00 - $447.62'})</span>
+                <span>20% ({period === 'monthly' ? '$895.24 - $2,038.10' : '$447.62 - $1,019.05'})</span>
+                <span>30% (&gt; {period === 'monthly' ? '$2,038.10' : '$1,019.05'})</span>
               </div>
-              <div className="progress" style={{ height: '6px', backgroundColor: '#e2e8f0' }}>
+              <div className="progress" style={{ height: '7px', backgroundColor: '#e2e8f0' }}>
                 <div
                   className="progress-bar"
+                  role="progressbar"
                   style={{
                     width: `${isrMarkerPercent}%`,
                     backgroundColor: '#475569',
-                    transition: 'width 0.3s ease',
+                    transition: 'width 0.2s ease',
                   }}
                 />
               </div>
@@ -316,8 +315,8 @@ export function PayrollView({
 
             {/* Tabla Completa de Tramos */}
             {showAllBrackets && (
-              <div className="table-responsive border rounded">
-                <table className="table table-minimal align-middle small font-monospace">
+              <div className="table-responsive border rounded mt-3">
+                <table className="table table-minimal align-middle small font-monospace mb-0" style={{ minWidth: '480px' }}>
                   <thead>
                     <tr>
                       <th>Tramo</th>
@@ -334,7 +333,7 @@ export function PayrollView({
                       return (
                         <tr key={rule.id} className={isCurrent ? 'bg-light fw-bold' : ''}>
                           <td>
-                            {isCurrent && <span className="badge bg-secondary me-1">Actual</span>}
+                            {isCurrent && <span className="badge bg-secondary me-1.5">Actual</span>}
                             Tramo {rule.id}
                           </td>
                           <td>{formatUSD(rule.from)}</td>
@@ -370,7 +369,7 @@ export function PayrollView({
 
           <div className="p-3">
             <div className="row g-3 mb-3 text-center">
-              <div className="col-4">
+              <div className="col-12 col-sm-4">
                 <div className="p-3 border rounded bg-light">
                   <span className="text-muted small d-block">AFP Patronal (8.75%)</span>
                   <span className="fs-5 fw-bold font-monospace text-slate-dark">
@@ -378,17 +377,17 @@ export function PayrollView({
                   </span>
                 </div>
               </div>
-              <div className="col-4">
+              <div className="col-12 col-sm-4">
                 <div className="p-3 border rounded bg-light">
                   <span className="text-muted small d-block">
-                    ISSS Patronal (7.5% máx {period === 'monthly' ? '$75' : '$37.50'})
+                    ISSS Patronal (7.5% máx {period === 'monthly' ? '$75.00' : '$37.50'})
                   </span>
                   <span className="fs-5 fw-bold font-monospace text-slate-dark">
                     {formatUSD(activePayroll.isssEmployer)}
                   </span>
                 </div>
               </div>
-              <div className="col-4">
+              <div className="col-12 col-sm-4">
                 <div className="p-3 border rounded bg-light">
                   <span className="text-muted small d-block">INSAFORP/INCAF (1%)</span>
                   <span className="fs-5 fw-bold font-monospace text-slate-dark">
@@ -398,7 +397,7 @@ export function PayrollView({
               </div>
             </div>
 
-            <div className="p-3 border rounded bg-slate-50 d-flex justify-content-between align-items-center">
+            <div className="p-3 border rounded bg-slate-50 d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div>
                 <span className="small fw-semibold text-slate-dark d-block">
                   Costo Total Empresa:
@@ -423,7 +422,7 @@ export function PayrollView({
               <span className="small text-muted d-block">Impacto de Bono Mensual (+{formatUSD(extraMonthlyBonus)})</span>
               <strong className="text-slate-dark small">¿Cuánto de tu bono adicional llega efectivamente a tu bolsillo?</strong>
             </div>
-            <div className="d-flex align-items-center gap-2 font-monospace small">
+            <div className="d-flex flex-wrap align-items-center gap-2 font-monospace small">
               <span className="text-muted">Sin bono: {formatUSD(monthlyBaseOnlyPayroll.netPay)}</span>
               <ChevronRight size={14} className="text-muted" />
               <span className="text-emerald fw-semibold">Con bono: {formatUSD(monthlyPayroll.netPay)}</span>

@@ -30,7 +30,7 @@ export default function Error403() {
           <button
             type="button"
             onClick={() => navigate('/mis-gastos')}
-            className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-3 fw-semibold"
+            className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-3 fw-semibold"
           >
             <Wallet size={14} />
             <span>Ir a Mis Gastos</span>
@@ -38,7 +38,7 @@ export default function Error403() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-3"
+            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-3"
           >
             <Home size={14} />
             <span>Volver al Inicio</span>

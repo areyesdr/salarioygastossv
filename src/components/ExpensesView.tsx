@@ -248,7 +248,7 @@ export function ExpensesView({
               <button
                 type="button"
                 onClick={onResetDefaultExpenses}
-                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 py-1 px-2"
+                className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2 py-1 px-2"
                 style={{ fontSize: '11px' }}
                 title="Restaurar gastos de ejemplo"
               >
@@ -334,7 +334,7 @@ export function ExpensesView({
                         Fijo
                       </label>
                     </div>
-                    <button type="submit" className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1 py-1" style={{ fontSize: '12px' }}>
+                    <button type="submit" className="btn btn-dark btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 py-1" style={{ fontSize: '12px' }}>
                       <Plus size={13} />
                       <span>Agregar</span>
                     </button>
@@ -388,7 +388,7 @@ export function ExpensesView({
                           item.paid ? 'bg-light text-muted' : ''
                         }`}
                       >
-                        <div className="d-flex align-items-center gap-2.5">
+                        <div className="d-flex align-items-center gap-2">
                           <button
                             type="button"
                             onClick={() => onToggleExpensePaid(item.id)}
@@ -402,7 +402,7 @@ export function ExpensesView({
                           </button>
 
                           <div>
-                            <div className="d-flex align-items-center gap-1.5 mb-0.5">
+                            <div className="d-flex align-items-center gap-2 mb-0.5">
                               <span className={`fw-semibold text-slate-dark small ${item.paid ? 'text-decoration-line-through text-muted' : ''}`}>
                                 {item.name}
                               </span>
@@ -414,7 +414,7 @@ export function ExpensesView({
                               </span>
                             </div>
 
-                            <div className="small font-monospace text-muted d-flex align-items-center gap-1.5" style={{ fontSize: '11px' }}>
+                            <div className="small font-monospace text-muted d-flex align-items-center gap-2" style={{ fontSize: '11px' }}>
                               <Clock size={11} className="text-secondary" />
                               <span>Equivale a {formatHours(hoursCost)} de trabajo</span>
                               <span>·</span>
@@ -423,7 +423,7 @@ export function ExpensesView({
                           </div>
                         </div>
 
-                        <div className="d-flex align-items-center gap-2.5">
+                        <div className="d-flex align-items-center gap-2">
                           <span className="fw-semibold font-monospace text-slate-dark small">
                             {formatUSD(item.amount)}
                           </span>

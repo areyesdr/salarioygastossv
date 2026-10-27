@@ -52,6 +52,7 @@ import {
   type ExpenseItem,
   type BonusGoalItem,
 } from './components/ExpensesView.tsx';
+import { formatUSD, parseUSDCurrency, formatHours } from './lib/formatters.ts';
 import LoginPage from './pages/LoginPage.tsx';
 import AdminPanel from './pages/AdminPanel.tsx';
 import TerminosPage from './pages/TerminosPage.tsx';
@@ -143,24 +144,7 @@ const DEFAULT_BONUS_GOALS: BonusGoalItem[] = [
 
 const STORAGE_KEY = 'salarioygastossv_state_v1';
 
-function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number.isFinite(value) ? value : 0);
-}
 
-function formatHours(hours: number): string {
-  if (!Number.isFinite(hours) || hours <= 0) return '0h';
-  if (hours < 1) {
-    return `${Math.round(hours * 60)} min`;
-  }
-  const whole = Math.floor(hours);
-  const mins = Math.round((hours - whole) * 60);
-  return mins > 0 ? `${whole}h ${mins}m` : `${whole}h`;
-}
 
 function AppShell() {
   const { user, logout } = useAuth();
@@ -471,27 +455,31 @@ function AppShell() {
 
   const handleSalaryTextChange = (val: string) => {
     setSalaryInput(val);
-    const parsed = parseFloat(val);
-    if (!Number.isNaN(parsed) && parsed >= 0) {
-      setMonthlySalary(parsed);
-    } else if (val.trim() === '') {
+    if (val.trim() === '') {
       setMonthlySalary(0);
+      return;
+    }
+    const parsed = parseUSDCurrency(val);
+    if (parsed >= 0) {
+      setMonthlySalary(parsed);
     }
   };
 
   const handleBonusTextChange = (val: string) => {
     setBonusInput(val);
-    const parsed = parseFloat(val);
-    if (!Number.isNaN(parsed) && parsed >= 0) {
-      setExtraMonthlyBonus(parsed);
-    } else if (val.trim() === '') {
+    if (val.trim() === '') {
       setExtraMonthlyBonus(0);
+      return;
+    }
+    const parsed = parseUSDCurrency(val);
+    if (parsed >= 0) {
+      setExtraMonthlyBonus(parsed);
     }
   };
 
   const applyPresetSalary = (amount: number) => {
     setMonthlySalary(amount);
-    setSalaryInput(amount.toFixed(2).replace(/\.00$/, ''));
+    setSalaryInput(amount.toFixed(2));
     setShowLawParamsModal(false);
   };
 
@@ -580,7 +568,7 @@ function AppShell() {
     <div className="min-h-screen d-flex flex-column" style={{ backgroundColor: '#f8fafc' }}>
       {/* Header Institucional Minimalista */}
       <nav className="navbar navbar-expand navbar-dark navbar-institutional py-2.5 px-3">
-        <div className="container-fluid d-flex justify-content-between align-items-center">
+        <div className="container-constrained d-flex justify-content-between align-items-center">
           {/* Logo sobrio institucional */}
           <Link to="/" className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-3">
             <div
@@ -599,14 +587,14 @@ function AppShell() {
           </Link>
 
           {/* Enlaces de Navegación Secundarios Centrales */}
-          <div className="d-flex align-items-center gap-1 mx-auto">
+          <div className="d-flex align-items-center gap-1 mx-auto flex-wrap justify-content-center">
             <button
               type="button"
               onClick={() => {
                 setCalcTab('payroll');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-flex align-items-center gap-1.5 ${
+              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
                 isCalculatorRoute && calcTab === 'payroll' ? 'active' : ''
               }`}
             >
@@ -620,7 +608,7 @@ function AppShell() {
                 setCalcTab('bonuses');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-flex align-items-center gap-1.5 ${
+              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
                 isCalculatorRoute && calcTab === 'bonuses' ? 'active' : ''
               }`}
             >
@@ -634,7 +622,7 @@ function AppShell() {
                 setCalcTab('hourly');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-flex align-items-center gap-1.5 ${
+              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
                 isCalculatorRoute && calcTab === 'hourly' ? 'active' : ''
               }`}
             >
@@ -645,7 +633,7 @@ function AppShell() {
             <button
               type="button"
               onClick={() => navigate('/mis-gastos')}
-              className={`btn btn-sm border-0 nav-link-subtle d-flex align-items-center gap-1.5 ${
+              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
                 isExpensesRoute ? 'active' : ''
               }`}
             >
@@ -661,7 +649,7 @@ function AppShell() {
                 <button
                   type="button"
                   onClick={() => setShowProfileMenu((prev) => !prev)}
-                  className="btn btn-sm btn-outline-light d-flex align-items-center gap-1.5 py-1 px-2.5"
+                  className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-2.5"
                   style={{ fontSize: '12px' }}
                 >
                   <User size={13} />
@@ -672,7 +660,7 @@ function AppShell() {
                 {showProfileMenu && (
                   <div
                     className="dropdown-menu dropdown-menu-end show shadow-sm p-2 mt-1 border"
-                    style={{ minWidth: '210px', zIndex: 1050, fontSize: '13px' }}
+                    style={{ minWidth: '220px', maxWidth: 'calc(100vw - 2rem)', right: 0, left: 'auto', zIndex: 1050, fontSize: '13px' }}
                   >
                     <div className="px-2 py-1 mb-1 border-bottom">
                       <span className="small text-muted d-block" style={{ fontSize: '11px' }}>
@@ -698,16 +686,18 @@ function AppShell() {
                     <Link
                       to="/terminos"
                       onClick={() => setShowProfileMenu(false)}
-                      className="dropdown-item py-1.5 text-muted"
+                      className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
                     >
-                      Términos y Condiciones
+                      <Scale size={13} />
+                      <span>Términos de Uso</span>
                     </Link>
                     <Link
                       to="/privacidad"
                       onClick={() => setShowProfileMenu(false)}
-                      className="dropdown-item py-1.5 text-muted"
+                      className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
                     >
-                      Privacidad y Derechos ARCO
+                      <Shield size={13} />
+                      <span>Privacidad y Datos ARCO</span>
                     </Link>
 
                     <div className="dropdown-divider my-1" />
@@ -718,7 +708,7 @@ function AppShell() {
                         logout();
                         setShowProfileMenu(false);
                       }}
-                      className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-1.5"
+                      className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-2"
                     >
                       <LogOut size={13} />
                       <span>Cerrar Sesión</span>
@@ -729,7 +719,7 @@ function AppShell() {
             ) : (
               <Link
                 to="/login"
-                className="btn btn-sm btn-outline-light d-flex align-items-center gap-1.5 py-1 px-3"
+                className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-3"
                 style={{ fontSize: '12px', fontWeight: 500 }}
               >
                 <LogIn size={13} />
@@ -743,7 +733,7 @@ function AppShell() {
       {/* Sección Hero / Calculadora Principal con Jerarquía Limpia */}
       {(isCalculatorRoute || isExpensesRoute) && (
         <section className="py-4">
-          <div className="container-fluid">
+          <div className="container-constrained">
             {/* Tarjeta Flotante Principal de Entrada y Resultado Líquido */}
             <div className="card-soft p-4 mb-4">
               <div className="row g-4 align-items-stretch">
@@ -843,7 +833,7 @@ function AppShell() {
                     <button
                       type="button"
                       onClick={() => setShowLawParamsModal(true)}
-                      className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1.5"
+                      className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
                       style={{ fontSize: '12px' }}
                     >
                       <SlidersHorizontal size={13} className="text-secondary" />
@@ -928,7 +918,7 @@ function AppShell() {
           tabIndex={-1}
           style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)', zIndex: 1060 }}
         >
-          <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
             <div className="modal-content shadow border-0 rounded-3">
               <div className="modal-header border-bottom py-3 px-4">
                 <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
@@ -1031,7 +1021,7 @@ function AppShell() {
                             className="btn btn-xs btn-outline-secondary py-0.5 px-2"
                             style={{ fontSize: '11px' }}
                           >
-                            Cargar $1,000
+                            Cargar $1,000.00
                           </button>
                         </td>
                       </tr>
@@ -1046,7 +1036,7 @@ function AppShell() {
                             className="btn btn-xs btn-outline-secondary py-0.5 px-2"
                             style={{ fontSize: '11px' }}
                           >
-                            Cargar $1,500
+                            Cargar $1,500.00
                           </button>
                         </td>
                       </tr>
@@ -1085,7 +1075,7 @@ function AppShell() {
       )}
 
       {/* Contenido Principal con Router */}
-      <main className="container-fluid flex-grow-1">
+      <main className="container-constrained flex-grow-1">
         <Routes>
           <Route
             path="/"
@@ -1230,8 +1220,8 @@ function AppShell() {
 
       {/* Footer Minimalista y Confiable */}
       <footer className="bg-white border-top py-4 mt-auto">
-        <div className="container-fluid">
-          <div className="p-3 rounded bg-light border border-slate-200 small mb-3 d-flex align-items-start gap-2.5">
+        <div className="container-constrained">
+          <div className="p-3 rounded bg-light border border-slate-200 small mb-3 d-flex align-items-start gap-2">
             <AlertTriangle size={16} className="shrink-0 mt-0.5 text-secondary" />
             <div className="text-muted" style={{ fontSize: '12px' }}>
               <strong className="text-slate-dark">Aviso Legal y Exoneración de Responsabilidad:</strong> Los

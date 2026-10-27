@@ -118,7 +118,7 @@ export default function LoginPage() {
                   }`}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div className="fw-semibold d-flex align-items-center gap-1.5">
+                  <div className="fw-semibold d-flex align-items-center gap-2">
                     <UserCheck size={14} className="text-secondary" />
                     <span>Usuario</span>
                   </div>
@@ -139,7 +139,7 @@ export default function LoginPage() {
                   }`}
                   style={{ cursor: 'pointer' }}
                 >
-                  <div className="fw-semibold d-flex align-items-center gap-1.5">
+                  <div className="fw-semibold d-flex align-items-center gap-2">
                     <Shield size={14} className="text-secondary" />
                     <span>Administrador</span>
                   </div>

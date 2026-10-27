@@ -7,7 +7,7 @@ export default function TerminosPage() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <Link
           to="/"
-          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5"
+          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
           style={{ fontSize: '12px' }}
         >
           <ArrowLeft size={13} />

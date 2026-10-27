@@ -45,7 +45,7 @@ export default function PrivacidadPage() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <Link
           to="/"
-          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5"
+          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
           style={{ fontSize: '12px' }}
         >
           <ArrowLeft size={13} />
@@ -138,7 +138,7 @@ export default function PrivacidadPage() {
                   <button
                     type="button"
                     onClick={handleExportARCO}
-                    className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                    className="btn btn-dark btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 py-1.5"
                     style={{ fontSize: '11px' }}
                   >
                     <Download size={13} />
@@ -177,7 +177,7 @@ export default function PrivacidadPage() {
                   </div>
                   <button
                     type="submit"
-                    className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                    className="btn btn-dark btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 py-1.5"
                     style={{ fontSize: '11px' }}
                   >
                     {savedNotice ? (
@@ -213,7 +213,7 @@ export default function PrivacidadPage() {
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(true)}
-                      className="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                      className="btn btn-outline-danger btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 py-1.5"
                       style={{ fontSize: '11px' }}
                     >
                       <Trash2 size={13} />

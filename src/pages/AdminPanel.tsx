@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Shield, Lock, CheckCircle2, AlertTriangle, ArrowLeft, Bug } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { RATES, MINIMUM_WAGES_2026 } from '../lib/svLaborLaw.ts';
+import { formatUSD } from '../lib/formatters.ts';
 
 export default function AdminPanel() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function AdminPanel() {
 
         <Link
           to="/"
-          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 self-start py-1.5 px-3"
+          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2 self-start py-1.5 px-3"
           style={{ fontSize: '12px' }}
         >
           <ArrowLeft size={13} />
@@ -87,10 +88,10 @@ export default function AdminPanel() {
               <Shield size={16} className="text-secondary" />
             </div>
             <div className="fs-5 fw-bold font-monospace text-slate-dark mb-1">
-              ISSS ${RATES.ISSS_CAP_MONTHLY} · Q25 ${RATES.QUINCENA_25_CAP}
+              ISSS {formatUSD(RATES.ISSS_CAP_MONTHLY)} · Q25 {formatUSD(RATES.QUINCENA_25_CAP)}
             </div>
             <span className="small text-muted" style={{ fontSize: '11px' }}>
-              Salario mín. comercio: ${MINIMUM_WAGES_2026.comercio.monthly.toFixed(2)}
+              Salario mín. comercio: {formatUSD(MINIMUM_WAGES_2026.comercio.monthly)}
             </span>
           </div>
         </div>

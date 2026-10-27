@@ -38,7 +38,7 @@ export default function Error500({ resetErrorBoundary }: Error500Props) {
         <button
           type="button"
           onClick={handleRetry}
-          className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-4 fw-semibold"
+          className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-4 fw-semibold"
         >
           <RotateCcw size={14} />
           <span>Reintentar Operación</span>
