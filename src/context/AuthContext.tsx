@@ -3,7 +3,8 @@ import { type SessionUser, type UserRole } from '../lib/security.ts';
 
 interface AuthContextValue {
   user: SessionUser | null;
-  loginAs: (role: UserRole, customEmail?: string, customName?: string) => void;
+  loginAs: (role: UserRole, customEmail?: string, customName?: string, cleanSlate?: boolean) => void;
+  createCleanUser: (customName?: string, customEmail?: string) => void;
   logout: () => void;
   updateProfile: (name: string, email: string) => void;
   purgeUserDataAndAccount: () => void;
@@ -13,9 +14,9 @@ const AUTH_STORAGE_KEY = 'salarioygastossv_auth_v1';
 const DATA_STORAGE_KEY = 'salarioygastossv_state_v1';
 
 const DEFAULT_USER: SessionUser = {
-  id: 'usr-sv-01',
-  name: 'Usuario SV',
-  email: 'usuario@salariosv.com',
+  id: 'usr-test-01',
+  name: 'Usuario Pruebas',
+  email: 'test@salariosv.com',
   loggedIn: true,
   role: 'user',
   acceptedTermsAt: '2026-10-26T18:00:00.000Z',
@@ -46,14 +47,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const loginAs = (role: UserRole, customEmail?: string, customName?: string) => {
-    const id = role === 'admin' ? 'usr-admin-01' : 'usr-sv-01';
+  const loginAs = (
+    role: UserRole,
+    customEmail?: string,
+    customName?: string,
+    cleanSlate: boolean = false
+  ) => {
+    let id: string;
+    if (role === 'admin') {
+      id = 'usr-admin-01';
+    } else if (cleanSlate || (customEmail && customEmail.toLowerCase() !== 'usuario@salariosv.com')) {
+      id = `usr-test-${Date.now().toString(36)}`;
+    } else {
+      id = 'usr-sv-01';
+    }
+
+    if (cleanSlate) {
+      try {
+        localStorage.removeItem(DATA_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+    }
+
     setUser({
       id,
-      name: customName?.trim() || (role === 'admin' ? 'Administrador SV' : 'Usuario SV'),
-      email: customEmail?.trim() || (role === 'admin' ? 'admin@salariosv.com' : 'usuario@salariosv.com'),
+      name: customName?.trim() || (role === 'admin' ? 'Administrador SV' : 'Usuario Pruebas'),
+      email: customEmail?.trim() || (role === 'admin' ? 'admin@salariosv.com' : 'test@salariosv.com'),
       loggedIn: true,
       role,
+      acceptedTermsAt: new Date().toISOString(),
+    });
+  };
+
+  const createCleanUser = (customName?: string, customEmail?: string) => {
+    const id = `usr-test-${Date.now().toString(36)}`;
+    try {
+      localStorage.removeItem(DATA_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    setUser({
+      id,
+      name: customName?.trim() || 'Usuario Pruebas',
+      email: customEmail?.trim() || 'test@salariosv.com',
+      loggedIn: true,
+      role: 'user',
       acceptedTermsAt: new Date().toISOString(),
     });
   };
@@ -88,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         loginAs,
+        createCleanUser,
         logout,
         updateProfile,
         purgeUserDataAndAccount,

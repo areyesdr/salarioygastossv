@@ -20,6 +20,7 @@ import {
   ChevronDown,
   User,
   Shield,
+  RotateCcw,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -705,6 +706,25 @@ function AppShell() {
                     <button
                       type="button"
                       onClick={() => {
+                        if (effectiveOwnerUser) {
+                          setExpenses((prev) => prev.filter((e) => e.ownerId !== effectiveOwnerUser.id));
+                          setBonusGoals((prev) => prev.filter((g) => g.ownerId !== effectiveOwnerUser.id));
+                        }
+                        setMonthlySalary(MINIMUM_WAGES_2026.comercio.monthly);
+                        setSalaryInput(MINIMUM_WAGES_2026.comercio.monthly.toFixed(2));
+                        setExtraMonthlyBonus(0);
+                        setBonusInput('0.00');
+                        setShowProfileMenu(false);
+                      }}
+                      className="dropdown-item py-1.5 text-secondary d-flex align-items-center gap-2"
+                    >
+                      <RotateCcw size={13} />
+                      <span>Reiniciar datos a cero</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
                         logout();
                         setShowProfileMenu(false);
                       }}
@@ -1194,7 +1214,18 @@ function AppShell() {
                   onAddExpense={handleAddExpense}
                   onToggleExpensePaid={handleToggleExpensePaid}
                   onDeleteExpense={handleDeleteExpense}
-                  onResetDefaultExpenses={() => setExpenses(DEFAULT_EXPENSES)}
+                  onResetDefaultExpenses={() => {
+                    if (!effectiveOwnerUser) return;
+                    const samples = DEFAULT_EXPENSES.map((e) => ({
+                      ...e,
+                      id: `exp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                      ownerId: effectiveOwnerUser.id,
+                    }));
+                    setExpenses((prev) => [
+                      ...prev.filter((e) => e.ownerId !== effectiveOwnerUser.id),
+                      ...samples,
+                    ]);
+                  }}
                   bonusGoals={userOwnedGoals}
                   newGoalTitle={newGoalTitle}
                   setNewGoalTitle={setNewGoalTitle}

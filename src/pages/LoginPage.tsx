@@ -7,12 +7,25 @@ import { type UserRole } from '../lib/security.ts';
 export default function LoginPage() {
   const { user, loginAs, logout } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('Usuario Demo');
-  const [email, setEmail] = useState('demo@salariosv.com');
+  const [mode, setMode] = useState<'clean' | 'demo'>('clean');
+  const [name, setName] = useState('Usuario Pruebas');
+  const [email, setEmail] = useState('test@salariosv.com');
   const [password, setPassword] = useState('••••••••••••');
   const [selectedRole, setSelectedRole] = useState<UserRole>('user');
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleModeChange = (newMode: 'clean' | 'demo') => {
+    setMode(newMode);
+    if (newMode === 'clean') {
+      setName('Usuario Pruebas');
+      setEmail('test@salariosv.com');
+      setSelectedRole('user');
+    } else {
+      setName('Usuario Demo');
+      setEmail('usuario@salariosv.com');
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,8 +34,14 @@ export default function LoginPage() {
       return;
     }
     setErrorMsg('');
-    loginAs(selectedRole, email, name);
-    navigate(selectedRole === 'admin' ? '/admin' : '/mis-gastos');
+    const isClean = mode === 'clean';
+    loginAs(selectedRole, email, name, isClean);
+    navigate(selectedRole === 'admin' ? '/admin' : '/');
+  };
+
+  const handleStartFreshTestUser = () => {
+    loginAs('user', 'test@salariosv.com', 'Usuario Pruebas', true);
+    navigate('/');
   };
 
   return (
@@ -36,29 +55,72 @@ export default function LoginPage() {
             <Lock size={20} />
           </div>
           <div>
-            <h5 className="fw-semibold text-slate-dark mb-0">Iniciar Sesión</h5>
+            <h5 className="fw-semibold text-slate-dark mb-0">Acceso y Gestión de Pruebas</h5>
             <span className="small text-muted" style={{ fontSize: '12px' }}>
-              Acceso seguro y gestión de registros financieros
+              Inicia sesión o crea una cuenta limpia para pruebas desde cero
             </span>
           </div>
         </div>
 
         {user?.loggedIn && (
-          <div className="p-3 rounded bg-slate-50 border border-slate-200 small mb-4 d-flex justify-content-between align-items-center">
-            <div>
-              <strong className="text-slate-dark d-block">Sesión activa: {user.name}</strong>
-              <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
-                Rol: {user.role.toUpperCase()} · ID: {user.id}
-              </span>
+          <div className="p-3 rounded bg-slate-50 border border-slate-200 small mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <strong className="text-slate-dark d-block">Sesión activa: {user.name}</strong>
+                <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
+                  {user.email} · Rol: {user.role.toUpperCase()} · ID: {user.id}
+                </span>
+              </div>
+              <span className="badge-subtle font-monospace">Activa</span>
             </div>
-            <button
-              type="button"
-              onClick={logout}
-              className="btn btn-sm btn-outline-danger py-1 px-2"
-              style={{ fontSize: '11px' }}
-            >
-              Cerrar sesión
-            </button>
+            <div className="d-flex gap-2 pt-1 border-top">
+              <button
+                type="button"
+                onClick={handleStartFreshTestUser}
+                className="btn btn-sm btn-outline-secondary py-1 px-2.5 flex-grow-1"
+                style={{ fontSize: '11px' }}
+              >
+                Reiniciar cuenta a cero
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="btn btn-sm btn-outline-danger py-1 px-2.5"
+                style={{ fontSize: '11px' }}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Selector de Modo: Pruebas desde Cero vs Demo */}
+        <div className="segmented-control mb-4">
+          <button
+            type="button"
+            onClick={() => handleModeChange('clean')}
+            className={mode === 'clean' ? 'active' : ''}
+          >
+            Pruebas desde Cero
+          </button>
+          <button
+            type="button"
+            onClick={() => handleModeChange('demo')}
+            className={mode === 'demo' ? 'active' : ''}
+          >
+            Usuario Demo (Ejemplos)
+          </button>
+        </div>
+
+        {mode === 'clean' && (
+          <div className="p-2.5 rounded bg-slate-50 border border-slate-200 text-slate-dark small mb-3" style={{ fontSize: '12px' }}>
+            <strong>Cuenta limpia:</strong> Iniciarás sin historial de gastos ni metas precargadas, con el salario mínimo de ley ($408.80) para probar el flujo desde cero.
+          </div>
+        )}
+
+        {mode === 'demo' && (
+          <div className="p-2.5 rounded bg-slate-50 border border-slate-200 text-slate-dark small mb-3" style={{ fontSize: '12px' }}>
+            <strong>Cuenta demo:</strong> Contiene gastos mensuales y metas de ahorro precargadas para explorar la distribución presupuestaria.
           </div>
         )}
 
@@ -183,7 +245,9 @@ export default function LoginPage() {
             className="btn btn-dark w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold"
           >
             <LogIn size={15} />
-            <span>Iniciar Sesión</span>
+            <span>
+              {mode === 'clean' ? 'Iniciar Pruebas desde Cero' : 'Cargar Sesión Demo'}
+            </span>
           </button>
         </form>
       </div>
