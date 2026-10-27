@@ -590,6 +590,7 @@ export interface SeniorityCalculationResult {
   aguinaldoSeniorityBracket: SeniorityBracket;
   aguinaldoDaysWorked: number;
   aguinaldoLabel: string;
+  aguinaldoShortBadge: string;
   q25CutoffDate: string;
   q25IsFullYear: boolean;
   q25DaysWorked: number;
@@ -620,6 +621,7 @@ export function calcSeniorityFromHireDate(
       aguinaldoSeniorityBracket: '1-to-3',
       aguinaldoDaysWorked: 365,
       aguinaldoLabel: '1 a menos de 3 años (15 días)',
+      aguinaldoShortBadge: '15 días',
       q25CutoffDate: '2027-01-25',
       q25IsFullYear: true,
       q25DaysWorked: 365,
@@ -645,6 +647,7 @@ export function calcSeniorityFromHireDate(
       aguinaldoSeniorityBracket: 'under-1',
       aguinaldoDaysWorked: 0,
       aguinaldoLabel: 'Menos de 1 año (0 días)',
+      aguinaldoShortBadge: '0 días',
       q25CutoffDate: '2027-01-25',
       q25IsFullYear: false,
       q25DaysWorked: 0,
@@ -688,11 +691,13 @@ export function calcSeniorityFromHireDate(
   let agBracket: SeniorityBracket = 'under-1';
   let agDays = 365;
   let agLabel = 'Menos de 1 año (proporcional)';
+  let agShort = 'Proporcional';
 
   if (hire > agCutoff) {
     agBracket = 'under-1';
     agDays = 0;
     agLabel = 'Menos de 1 año (0 días al 12 dic.)';
+    agShort = '0 días';
   } else {
     let agY = agCutoff.getFullYear() - hire.getFullYear();
     let agM = agCutoff.getMonth() - hire.getMonth();
@@ -711,19 +716,23 @@ export function calcSeniorityFromHireDate(
       agBracket = '10-plus';
       agDays = 365;
       agLabel = '10 años o más (21 días de salario)';
+      agShort = '21 días';
     } else if (agY >= 3) {
       agBracket = '3-to-10';
       agDays = 365;
       agLabel = '3 a menos de 10 años (19 días de salario)';
+      agShort = '19 días';
     } else if (agY >= 1) {
       agBracket = '1-to-3';
       agDays = 365;
       agLabel = '1 a menos de 3 años (15 días de salario)';
+      agShort = '15 días';
     } else {
       agBracket = 'under-1';
       const daysWorked = Math.floor((agCutoff.getTime() - hire.getTime()) / 86_400_000) + 1;
       agDays = Math.min(365, Math.max(0, daysWorked));
       agLabel = `Menos de 1 año (${agDays} días al 12 dic.)`;
+      agShort = 'Proporcional';
     }
   }
 
@@ -763,6 +772,7 @@ export function calcSeniorityFromHireDate(
     aguinaldoSeniorityBracket: agBracket,
     aguinaldoDaysWorked: agDays,
     aguinaldoLabel: agLabel,
+    aguinaldoShortBadge: agShort,
     q25CutoffDate: `${q25Year}-01-25`,
     q25IsFullYear,
     q25DaysWorked,

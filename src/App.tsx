@@ -1033,23 +1033,27 @@ function AppShell() {
                           </span>
                         </label>
                         <div
-                          className="px-3 rounded border bg-slate-50 d-flex align-items-center justify-content-between"
-                          style={{ height: '42px' }}
+                          className="px-3 rounded border bg-slate-50 d-flex align-items-center justify-content-between overflow-hidden"
+                          style={{ height: '42px', maxWidth: '100%' }}
                         >
-                          <div className="d-flex align-items-center gap-1.5 small font-monospace text-truncate me-2">
-                            <Clock size={13} className="text-slate-muted shrink-0" />
-                            <span className="text-slate-dark fw-semibold text-truncate" style={{ fontSize: '12px' }}>
+                          <div
+                            className="d-flex align-items-center gap-1.5 small font-monospace text-truncate me-2"
+                            style={{ minWidth: 0 }}
+                            title={`Antigüedad exacta: ${seniorityDetails.formattedSeniority}`}
+                          >
+                            <Clock size={13} className="text-secondary shrink-0" />
+                            <span className="text-slate-dark fw-semibold text-truncate" style={{ fontSize: '11.5px' }}>
                               {seniorityDetails.formattedSeniority}
                             </span>
                           </div>
-                          <span
-                            className="badge-emerald font-monospace fw-semibold shrink-0"
-                            style={{ fontSize: '11px' }}
-                            title="Tramo de Aguinaldo según Código de Trabajo"
+                          <div
+                            className="d-flex align-items-center gap-1 text-emerald small font-monospace fw-bold shrink-0"
+                            style={{ fontSize: '11.5px', whiteSpace: 'nowrap' }}
+                            title={`Aguinaldo legal: ${seniorityDetails.aguinaldoLabel}`}
                           >
-                            <Gift size={12} className="me-1" />
-                            {seniorityDetails.aguinaldoLabel}
-                          </span>
+                            <Gift size={13} className="shrink-0" />
+                            <span>{seniorityDetails.aguinaldoShortBadge}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
