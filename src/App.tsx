@@ -752,10 +752,15 @@ function AppShell() {
                       <div className="col-12 col-sm-5">
                         <label
                           htmlFor="salary-input"
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1"
+                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
                           style={{ fontSize: '11px' }}
                         >
-                          Salario Base ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
+                          <span>Salario Base Mensual</span>
+                          {period === 'biweekly' && (
+                            <span className="text-secondary fw-normal font-monospace">
+                              {formatUSD(activePayroll.grossTotal)} / qna
+                            </span>
+                          )}
                         </label>
                         <div className="input-group">
                           <span className="input-group-text bg-white border-end-0 text-muted font-monospace fw-semibold">

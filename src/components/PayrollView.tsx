@@ -240,6 +240,50 @@ export function PayrollView({
               {formatUSD(activePayroll.netPay)}
             </span>
           </div>
+
+          {/* Desglose Quincenal Consolidado (Cuadre de Cierre de Mes) */}
+          {period === 'biweekly' && activePayroll.quincenaDetails && (
+            <div className="p-3 bg-light border-top">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small text-slate-dark fw-semibold" style={{ fontSize: '12px' }}>
+                  Desglose Quincenal Consolidado (Liquidación de Mes)
+                </span>
+                <span className="badge-subtle font-monospace" style={{ fontSize: '11px' }}>
+                  Total Mensual: {formatUSD(monthlyPayroll.netPay)}
+                </span>
+              </div>
+              <div className="row g-2 font-monospace small">
+                <div className="col-12 col-sm-6">
+                  <div className="p-2.5 rounded bg-white border border-slate-200">
+                    <span className="text-muted d-block font-sans" style={{ fontSize: '11px' }}>
+                      1.ª Quincena (Día 1 al 15):
+                    </span>
+                    <strong className="text-slate-dark">{formatUSD(activePayroll.quincenaDetails.q1.netPay)} neto</strong>
+                    <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>
+                      Bruto: {formatUSD(activePayroll.quincenaDetails.q1.grossTotal)} · Deds: -{formatUSD(activePayroll.quincenaDetails.q1.totalEmployeeDeductions)}
+                    </span>
+                  </div>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <div className="p-2.5 rounded bg-white border border-slate-200">
+                    <span className="text-muted d-block font-sans" style={{ fontSize: '11px' }}>
+                      2.ª Quincena (Ajuste de Cierre):
+                    </span>
+                    <strong className="text-slate-dark">{formatUSD(activePayroll.quincenaDetails.q2.netPay)} neto</strong>
+                    <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>
+                      Bruto: {formatUSD(activePayroll.quincenaDetails.q2.grossTotal)} · Deds: -{formatUSD(activePayroll.quincenaDetails.q2.totalEmployeeDeductions)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {activePayroll.quincenaDetails.hasOddCentAdjustment && (
+                <div className="text-muted mt-2 font-sans d-flex align-items-center gap-1.5" style={{ fontSize: '11px' }}>
+                  <Info size={12} className="text-secondary shrink-0" />
+                  <span>El centavo diferencial se ajusta en la 2.ª quincena conforme a la declaración mensual ante ISSS, AFP y Hacienda.</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

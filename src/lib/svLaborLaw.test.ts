@@ -155,4 +155,30 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(visibleToRegular.length, 1);
     assert.equal(visibleToRegular[0].id, 'exp-101');
   });
+
+  it('synchronizes biweekly and monthly calculations with zero cent discrepancy (odd-cent legal adjustment)', () => {
+    // Para $944.19 mensual: Neto mensual debe ser $800.00 y neto quincenal debe ser $400.00 exacto
+    const monthly = calcPayroll(944.19, 'monthly');
+    const biweekly = calcPayroll(944.19, 'biweekly');
+
+    assert.equal(monthly.netPay, 800.0);
+    assert.equal(biweekly.netPay, 400.0);
+
+    const details = biweekly.quincenaDetails;
+    assert.ok(details);
+    assert.equal(details.hasOddCentAdjustment, true);
+
+    // Q1 = $472.09 bruto, $72.09 deds, $400.00 neto
+    assert.equal(details.q1.grossTotal, 472.09);
+    assert.equal(details.q1.netPay, 400.0);
+
+    // Q2 = $472.10 bruto (absorbe centavo), $72.10 deds, $400.00 neto
+    assert.equal(details.q2.grossTotal, 472.1);
+    assert.equal(details.q2.netPay, 400.0);
+
+    // Q1 + Q2 cuadra exactamente con el consolidado mensual
+    assert.equal(details.q1.grossTotal + details.q2.grossTotal, 944.19);
+    assert.equal(details.q1.netPay + details.q2.netPay, 800.0);
+    assert.equal(details.q1.totalEmployeeDeductions + details.q2.totalEmployeeDeductions, monthly.totalEmployeeDeductions);
+  });
 });

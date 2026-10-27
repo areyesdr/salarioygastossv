@@ -195,34 +195,44 @@ export interface PayrollBreakdown {
   insaforpEmployer: number;
   totalEmployerContributions: number;
   totalEmployerCost: number;
+  quincenaDetails?: {
+    q1: QuincenaDetail;
+    q2: QuincenaDetail;
+    hasOddCentAdjustment: boolean;
+  };
 }
 
-/**
- * Calcula el desglose exacto de planilla mensual o quincenal.
- */
-export function calcPayroll(
-  monthlyBaseSalary: number,
-  period: PayPeriod = 'monthly',
-  monthlyExtraBonuses: number = 0
-): PayrollBreakdown {
-  const safeBaseMonthly = Math.max(0, monthlyBaseSalary);
-  const safeBonusesMonthly = Math.max(0, monthlyExtraBonuses);
+export interface QuincenaDetail {
+  grossBase: number;
+  bonuses: number;
+  grossTotal: number;
+  afpEmployee: number;
+  isssEmployee: number;
+  taxableIncome: number;
+  isr: number;
+  totalEmployeeDeductions: number;
+  netPay: number;
+  afpEmployer: number;
+  isssEmployer: number;
+  insaforpEmployer: number;
+  totalEmployerContributions: number;
+  totalEmployerCost: number;
+}
 
-  const factor = period === 'biweekly' ? 0.5 : 1;
-  const grossBase = round2(safeBaseMonthly * factor);
-  const bonuses = round2(safeBonusesMonthly * factor);
+function calcMonthlyPayrollInternal(
+  safeBaseMonthly: number,
+  safeBonusesMonthly: number
+): PayrollBreakdown {
+  const grossBase = round2(safeBaseMonthly);
+  const bonuses = round2(safeBonusesMonthly);
   const grossTotal = round2(grossBase + bonuses);
 
-  const isssCap = period === 'biweekly' ? RATES.ISSS_CAP_BIWEEKLY : RATES.ISSS_CAP_MONTHLY;
-  const isssMaxEE = period === 'biweekly' ? RATES.ISSS_MAX_EE_BIWEEKLY : RATES.ISSS_MAX_EE_MONTHLY;
-  const isssMaxER = period === 'biweekly' ? RATES.ISSS_MAX_ER_BIWEEKLY : RATES.ISSS_MAX_ER_MONTHLY;
-
   const afpEmployee = round2(grossTotal * RATES.AFP_EE);
-  const isssEmployee = round2(Math.min(grossTotal * RATES.ISSS_EE, isssMaxEE));
-  const isssCapped = grossTotal >= isssCap;
+  const isssEmployee = round2(Math.min(grossTotal * RATES.ISSS_EE, RATES.ISSS_MAX_EE_MONTHLY));
+  const isssCapped = grossTotal >= RATES.ISSS_CAP_MONTHLY;
 
   const taxableIncome = Math.max(0, round2(grossTotal - afpEmployee - isssEmployee));
-  const isrDetail = calcISR(taxableIncome, period);
+  const isrDetail = calcISR(taxableIncome, 'monthly');
   const isr = isrDetail.isr;
 
   const totalEmployeeDeductions = round2(afpEmployee + isssEmployee + isr);
@@ -230,13 +240,13 @@ export function calcPayroll(
   const effectiveDeductionPct = grossTotal > 0 ? round2((totalEmployeeDeductions / grossTotal) * 100) : 0;
 
   const afpEmployer = round2(grossTotal * RATES.AFP_ER);
-  const isssEmployer = round2(Math.min(grossTotal * RATES.ISSS_ER, isssMaxER));
+  const isssEmployer = round2(Math.min(grossTotal * RATES.ISSS_ER, RATES.ISSS_MAX_ER_MONTHLY));
   const insaforpEmployer = round2(grossTotal * RATES.INSAFORP_ER);
   const totalEmployerContributions = round2(afpEmployer + isssEmployer + insaforpEmployer);
   const totalEmployerCost = round2(grossTotal + totalEmployerContributions);
 
   return {
-    period,
+    period: 'monthly',
     grossBase,
     bonuses,
     grossTotal,
@@ -254,6 +264,146 @@ export function calcPayroll(
     insaforpEmployer,
     totalEmployerContributions,
     totalEmployerCost,
+  };
+}
+
+function computeQuincenaPair(monthly: PayrollBreakdown): {
+  q1: QuincenaDetail;
+  q2: QuincenaDetail;
+  hasOddCentAdjustment: boolean;
+} {
+  const q1GrossBase = Math.floor((monthly.grossBase * 100) / 2) / 100;
+  const q2GrossBase = round2(monthly.grossBase - q1GrossBase);
+
+  const q1Bonuses = Math.floor((monthly.bonuses * 100) / 2) / 100;
+  const q2Bonuses = round2(monthly.bonuses - q1Bonuses);
+
+  const q1GrossTotal = round2(q1GrossBase + q1Bonuses);
+  const q2GrossTotal = round2(q2GrossBase + q2Bonuses);
+
+  const q1AfpEmployee = round2(q1GrossTotal * RATES.AFP_EE);
+  const q2AfpEmployee = round2(monthly.afpEmployee - q1AfpEmployee);
+
+  const q1IsssEmployee = round2(Math.min(q1GrossTotal * RATES.ISSS_EE, RATES.ISSS_MAX_EE_BIWEEKLY));
+  const q2IsssEmployee = round2(monthly.isssEmployee - q1IsssEmployee);
+
+  const q1TaxableIncome = Math.max(0, round2(q1GrossTotal - q1AfpEmployee - q1IsssEmployee));
+  const q1Isr = calcISR(q1TaxableIncome, 'biweekly').isr;
+  const q2Isr = round2(monthly.isr - q1Isr);
+
+  const q1TotalEmployeeDeductions = round2(q1AfpEmployee + q1IsssEmployee + q1Isr);
+  const q2TotalEmployeeDeductions = round2(q2AfpEmployee + q2IsssEmployee + q2Isr);
+
+  const q1NetPay = round2(q1GrossTotal - q1TotalEmployeeDeductions);
+  const q2NetPay = round2(q2GrossTotal - q2TotalEmployeeDeductions);
+
+  const q1AfpEmployer = round2(q1GrossTotal * RATES.AFP_ER);
+  const q2AfpEmployer = round2(monthly.afpEmployer - q1AfpEmployer);
+
+  const q1IsssEmployer = round2(Math.min(q1GrossTotal * RATES.ISSS_ER, RATES.ISSS_MAX_ER_BIWEEKLY));
+  const q2IsssEmployer = round2(monthly.isssEmployer - q1IsssEmployer);
+
+  const q1InsaforpEmployer = round2(q1GrossTotal * RATES.INSAFORP_ER);
+  const q2InsaforpEmployer = round2(monthly.insaforpEmployer - q1InsaforpEmployer);
+
+  const q1TotalEmployerContribs = round2(q1AfpEmployer + q1IsssEmployer + q1InsaforpEmployer);
+  const q2TotalEmployerContribs = round2(q2AfpEmployer + q2IsssEmployer + q2InsaforpEmployer);
+
+  const q1TotalEmployerCost = round2(q1GrossTotal + q1TotalEmployerContribs);
+  const q2TotalEmployerCost = round2(q2GrossTotal + q2TotalEmployerContribs);
+
+  const hasOddCentAdjustment =
+    q1GrossTotal !== q2GrossTotal ||
+    q1TotalEmployeeDeductions !== q2TotalEmployeeDeductions ||
+    q1NetPay !== q2NetPay;
+
+  return {
+    q1: {
+      grossBase: q1GrossBase,
+      bonuses: q1Bonuses,
+      grossTotal: q1GrossTotal,
+      afpEmployee: q1AfpEmployee,
+      isssEmployee: q1IsssEmployee,
+      taxableIncome: q1TaxableIncome,
+      isr: q1Isr,
+      totalEmployeeDeductions: q1TotalEmployeeDeductions,
+      netPay: q1NetPay,
+      afpEmployer: q1AfpEmployer,
+      isssEmployer: q1IsssEmployer,
+      insaforpEmployer: q1InsaforpEmployer,
+      totalEmployerContributions: q1TotalEmployerContribs,
+      totalEmployerCost: q1TotalEmployerCost,
+    },
+    q2: {
+      grossBase: q2GrossBase,
+      bonuses: q2Bonuses,
+      grossTotal: q2GrossTotal,
+      afpEmployee: q2AfpEmployee,
+      isssEmployee: q2IsssEmployee,
+      taxableIncome: Math.max(0, round2(q2GrossTotal - q2AfpEmployee - q2IsssEmployee)),
+      isr: q2Isr,
+      totalEmployeeDeductions: q2TotalEmployeeDeductions,
+      netPay: q2NetPay,
+      afpEmployer: q2AfpEmployer,
+      isssEmployer: q2IsssEmployer,
+      insaforpEmployer: q2InsaforpEmployer,
+      totalEmployerContributions: q2TotalEmployerContribs,
+      totalEmployerCost: q2TotalEmployerCost,
+    },
+    hasOddCentAdjustment,
+  };
+}
+
+/**
+ * Calcula el desglose exacto de planilla mensual o quincenal conforme a la
+ * práctica laboral y tributaria de El Salvador (liquidación mensual consolidada).
+ */
+export function calcPayroll(
+  monthlyBaseSalary: number,
+  period: PayPeriod = 'monthly',
+  monthlyExtraBonuses: number = 0
+): PayrollBreakdown {
+  const safeBaseMonthly = Math.max(0, monthlyBaseSalary);
+  const safeBonusesMonthly = Math.max(0, monthlyExtraBonuses);
+
+  const monthly = calcMonthlyPayrollInternal(safeBaseMonthly, safeBonusesMonthly);
+  const pair = computeQuincenaPair(monthly);
+
+  if (period === 'monthly') {
+    return {
+      ...monthly,
+      quincenaDetails: pair,
+    };
+  }
+
+  // Si period === 'biweekly', devolvemos la 1.ª quincena (anticipo quincenal oficial)
+  // sincronizado con la liquidación mensual consolidada:
+  const q1 = pair.q1;
+  const isssCapped = q1.grossTotal >= RATES.ISSS_CAP_BIWEEKLY;
+  const isrDetail = calcISR(q1.taxableIncome, 'biweekly');
+  const effectiveDeductionPct =
+    q1.grossTotal > 0 ? round2((q1.totalEmployeeDeductions / q1.grossTotal) * 100) : 0;
+
+  return {
+    period: 'biweekly',
+    grossBase: q1.grossBase,
+    bonuses: q1.bonuses,
+    grossTotal: q1.grossTotal,
+    afpEmployee: q1.afpEmployee,
+    isssEmployee: q1.isssEmployee,
+    isssCapped,
+    taxableIncome: q1.taxableIncome,
+    isrDetail,
+    isr: q1.isr,
+    totalEmployeeDeductions: q1.totalEmployeeDeductions,
+    netPay: q1.netPay,
+    effectiveDeductionPct,
+    afpEmployer: q1.afpEmployer,
+    isssEmployer: q1.isssEmployer,
+    insaforpEmployer: q1.insaforpEmployer,
+    totalEmployerContributions: q1.totalEmployerContributions,
+    totalEmployerCost: q1.totalEmployerCost,
+    quincenaDetails: pair,
   };
 }
 
