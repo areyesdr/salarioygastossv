@@ -32,6 +32,7 @@ export interface DbProfile {
   email: string;
   name: string;
   role: 'user' | 'admin';
+  current_hire_date?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -42,6 +43,8 @@ export interface DbSalaryHistory {
   effective_date: string;
   gross_salary: number;
   reason?: string;
+  company_name?: string | null;
+  hire_date?: string | null;
   notes?: string;
   created_at?: string;
 }
@@ -181,6 +184,8 @@ export async function addSalaryRecordToSupabase(
       effective_date: record.effective_date,
       gross_salary: record.gross_salary,
       reason: record.reason || 'Aumento salarial',
+      company_name: record.company_name || null,
+      hire_date: record.hire_date || null,
       notes: record.notes || null,
     });
 
@@ -191,6 +196,59 @@ export async function addSalaryRecordToSupabase(
     return true;
   } catch (err) {
     console.warn('Fallo de red al registrar aumento salarial:', err);
+    return false;
+  }
+}
+
+/**
+ * Consulta el perfil del usuario autenticado en Supabase.
+ */
+export async function fetchUserProfileFromSupabase(userId: string): Promise<DbProfile | null> {
+  if (!isSupabaseConfigured || !userId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Error al consultar perfil en Supabase:', error.message);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.warn('Fallo de red al consultar perfil:', err);
+    return null;
+  }
+}
+
+/**
+ * Actualiza la fecha de inicio de labores en el perfil de Supabase.
+ */
+export async function updateProfileHireDateInSupabase(
+  userId: string,
+  hireDate: string
+): Promise<boolean> {
+  if (!isSupabaseConfigured || !userId) return false;
+
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        current_hire_date: hireDate,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
+
+    if (error) {
+      console.warn('Error al guardar fecha de inicio en perfil:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Fallo de red al actualizar fecha de inicio:', err);
     return false;
   }
 }

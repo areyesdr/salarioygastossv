@@ -66,6 +66,8 @@ import {
   upsertMonthLedgerToSupabase,
   fetchSalaryHistoryFromSupabase,
   addSalaryRecordToSupabase,
+  fetchUserProfileFromSupabase,
+  updateProfileHireDateInSupabase,
   isSupabaseConfigured,
   type DbSalaryHistory,
 } from './lib/supabase.ts';
@@ -217,6 +219,11 @@ function AppShell() {
     () => new Date().toISOString().slice(0, 10)
   );
   const [newSalaryReason, setNewSalaryReason] = useState<string>('Aumento salarial');
+  const [isNewJob, setIsNewJob] = useState<boolean>(false);
+  const [newJobCompany, setNewJobCompany] = useState<string>('');
+  const [newJobHireDate, setNewJobHireDate] = useState<string>(
+    () => new Date().toISOString().slice(0, 10)
+  );
   const [salarySaveFeedback, setSalarySaveFeedback] = useState<string>('');
   const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -276,6 +283,10 @@ function AppShell() {
     setQ25FullYear(details.q25IsFullYear);
     setQ25DaysWorked(details.q25DaysWorked);
     setQ25HireDate(newDate);
+
+    if (isSupabaseConfigured && user?.id) {
+      updateProfileHireDateInSupabase(user.id, newDate);
+    }
   };
 
   // Hourly & overtime state
@@ -369,12 +380,19 @@ function AppShell() {
     }
   };
 
-  // Carga de historial de salarios desde Supabase para usuario autenticado
+  // Carga de historial de salarios y fecha de inicio desde Supabase para usuario autenticado
   useEffect(() => {
     if (!isSupabaseConfigured || !user?.id) {
       setSalaryHistoryList([]);
       return;
     }
+
+    // Cargar perfil para obtener fecha de contratación activa
+    fetchUserProfileFromSupabase(user.id).then((profile) => {
+      if (profile?.current_hire_date) {
+        handleHireDateChange(profile.current_hire_date);
+      }
+    });
 
     fetchSalaryHistoryFromSupabase(user.id).then((history) => {
       setSalaryHistoryList(history);
@@ -398,21 +416,32 @@ function AppShell() {
     setIsSavingSalary(true);
     setSalarySaveFeedback('');
     try {
+      const reasonText = isNewJob
+        ? `Nuevo empleo: ${newSalaryReason.trim() || 'Contratación'}`
+        : (newSalaryReason.trim() || 'Aumento salarial');
+
       const success = await addSalaryRecordToSupabase(user.id, {
         gross_salary: amt,
         effective_date: newSalaryEffectiveDate,
-        reason: newSalaryReason.trim() || 'Aumento salarial',
+        reason: reasonText,
+        company_name: isNewJob && newJobCompany.trim() ? newJobCompany.trim() : null,
+        hire_date: isNewJob ? newJobHireDate : null,
       });
 
       if (success) {
         setMonthlySalary(amt);
         setSalaryInput(amt.toFixed(2));
-        setSalarySaveFeedback('Aumento guardado correctamente en Supabase.');
+        if (isNewJob && newJobHireDate) {
+          handleHireDateChange(newJobHireDate);
+        }
+        setSalarySaveFeedback('Guardado correctamente en Supabase.');
         setTimeout(() => setSalarySaveFeedback(''), 3500);
         const updated = await fetchSalaryHistoryFromSupabase(user.id);
         setSalaryHistoryList(updated);
+        setIsNewJob(false);
+        setNewJobCompany('');
       } else {
-        setSalarySaveFeedback('Error al guardar el aumento.');
+        setSalarySaveFeedback('Error al guardar en Supabase.');
       }
     } finally {
       setIsSavingSalary(false);
@@ -1576,6 +1605,51 @@ function AppShell() {
                       />
                     </div>
 
+                    <div className="col-12 mt-2">
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          id="isNewJobCheck"
+                          checked={isNewJob}
+                          onChange={(e) => setIsNewJob(e.target.checked)}
+                          className="form-check-input"
+                        />
+                        <label htmlFor="isNewJobCheck" className="form-check-label fw-semibold text-slate-dark" style={{ fontSize: '12px' }}>
+                          ¿Es cambio de empresa / nuevo empleo? (Reinicia fecha de inicio de labores)
+                        </label>
+                      </div>
+                    </div>
+
+                    {isNewJob && (
+                      <>
+                        <div className="col-12 col-sm-6 mt-1">
+                          <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                            Empresa / Empleador
+                          </label>
+                          <input
+                            type="text"
+                            value={newJobCompany}
+                            onChange={(e) => setNewJobCompany(e.target.value)}
+                            placeholder="Ej. Empresa ABC, S.A."
+                            className="form-control form-control-sm"
+                          />
+                        </div>
+
+                        <div className="col-12 col-sm-6 mt-1">
+                          <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                            Fecha de Inicio en este Trabajo
+                          </label>
+                          <input
+                            type="date"
+                            required={isNewJob}
+                            value={newJobHireDate}
+                            onChange={(e) => setNewJobHireDate(e.target.value)}
+                            className="form-control form-control-sm"
+                          />
+                        </div>
+                      </>
+                    )}
+
                     <div className="col-12 mt-3 d-flex justify-content-between align-items-center">
                       <div>
                         {salarySaveFeedback && (
@@ -1613,7 +1687,7 @@ function AppShell() {
                           <th>Fecha de Vigencia</th>
                           <th>Salario Bruto</th>
                           <th>Líquido Estimado</th>
-                          <th>Motivo</th>
+                          <th>Motivo / Empresa</th>
                           <th className="text-center">Acción</th>
                         </tr>
                       </thead>
@@ -1631,8 +1705,18 @@ function AppShell() {
                               <td className="font-monospace text-emerald">
                                 {formatUSD(estPayroll.netPay)}
                               </td>
-                              <td className="text-muted">
-                                {rec.reason || 'Aumento salarial'}
+                              <td>
+                                <span className="text-slate-dark d-block">{rec.reason || 'Aumento salarial'}</span>
+                                {rec.company_name && (
+                                  <span className="badge-subtle font-monospace text-slate-dark mt-0.5 d-inline-block" style={{ fontSize: '10px' }}>
+                                    {rec.company_name}
+                                  </span>
+                                )}
+                                {rec.hire_date && (
+                                  <span className="text-muted d-block font-monospace" style={{ fontSize: '10px' }}>
+                                    Inicio: {rec.hire_date}
+                                  </span>
+                                )}
                               </td>
                               <td className="text-center">
                                 <button
@@ -1640,6 +1724,9 @@ function AppShell() {
                                   onClick={() => {
                                     setMonthlySalary(rec.gross_salary);
                                     setSalaryInput(rec.gross_salary.toFixed(2));
+                                    if (rec.hire_date) {
+                                      handleHireDateChange(rec.hire_date);
+                                    }
                                     setShowSalaryHistoryModal(false);
                                   }}
                                   className="btn btn-xs btn-outline-secondary py-0.5 px-2"

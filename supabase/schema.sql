@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  current_hire_date DATE DEFAULT '2023-01-16',
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -35,6 +36,8 @@ CREATE TABLE IF NOT EXISTS public.salary_history (
   effective_date DATE NOT NULL,
   gross_salary NUMERIC(10, 2) NOT NULL CHECK (gross_salary > 0),
   reason TEXT DEFAULT 'Aumento salarial',
+  company_name TEXT DEFAULT NULL,
+  hire_date DATE DEFAULT NULL,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
