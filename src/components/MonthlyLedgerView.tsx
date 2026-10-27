@@ -635,7 +635,7 @@ export function MonthlyLedgerView({
 
                     if (isEditing) {
                       return (
-                        <tr key={item.id} className="table-warning">
+                        <tr key={item.id}>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">
@@ -961,7 +961,7 @@ export function MonthlyLedgerView({
 
                     if (isEditing) {
                       return (
-                        <tr key={item.id} className="table-warning">
+                        <tr key={item.id}>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">

@@ -488,7 +488,7 @@ export function ExpensesView({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
-                          className="list-group-item bg-amber-50 p-2.5"
+                          className="list-group-item p-2.5"
                         >
                           <div className="row g-2 align-items-center">
                             <div className="col-12 col-sm-4">
