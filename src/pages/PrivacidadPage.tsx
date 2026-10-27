@@ -116,7 +116,7 @@ export default function PrivacidadPage() {
             Centro de Control de Derechos ARCO (Acceso, Rectificación, Cancelación y Oposición)
           </h6>
           <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
-            Como titular de tus datos en El Salvador, puedes ejercer tus derechos directamente desde aquí o escribiendo a axel.f.reyes.a@gmail.com:
+            Como titular de tus datos en El Salvador, puedes ejercer tus derechos directamente desde aquí o escribiendo a privacidad@salariosv.com:
           </p>
 
           {user ? (

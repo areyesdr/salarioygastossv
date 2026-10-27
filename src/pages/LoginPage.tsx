@@ -7,8 +7,8 @@ import { type UserRole } from '../lib/security.ts';
 export default function LoginPage() {
   const { user, loginAs, logout } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState('Axel Reyes');
-  const [email, setEmail] = useState('axel.f.reyes.a@gmail.com');
+  const [name, setName] = useState('Usuario Demo');
+  const [email, setEmail] = useState('demo@salariosv.com');
   const [password, setPassword] = useState('••••••••••••');
   const [selectedRole, setSelectedRole] = useState<UserRole>('user');
   const [acceptedTerms, setAcceptedTerms] = useState(true);

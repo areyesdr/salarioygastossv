@@ -749,7 +749,7 @@ function AppShell() {
 
                     <div className="row g-3">
                       {/* Salario Base Input */}
-                      <div className="col-12 col-sm-6">
+                      <div className="col-12 col-sm-5">
                         <label
                           htmlFor="salary-input"
                           className="form-label text-slate-muted small fw-semibold text-uppercase mb-1"
@@ -801,25 +801,25 @@ function AppShell() {
                       </div>
 
                       {/* Selector de Frecuencia Tipo Segmented Control */}
-                      <div className="col-6 col-sm-3">
+                      <div className="col-6 col-sm-4">
                         <label
                           className="form-label text-slate-muted small fw-semibold text-uppercase mb-1"
                           style={{ fontSize: '11px' }}
                         >
                           Frecuencia
                         </label>
-                        <div className="segmented-control w-100 justify-content-center" style={{ height: '42px' }}>
+                        <div className="segmented-control w-100" style={{ height: '42px' }}>
                           <button
                             type="button"
                             onClick={() => setPeriod('monthly')}
-                            className={`w-50 ${period === 'monthly' ? 'active' : ''}`}
+                            className={period === 'monthly' ? 'active' : ''}
                           >
                             Mes
                           </button>
                           <button
                             type="button"
                             onClick={() => setPeriod('biweekly')}
-                            className={`w-50 ${period === 'biweekly' ? 'active' : ''}`}
+                            className={period === 'biweekly' ? 'active' : ''}
                           >
                             Quincena
                           </button>
@@ -872,8 +872,8 @@ function AppShell() {
               <hr className="my-3 text-slate-200" />
               <div className="row g-2 text-start small font-monospace">
                 <div className="col-12 col-md-4">
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-muted d-block" style={{ fontSize: '11px' }}>
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
+                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
                       Desglose de Descuentos ({period === 'monthly' ? 'Mes' : 'Qna'}):
                     </span>
                     <span className="text-slate-dark">
@@ -883,24 +883,24 @@ function AppShell() {
                 </div>
 
                 <div className="col-12 col-md-4">
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-muted d-block" style={{ fontSize: '11px' }}>
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
+                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
                       Valor de Hora Neta de Trabajo:
                     </span>
                     <strong className="text-slate-dark">{formatUSD(hourlyResult.netHourly)}/h</strong>
-                    <span className="text-muted ms-1" style={{ fontSize: '11px' }}>
+                    <span className="text-muted ms-1 font-sans" style={{ fontSize: '11px' }}>
                       (Bruta: {formatUSD(hourlyResult.grossHourly)}/h)
                     </span>
                   </div>
                 </div>
 
                 <div className="col-12 col-md-4">
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-muted d-block" style={{ fontSize: '11px' }}>
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
+                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
                       Bonos Anuales Estimados:
                     </span>
                     <strong className="text-emerald">+{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}</strong>
-                    <span className="text-muted ms-1" style={{ fontSize: '11px' }}>
+                    <span className="text-muted ms-1 font-sans" style={{ fontSize: '11px' }}>
                       (Vacación + Aguinaldo + Q25)
                     </span>
                   </div>
@@ -1234,8 +1234,7 @@ function AppShell() {
 
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small text-muted">
             <div>
-              <strong className="text-slate-dark">Salario SV</strong> · Titular: Axel Reyes (San Salvador,
-              El Salvador · <span className="font-monospace">axel.f.reyes.a@gmail.com</span>)
+              <strong className="text-slate-dark">© 2026 Salario SV</strong> · Plataforma independiente de cálculo laboral y presupuestario para El Salvador.
             </div>
             <div className="d-flex flex-wrap gap-3">
               <Link to="/terminos" className="text-decoration-none text-muted">

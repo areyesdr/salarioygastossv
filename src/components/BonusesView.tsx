@@ -101,11 +101,11 @@ export function BonusesView({
               Ingresos extraordinarios estipulados por la legislación laboral de El Salvador
             </span>
           </div>
-          <div className="card-net-hero py-1.5 px-3 d-inline-flex align-items-center gap-2">
-            <span className="small text-muted">Total Anual Neto:</span>
-            <span className="fw-bold font-monospace text-emerald fs-6">
+          <div className="badge-emerald py-1 px-3 d-inline-flex align-items-center gap-1.5 flex-shrink-0">
+            <span className="small opacity-75">Total Anual Neto:</span>
+            <strong className="font-monospace fs-6">
               +{formatUSD(totalAnnualNetBonuses)}
-            </span>
+            </strong>
           </div>
         </div>
 
@@ -116,10 +116,10 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
                       15 – 25 Enero
                     </span>
-                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
                       Obligatoria 2027
                     </span>
                   </div>
@@ -142,10 +142,10 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
                       Anual / Tramos
                     </span>
-                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
                       Art. 177 C.T.
                     </span>
                   </div>
@@ -168,10 +168,10 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
                       1 Oct – 20 Dic
                     </span>
-                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
                       Arts. 196–202
                     </span>
                   </div>
@@ -208,7 +208,7 @@ export function BonusesView({
                     Obligatoria a partir de enero de 2027
                   </span>
                 </div>
-                <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '11px' }}>
+                <span className="badge-subtle font-monospace" style={{ fontSize: '11px' }}>
                   {quincena25Result.eligibleByLaw ? 'Elegible por ley' : '> $1,500 tope'}
                 </span>
               </div>
@@ -331,7 +331,7 @@ export function BonusesView({
                     Ventana legal de entrega: 1 al 20 de diciembre
                   </span>
                 </div>
-                <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '11px' }}>
+                <span className="badge-subtle font-monospace" style={{ fontSize: '11px' }}>
                   Exento ISSS / AFP
                 </span>
               </div>
@@ -520,7 +520,7 @@ export function BonusesView({
                     >
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
-                          <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
+                          <span className="badge-subtle" style={{ fontSize: '10px' }}>
                             Práctica A
                           </span>
                           {vacationMode === 'bonus_only' && <Check size={14} className="text-emerald" />}
@@ -560,7 +560,7 @@ export function BonusesView({
                     >
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
-                          <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
+                          <span className="badge-subtle" style={{ fontSize: '10px' }}>
                             Práctica B
                           </span>
                           {vacationMode === 'full_advance' && <Check size={14} className="text-emerald" />}

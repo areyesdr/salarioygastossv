@@ -14,8 +14,8 @@ const DATA_STORAGE_KEY = 'salarioygastossv_state_v1';
 
 const DEFAULT_USER: SessionUser = {
   id: 'usr-sv-01',
-  name: 'Axel Reyes',
-  email: 'axel.f.reyes.a@gmail.com',
+  name: 'Usuario SV',
+  email: 'usuario@salariosv.com',
   loggedIn: true,
   role: 'user',
   acceptedTermsAt: '2026-10-26T18:00:00.000Z',
@@ -50,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const id = role === 'admin' ? 'usr-admin-01' : 'usr-sv-01';
     setUser({
       id,
-      name: customName?.trim() || (role === 'admin' ? 'Administrador SV' : 'Axel Reyes'),
-      email: customEmail?.trim() || (role === 'admin' ? 'admin@salarioygastossv.com' : 'axel.f.reyes.a@gmail.com'),
+      name: customName?.trim() || (role === 'admin' ? 'Administrador SV' : 'Usuario SV'),
+      email: customEmail?.trim() || (role === 'admin' ? 'admin@salariosv.com' : 'usuario@salariosv.com'),
       loggedIn: true,
       role,
       acceptedTermsAt: new Date().toISOString(),

@@ -124,8 +124,8 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     const anonUser: SessionUser | null = null;
     const regularUser: SessionUser = {
       id: 'usr-sv-01',
-      name: 'Axel Reyes',
-      email: 'axel.f.reyes.a@gmail.com',
+      name: 'Usuario SV',
+      email: 'usuario@salariosv.com',
       loggedIn: true,
       role: 'user',
       acceptedTermsAt: '2026-10-26T18:00:00Z',

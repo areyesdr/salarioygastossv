@@ -108,9 +108,9 @@ export default function TerminosPage() {
               En cumplimiento con la <strong>Ley de Comercio Electrónico de la República de El Salvador</strong>, se detallan los datos de contacto del responsable:
             </p>
             <ul className="list-unstyled mb-2 font-monospace space-y-1">
-              <li><strong>Titular / Desarrollador:</strong> Axel Reyes</li>
-              <li><strong>Domicilio:</strong> San Salvador, República de El Salvador</li>
-              <li><strong>Contacto:</strong> axel.f.reyes.a@gmail.com</li>
+              <li><strong>Titular del Proyecto:</strong> Salario SV</li>
+              <li><strong>Jurisdicción:</strong> San Salvador, República de El Salvador</li>
+              <li><strong>Contacto:</strong> contacto@salariosv.com</li>
             </ul>
             <p className="mb-0">
               Cualquier controversia se regirá bajo las leyes de la <strong>República de El Salvador</strong>, con competencia exclusiva en los tribunales de San Salvador.
