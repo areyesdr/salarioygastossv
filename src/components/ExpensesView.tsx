@@ -18,6 +18,7 @@ export type ExpenseCycle = 'quincena_1' | 'quincena_2' | 'mensual';
 
 export interface ExpenseItem {
   id: string;
+  ownerId: string;
   name: string;
   amount: number;
   category: ExpenseCategory;
@@ -28,6 +29,7 @@ export interface ExpenseItem {
 
 export interface BonusGoalItem {
   id: string;
+  ownerId: string;
   title: string;
   source: 'quincena25' | 'vacacion' | 'aguinaldo' | 'pool';
   amount: number;

@@ -9,6 +9,13 @@ import {
   calcHourlyAndOvertime,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
+import {
+  canAccessPrivateRoute,
+  canAccessAdminRoute,
+  verifyResourceOwnership,
+  filterOwnedResources,
+  type SessionUser,
+} from './security.ts';
 
 describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
   it('calculates minimum wage ($408.80 comercio) deductions with Tramo I (Exento ISR)', () => {
@@ -111,5 +118,41 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     const extraNight = hr.overtimeRates.find((r) => r.id === 'extra_night');
     assert.equal(extraDay?.hourlyRateUsd, 10.0);
     assert.equal(extraNight?.hourlyRateUsd, 11.25);
+  });
+
+  it('enforces RBAC route permissions and ID Matching ownership on financial records', () => {
+    const anonUser: SessionUser | null = null;
+    const regularUser: SessionUser = {
+      id: 'usr-sv-01',
+      name: 'Axel Reyes',
+      email: 'axel.f.reyes.a@gmail.com',
+      loggedIn: true,
+      role: 'user',
+      acceptedTermsAt: '2026-10-26T18:00:00Z',
+    };
+    const adminUser: SessionUser = {
+      id: 'usr-admin-01',
+      name: 'Admin',
+      email: 'admin@salarioygastossv.com',
+      loggedIn: true,
+      role: 'admin',
+      acceptedTermsAt: '2026-10-26T18:00:00Z',
+    };
+
+    assert.equal(canAccessPrivateRoute(anonUser), false);
+    assert.equal(canAccessPrivateRoute(regularUser), true);
+    assert.equal(canAccessAdminRoute(regularUser), false);
+    assert.equal(canAccessAdminRoute(adminUser), true);
+
+    const sampleRecords = [
+      { id: 'exp-101', ownerId: 'usr-sv-01', amount: 150 },
+      { id: 'exp-102', ownerId: 'usr-other-99', amount: 500 },
+    ];
+
+    assert.equal(verifyResourceOwnership(sampleRecords[0], regularUser), true);
+    assert.equal(verifyResourceOwnership(sampleRecords[1], regularUser), false);
+    const visibleToRegular = filterOwnedResources(sampleRecords, regularUser);
+    assert.equal(visibleToRegular.length, 1);
+    assert.equal(visibleToRegular[0].id, 'exp-101');
   });
 });
