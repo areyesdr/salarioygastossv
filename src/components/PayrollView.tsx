@@ -117,10 +117,10 @@ export function PayrollView({
                 {/* Salario Base */}
                 <tr>
                   <td className="font-sans">
-                    <span className="fw-semibold text-slate-dark">Salario Base</span>
+                    <span className="fw-semibold text-slate-dark">Salario Base Pactado</span>
                     {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
-                        Base legal: Salario contractual ordinario (Art. 119 C.T.)
+                      <div className="text-muted small mt-1 font-sans" style={{ fontSize: '11px' }}>
+                        El sueldo acordado en tu contrato antes de cualquier descuento o bono.
                       </div>
                     )}
                   </td>
@@ -131,10 +131,10 @@ export function PayrollView({
                 {activePayroll.bonuses > 0 && (
                   <tr>
                     <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Bono / Comisión Mensual</span>
+                      <span className="fw-semibold text-emerald">+ Bono o Comisión Adicional</span>
                       {showLegalDetails && (
-                        <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
-                          Base legal: Gravado para cotizaciones de ISSS, AFP y cómputo de Renta
+                        <div className="text-muted small mt-1 font-sans" style={{ fontSize: '11px' }}>
+                          Dinero extra ganado. Se suma al salario y también paga AFP, ISSS y Renta.
                         </div>
                       )}
                     </td>
@@ -147,8 +147,8 @@ export function PayrollView({
                   <td className="font-sans fw-semibold text-slate-dark">
                     <span>Total Ingreso Bruto</span>
                     {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace fw-normal" style={{ fontSize: '11px' }}>
-                        Suma de salario ordinario más bonificaciones percibidas
+                      <div className="text-muted small mt-1 font-sans fw-normal" style={{ fontSize: '11px' }}>
+                        Todo lo que generaste en el período, antes de que te descuenten nada.
                       </div>
                     )}
                   </td>
@@ -158,10 +158,15 @@ export function PayrollView({
                 {/* AFP */}
                 <tr>
                   <td className="font-sans">
-                    <span className="text-slate-dark">AFP Trabajador (7.25%)</span>
+                    <div>
+                      <span className="text-slate-dark fw-medium">Pensión AFP (-7.25%)</span>
+                      <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
+                        Tu ahorro para el retiro. Te descuentan el 7.25% de todo lo que ganas, sin límite.
+                      </span>
+                    </div>
                     {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
-                        Base legal: {formatUSD(activePayroll.grossTotal)} × 7.25% (Fondo obligatorio sin techo salarial)
+                      <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
+                        Cálculo: {formatUSD(activePayroll.grossTotal)} × 7.25% = -{formatUSD(activePayroll.afpEmployee)}
                       </div>
                     )}
                   </td>
@@ -172,16 +177,19 @@ export function PayrollView({
                 <tr>
                   <td className="font-sans">
                     <div className="d-flex align-items-center gap-2">
-                      <span className="text-slate-dark">ISSS Trabajador (3.00%)</span>
+                      <span className="text-slate-dark fw-medium">Seguro Social ISSS (-3.00%)</span>
                       {activePayroll.isssCapped && (
-                        <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
-                          Tope {period === 'monthly' ? '$30.00' : '$15.00'}
+                        <span className="badge bg-light text-secondary border font-sans" style={{ fontSize: '10px' }}>
+                          Tope máximo alcanzado
                         </span>
                       )}
                     </div>
+                    <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
+                      Tu seguro médico. Te descuentan el 3%, pero tiene un techo: lo máximo que te pueden quitar son {period === 'monthly' ? '$30.00 al mes ($1,000 de sueldo)' : '$15.00 por quincena'}. Si ganas más de $1,000, no te descuentan más de eso.
+                    </span>
                     {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
-                        Base legal: 3% hasta techo cotizable de {period === 'monthly' ? '$1,000.00/mes ($30.00)' : '$500.00/quincena ($15.00)'}
+                      <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
+                        Cálculo: 3% sobre tu salario (topado a {period === 'monthly' ? '$1,000.00' : '$500.00'}) = -{formatUSD(activePayroll.isssEmployee)}
                       </div>
                     )}
                   </td>
@@ -191,12 +199,10 @@ export function PayrollView({
                 {/* Renta Gravada Imponible */}
                 <tr className="bg-light">
                   <td className="font-sans">
-                    <span className="fw-semibold text-slate-dark">Renta Gravada (Base Imponible)</span>
-                    {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace fw-normal" style={{ fontSize: '11px' }}>
-                        Base legal: Total bruto menos deducciones obligatorias de AFP e ISSS
-                      </div>
-                    )}
+                    <span className="fw-semibold text-slate-dark">Sueldo Imponible (Base de Renta)</span>
+                    <span className="text-muted d-block small font-sans fw-normal" style={{ fontSize: '11px' }}>
+                      El dinero sobre el que Hacienda te cobra impuesto: es tu sueldo bruto menos lo que ya te quitaron de AFP e ISSS.
+                    </span>
                   </td>
                   <td className="text-end fw-semibold text-slate-dark">{formatUSD(activePayroll.taxableIncome)}</td>
                 </tr>
@@ -205,18 +211,20 @@ export function PayrollView({
                 <tr>
                   <td className="font-sans">
                     <div className="d-flex align-items-center gap-2">
-                      <span className="text-slate-dark">Retención de Renta (ISR)</span>
-                      <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
-                        {activePayroll.isrDetail.bracketLabel}
+                      <span className="text-slate-dark fw-medium">Impuesto sobre la Renta (ISR)</span>
+                      <span className="badge bg-light text-secondary border font-sans" style={{ fontSize: '10px' }}>
+                        {activePayroll.isrDetail.bracketId === 'I' ? 'Exento de Renta' : `Tramo ${activePayroll.isrDetail.bracketId}`}
                       </span>
                     </div>
-                    {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-monospace" style={{ fontSize: '11px' }}>
-                        Base legal: {activePayroll.isrDetail.bracketId === 'I'
-                          ? `Exento (base gravada ≤ ${period === 'monthly' ? '$550.00' : '$275.00'})`
-                          : `Cuota fija de ${formatUSD(activePayroll.isrDetail.fixedFee)} + ${Math.round(activePayroll.isrDetail.rate * 100)}% sobre excedente de ${formatUSD(activePayroll.isrDetail.excessOver)}`}
-                      </div>
-                    )}
+                    <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
+                      {activePayroll.isrDetail.bracketId === 'I' ? (
+                        <span className="text-emerald">No te quitan nada de impuesto porque tu sueldo imponible no pasa de {period === 'monthly' ? '$550.00' : '$275.00'}.</span>
+                      ) : (
+                        <span>
+                          Impuesto al Estado: cuota fija de {formatUSD(activePayroll.isrDetail.fixedFee)} más el {Math.round(activePayroll.isrDetail.rate * 100)}% solo sobre la parte que pasa de {formatUSD(activePayroll.isrDetail.excessOver)}.
+                        </span>
+                      )}
+                    </span>
                   </td>
                   <td className="text-end font-monospace text-terracotta">
                     -{formatUSD(activePayroll.isr)}

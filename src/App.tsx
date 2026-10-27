@@ -1374,27 +1374,27 @@ function AppShell() {
                   <div className="metric-tile">
                     <div className="d-flex justify-content-between align-items-center mb-1.5">
                       <span className="metric-tile-title">
-                        Descuentos ({period === 'monthly' ? 'Mes' : 'Qna'})
+                        Lo que te quitan de ley ({period === 'monthly' ? 'Mes' : 'Qna'})
                       </span>
                       <span className="fw-bold text-terracotta font-monospace" style={{ fontSize: '12px' }}>
                         -{formatUSD(activePayroll.totalEmployeeDeductions)}
                       </span>
                     </div>
                     <div className="d-flex align-items-center justify-content-between pt-1.5 border-top gap-1 font-monospace">
-                      <div className="text-center flex-fill">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>AFP (7.25%)</span>
+                      <div className="text-center flex-fill" title="Pensión obligatoria (7.25% sin tope)">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Pensión AFP</span>
                         <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
                           -{formatUSD(activePayroll.afpEmployee)}
                         </span>
                       </div>
-                      <div className="text-center flex-fill border-start border-end px-1">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>ISSS (3%)</span>
+                      <div className="text-center flex-fill border-start border-end px-1" title="Seguro de salud (3% topado a $30/mes)">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Seguro ISSS</span>
                         <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
                           -{formatUSD(activePayroll.isssEmployee)}
                         </span>
                       </div>
-                      <div className="text-center flex-fill">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>ISR Renta</span>
+                      <div className="text-center flex-fill" title="Impuesto al Estado (según tabla de tramos)">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Impuesto Renta</span>
                         <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
                           {activePayroll.isr > 0 ? `-${formatUSD(activePayroll.isr)}` : '$0.00'}
                         </span>
@@ -1408,10 +1408,10 @@ function AppShell() {
                   <div className="metric-tile">
                     <div className="d-flex justify-content-between align-items-center mb-1.5">
                       <span className="metric-tile-title">
-                        Valor de Hora de Trabajo
+                        Cuánto ganas por cada hora
                       </span>
                       <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
-                        44h / semana
+                        44h semanales
                       </span>
                     </div>
                     <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
@@ -1419,10 +1419,10 @@ function AppShell() {
                         <span className="fs-6 fw-bold font-monospace text-slate-dark">
                           {formatUSD(hourlyResult.netHourly)}
                         </span>
-                        <span className="text-muted font-sans small"> /h líquida</span>
+                        <span className="text-muted font-sans small"> /hora en mano</span>
                       </div>
                       <span className="badge-subtle font-monospace" style={{ fontSize: '10.5px' }}>
-                        Bruta: {formatUSD(hourlyResult.grossHourly)}/h
+                        Bruto: {formatUSD(hourlyResult.grossHourly)}/h
                       </span>
                     </div>
                   </div>
@@ -1433,10 +1433,10 @@ function AppShell() {
                   <div className="metric-tile">
                     <div className="d-flex justify-content-between align-items-center mb-1.5">
                       <span className="metric-tile-title">
-                        Prestaciones Anuales de Ley
+                        Bonos extra que te entran al año
                       </span>
                       <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
-                        Vac + Agui + Q25
+                        Vacación + Aguinaldo + Q25
                       </span>
                     </div>
                     <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
@@ -1444,7 +1444,7 @@ function AppShell() {
                         <span className="fs-6 fw-bold font-monospace text-emerald">
                           +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
                         </span>
-                        <span className="text-muted font-sans small"> neto estimado</span>
+                        <span className="text-muted font-sans small"> limpios / año</span>
                       </div>
                       <span className="small text-muted font-monospace" style={{ fontSize: '10.5px' }}>
                         {formatUSD(activePayroll.grossTotal)} total

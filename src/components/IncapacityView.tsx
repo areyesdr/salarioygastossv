@@ -257,22 +257,36 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                 </span>
               </div>
 
-              {/* Tarjeta Principal de Monto Total */}
+              {/* Tarjeta Principal de Monto Total - Directo al Bolsillo */}
               <div className="p-3.5 rounded bg-light border mb-3">
                 <div className="d-flex justify-content-between align-items-baseline mb-1">
-                  <span className="text-muted small font-sans">Total a Recibir por la Incapacidad:</span>
+                  <div>
+                    <span className="text-slate-dark fw-bold d-block">
+                      Dinero total que llegará a tu bolsillo:
+                    </span>
+                    <span className="text-muted small font-sans" style={{ fontSize: '11.5px' }}>
+                      Suma de lo que te paga tu empresa más lo que te deposita el Seguro Social
+                    </span>
+                  </div>
                   <span className="fs-3 fw-bold font-monospace text-emerald">
                     {formatUSD(result.totalIncapacityPay)}
                   </span>
                 </div>
-                <div className="d-flex justify-content-between align-items-center small font-monospace text-muted pt-2 border-top">
-                  <span>Equivalente ordinario si hubieras laborado:</span>
+
+                <div className="d-flex justify-content-between align-items-center small font-monospace text-muted pt-2.5 border-top mt-2">
+                  <span>Lo que habrías cobrado trabajando normal:</span>
                   <span className="text-slate-dark">{formatUSD(result.regularEquivalentGross)}</span>
                 </div>
+
                 {result.wageLoss > 0 && (
-                  <div className="d-flex justify-content-between align-items-center small font-monospace text-terracotta pt-1">
-                    <span>Diferencia no cubierta por ley:</span>
-                    <span>-{formatUSD(result.wageLoss)}</span>
+                  <div className="pt-2 border-top mt-2">
+                    <div className="d-flex justify-content-between align-items-center small font-monospace text-terracotta">
+                      <span className="fw-semibold">Lo que dejas de ganar (no cubierto por ley):</span>
+                      <span className="fw-bold">-{formatUSD(result.wageLoss)}</span>
+                    </div>
+                    <span className="text-muted d-block font-sans small mt-0.5" style={{ fontSize: '11px' }}>
+                      ¿Por qué dejas de ganar esto? Porque a partir del 4.º día, el ISSS solo te paga el 75% de cada día. El 25% restante nadie lo cubre.
+                    </span>
                   </div>
                 )}
               </div>
@@ -281,29 +295,40 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
               <div className="row g-3 mb-3">
                 {/* 1. Pago Patronal */}
                 <div className="col-12 col-sm-6">
-                  <div className="p-3 rounded border h-100 bg-white">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                        <Building2 size={14} className="text-secondary" />
-                        <span>A Cargo del Patrono</span>
-                      </span>
-                      <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
-                        {result.employerDays} día(s)
-                      </span>
+                  <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
+                    <div>
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
+                          <Building2 size={14} className="text-secondary" />
+                          <span>1. Te paga tu Empresa</span>
+                        </span>
+                        <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                          {result.employerDays} día(s)
+                        </span>
+                      </div>
+                      <div className="fs-4 fw-bold font-monospace text-slate-dark mb-1">
+                        {formatUSD(result.employerTotalPay)}
+                      </div>
                     </div>
-                    <div className="fs-4 fw-bold font-monospace text-slate-dark mb-1">
-                      {formatUSD(result.employerTotalPay)}
-                    </div>
-                    <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
+
+                    <div className="mt-2 pt-2 border-top small font-sans" style={{ fontSize: '11px' }}>
                       {result.employerDays > 0 ? (
                         <>
-                          Paga en tu planilla habitual {formatUSD(result.employerDailyAmount)} diarios (
-                          {(result.employerRate * 100).toFixed(0)}% de tu salario real).
+                          <div className="mb-1 text-slate-dark">
+                            <strong>{formatUSD(result.employerDailyAmount)}</strong> por cada día de reposo (
+                            {(result.employerRate * 100).toFixed(0)}% de tu sueldo normal).
+                          </div>
+                          <div className="text-muted">
+                            <strong>¿Cómo te lo pagan?</strong> En tu recibo o depósito quincenal de nómina como sueldo normal.
+                          </div>
+                          <div className="text-muted mt-1">
+                            <strong>¿Lleva descuentos?</strong> Sí, tus descuentos normales de planilla (AFP, ISSS y Renta).
+                          </div>
                         </>
                       ) : (
-                        'No aplica pago patronal para este tipo de incapacidad.'
+                        <span className="text-muted">Tu empresa no paga estos días; el pago corre por cuenta del Seguro Social desde el día 1.</span>
                       )}
-                    </span>
+                    </div>
                   </div>
                 </div>
 
@@ -314,7 +339,7 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                       <div className="d-flex align-items-center justify-content-between mb-2">
                         <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
                           <ShieldAlert size={14} className="text-primary" />
-                          <span>Subsidio del ISSS</span>
+                          <span>2. Te paga el Seguro (ISSS)</span>
                         </span>
                         <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style={{ fontSize: '10px' }}>
                           {result.isssDays} día(s)
@@ -326,31 +351,25 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                     </div>
 
                     {result.isssDays > 0 ? (
-                      <div className="mt-2 pt-2 border-top font-monospace" style={{ fontSize: '11px' }}>
-                        <div className="d-flex justify-content-between text-muted">
-                          <span>Base diaria ISSS (100%):</span>
-                          <span className="fw-semibold text-slate-dark">
-                            {formatUSD(result.dailyCotizableSalary)}/día
-                            {result.isSalaryCappedByISSS && ' (Topado)'}
-                          </span>
+                      <div className="mt-2 pt-2 border-top small font-sans" style={{ fontSize: '11px' }}>
+                        <div className="mb-1 text-slate-dark">
+                          <strong>{formatUSD(result.isssDailySubsidio)}</strong> por cada día de subsidio (el{' '}
+                          {(result.isssRate * 100).toFixed(0)}% que da la ley).
                         </div>
-                        <div className="d-flex justify-content-between text-primary">
-                          <span>Subsidio ISSS ({(result.isssRate * 100).toFixed(0)}%):</span>
-                          <span className="fw-bold">{formatUSD(result.isssDailySubsidio)}/día</span>
+                        <div className="text-muted">
+                          <strong>¿Cómo lo calculan?</strong> Tu día normal vale {formatUSD(result.dailyCotizableSalary)}. El Seguro te entrega el 75% y te deja de pagar el 25% (-{formatUSD(round2(result.dailyRealSalary - result.isssDailySubsidio))}/día).
                         </div>
-                        {result.isssRate < 1 && (
-                          <div className="d-flex justify-content-between text-muted">
-                            <span>No cubierto (25%):</span>
-                            <span className="text-terracotta">
-                              -{formatUSD(round2(result.dailyRealSalary - result.isssDailySubsidio))}/día
-                            </span>
-                          </div>
-                        )}
+                        <div className="text-emerald fw-semibold mt-1">
+                          <strong>¿Lleva descuentos?</strong> No. El Seguro te entrega los {formatUSD(result.isssTotalSubsidio)} limpios (0% AFP, 0% ISSS, 0% Renta).
+                        </div>
+                        <div className="text-muted mt-1">
+                          <strong>¿Cómo te lo pagan?</strong> Te lo deposita el ISSS directo a tu cuenta bancaria o lo cobras con tu DUI en el banco. No viene en el pago de tu empresa.
+                        </div>
                       </div>
                     ) : (
-                      <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
-                        No aplica subsidio del ISSS (período de espera no superado).
-                      </span>
+                      <div className="mt-2 pt-2 border-top small text-muted font-sans" style={{ fontSize: '11px' }}>
+                        El Seguro Social no paga nada porque la incapacidad duró 3 días o menos (período de espera). Todo lo asume tu empresa.
+                      </div>
                     )}
                   </div>
                 </div>
@@ -358,54 +377,55 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
 
               {/* Advertencia de Techo Salarial ISSS ($1,000) si aplica */}
               {result.isSalaryCappedByISSS && result.isssDays > 0 && (
-                <div className="p-2.5 rounded bg-warning-subtle border border-warning-subtle small d-flex align-items-start gap-2 mb-2">
-                  <AlertCircle size={15} className="text-warning-emphasis shrink-0 mt-0.5" />
-                  <div className="text-slate-dark font-sans" style={{ fontSize: '11.5px' }}>
-                    <strong>Tope de Cotización Aplicado:</strong> Tu salario real es de {formatUSD(monthlySalary)} ({formatUSD(result.dailyRealSalary)}/día),
-                    pero el ISSS solo cotiza hasta {formatUSD(RATES.ISSS_CAP_MONTHLY)}/mes ($33.33/día).
-                    El 100% que toma el ISSS son $33.33/día y te paga el 75%: {formatUSD(result.maxDailySubsidioCap)}/día.
+                <div className="p-3 rounded bg-warning-subtle border border-warning-subtle small d-flex align-items-start gap-2 mb-3">
+                  <AlertCircle size={16} className="text-warning-emphasis shrink-0 mt-0.5" />
+                  <div className="text-slate-dark font-sans" style={{ fontSize: '12px' }}>
+                    <strong>Por qué te pagan menos si ganas más de $1,000:</strong> Tu salario real es de {formatUSD(monthlySalary)} ({formatUSD(result.dailyRealSalary)} al día), pero la Ley del Seguro Social fija un tope máximo de {formatUSD(RATES.ISSS_CAP_MONTHLY)} al mes ($33.33 al día). Aunque ganes más, el Seguro solo calcula tu 75% sobre esos $33.33, pagándote como máximo {formatUSD(result.maxDailySubsidioCap)} al día.
                   </div>
                 </div>
               )}
 
-              {/* Tabla Comparativa de Descuentos (AFP, ISSS, Renta) */}
+              {/* Resumen ultra claro de Descuentos */}
               <div className="p-3 rounded bg-light border mb-2">
-                <span className="small fw-semibold text-slate-dark d-block mb-1.5 font-sans" style={{ fontSize: '12px' }}>
-                  ¿Lleva descuentos de AFP, ISSS o Renta?
+                <span className="small fw-bold text-slate-dark d-block mb-1 font-sans" style={{ fontSize: '12px' }}>
+                  Resumen de Descuentos: ¿Cuánto te quitan de cada pago?
                 </span>
+                <p className="text-muted small mb-2 font-sans" style={{ fontSize: '11px' }}>
+                  Para que tengas claro por qué recibes cada cantidad y qué retenciones aplican por ley:
+                </p>
                 <div className="table-responsive">
-                  <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11px' }}>
+                  <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11.5px' }}>
                     <thead>
                       <tr className="text-muted">
-                        <th>Concepto</th>
-                        <th className="text-center">Descuento AFP</th>
-                        <th className="text-center">Descuento ISSS</th>
-                        <th className="text-center">Retención Renta</th>
-                        <th className="text-end">Monto que recibes</th>
+                        <th>Quién te paga</th>
+                        <th className="text-center">Descuento de AFP</th>
+                        <th className="text-center">Descuento de ISSS</th>
+                        <th className="text-center">Descuento de Renta</th>
+                        <th className="text-end">¿Cómo te llega?</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td className="fw-semibold text-slate-dark">
-                          Patrono (Días 1-3)
+                          Tu Empresa (Días 1 a 3)
                         </td>
-                        <td className="text-center text-muted">Sí (7.25%)</td>
-                        <td className="text-center text-muted">Sí (3%)</td>
-                        <td className="text-center text-muted">Sí (Tramo ISR)</td>
+                        <td className="text-center text-secondary">Sí (-7.25%)</td>
+                        <td className="text-center text-secondary">Sí (-3.00%)</td>
+                        <td className="text-center text-secondary">Sí (según tabla)</td>
                         <td className="text-end font-monospace text-slate-dark">
-                          En tu planilla quincenal
+                          En tu quincena normal
                         </td>
                       </tr>
                       <tr className="bg-emerald-50 text-emerald-950">
                         <td className="fw-bold text-emerald-900 d-flex align-items-center gap-1">
-                          <CheckCircle2 size={12} className="text-emerald" />
-                          <span>Subsidio ISSS (Día 4+)</span>
+                          <CheckCircle2 size={13} className="text-emerald" />
+                          <span>El Seguro ISSS (Día 4 en adelante)</span>
                         </td>
-                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
-                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
-                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
+                        <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
+                        <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
+                        <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
                         <td className="text-end font-monospace fw-bold text-emerald">
-                          {formatUSD(result.isssTotalSubsidio)} (100% neto)
+                          {formatUSD(result.isssTotalSubsidio)} (100% limpio)
                         </td>
                       </tr>
                     </tbody>

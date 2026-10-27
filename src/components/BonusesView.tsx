@@ -72,8 +72,8 @@ export function BonusesView({
   setAguinaldoDaysUnder1,
   aguinaldoHireDate,
   setAguinaldoHireDate,
-  aguinaldoExemptionRule,
-  setAguinaldoExemptionRule,
+  aguinaldoExemptionRule: _aguinaldoExemptionRule,
+  setAguinaldoExemptionRule: _setAguinaldoExemptionRule,
   vacationSector,
   setVacationSector,
   vacationBonusPct: _vacationBonusPct,
@@ -152,22 +152,22 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
-                      15 – 25 Enero
+                    <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
+                      Pago: 15 – 25 Enero
                     </span>
-                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
-                      Obligatoria 2027
+                    <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
+                      Decreto 499
                     </span>
                   </div>
-                  <h6 className="fw-semibold text-slate-dark mb-1">Quincena 25 (Decreto 499)</h6>
-                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
-                    50% salario nominal (hasta $1,500), 100% exento de deducciones.
+                  <h6 className="fw-semibold text-slate-dark mb-1">Quincena 25 (Bono de Enero)</h6>
+                  <p className="text-muted small mb-2 font-sans" style={{ fontSize: '12px' }}>
+                    Medio sueldo adicional (50%). <strong>Te llega 100% limpio</strong> (la ley prohíbe descontarte AFP, ISSS o Renta).
                   </p>
                 </div>
                 <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>Líquido:</span>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>En tu bolsillo:</span>
                   <span className="fs-5 fw-bold font-monospace text-emerald">
-                    {formatUSD(quincena25Result.netQuincena25)}
+                    +{formatUSD(quincena25Result.netQuincena25)}
                   </span>
                 </div>
               </div>
@@ -178,22 +178,22 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
-                      Anual / Tramos
+                    <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style={{ fontSize: '10px' }}>
+                      Al cumplir cada año
                     </span>
-                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
+                    <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
                       Art. 177 C.T.
                     </span>
                   </div>
-                  <h6 className="fw-semibold text-slate-dark mb-1">Vacación Anual (15 días + 30%)</h6>
-                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
-                    Recargo legal del 30% sobre la quincena de descanso.
+                  <h6 className="fw-semibold text-slate-dark mb-1">Vacación (15 días + 30% Extra)</h6>
+                  <p className="text-muted small mb-2 font-sans" style={{ fontSize: '12px' }}>
+                    15 días continuos de descanso pagado más un <strong>30% de regalo de ley</strong> sobre esa quincena (lleva descuentos normales).
                   </p>
                 </div>
                 <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>Bono 30% neto est.:</span>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>Solo el bono 30% neto:</span>
                   <span className="fs-5 fw-bold font-monospace text-slate-dark">
-                    {formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
+                    +{formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
                   </span>
                 </div>
               </div>
@@ -204,22 +204,22 @@ export function BonusesView({
               <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge-subtle font-monospace" style={{ fontSize: '10px' }}>
-                      1 Oct – 20 Dic
+                    <span className="badge bg-amber-subtle text-amber-800 border border-amber-subtle font-monospace" style={{ fontSize: '10px' }}>
+                      Pago: 1 – 20 Diciembre
                     </span>
-                    <span className="badge-subtle" style={{ fontSize: '10px' }}>
-                      Arts. 196–202
+                    <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
+                      Art. 196 C.T.
                     </span>
                   </div>
-                  <h6 className="fw-semibold text-slate-dark mb-1">Aguinaldo de Ley</h6>
-                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
-                    Sin descuentos de ISSS/AFP. Exento de Renta hasta {formatUSD(aguinaldoResult.exemptionLimit)}.
+                  <h6 className="fw-semibold text-slate-dark mb-1">Aguinaldo de Fin de Año</h6>
+                  <p className="text-muted small mb-2 font-sans" style={{ fontSize: '12px' }}>
+                    De 15 a 21 días de sueldo según tus años. <strong>Cero descuento de ISSS y AFP</strong>, y sin Renta hasta $1,500.
                   </p>
                 </div>
                 <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>Líquido:</span>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>En tu bolsillo:</span>
                   <span className="fs-5 fw-bold font-monospace text-emerald">
-                    {formatUSD(aguinaldoResult.netAguinaldo)}
+                    +{formatUSD(aguinaldoResult.netAguinaldo)}
                   </span>
                 </div>
               </div>
@@ -320,21 +320,27 @@ export function BonusesView({
                   </div>
                 )}
 
-                <table className="table table-minimal table-sm small font-monospace mb-0">
+                <table className="table table-minimal table-sm small font-sans mb-0">
                   <tbody>
                     <tr>
-                      <td className="text-muted">Base de cálculo (50% salario mensual):</td>
-                      <td className="text-end fw-semibold text-slate-dark">{formatUSD(round2(monthlySalary * 0.5))}</td>
+                      <td className="text-muted">
+                        <strong>Cuánto te toca:</strong> 50% de tu sueldo mensual
+                      </td>
+                      <td className="text-end fw-semibold text-slate-dark font-monospace">{formatUSD(round2(monthlySalary * 0.5))}</td>
                     </tr>
                     <tr>
-                      <td className="text-muted">Factor de antigüedad:</td>
-                      <td className="text-end text-slate-dark">
-                        {round2(quincena25Result.proportionFactor * 100)}% ({quincena25Result.daysWorked} días)
+                      <td className="text-muted">
+                        <strong>Tiempo en la empresa:</strong> {quincena25Result.daysWorked} días computados
+                      </td>
+                      <td className="text-end text-slate-dark font-monospace">
+                        {round2(quincena25Result.proportionFactor * 100)}% de pago
                       </td>
                     </tr>
-                    <tr>
-                      <td className="text-muted">Deducciones ISSS, AFP y Renta:</td>
-                      <td className="text-end text-emerald fw-semibold">$0.00 (Exento 100%)</td>
+                    <tr className="bg-emerald-50">
+                      <td className="text-emerald-900">
+                        <strong>Descuentos de AFP, ISSS y Renta:</strong>
+                      </td>
+                      <td className="text-end text-emerald fw-bold font-monospace">$0.00 (Te llega íntegro)</td>
                     </tr>
                   </tbody>
                 </table>
@@ -343,11 +349,15 @@ export function BonusesView({
 
             <div className="p-3 bg-slate-50 border-top d-flex justify-content-between align-items-center">
               <div>
-                <span className="fw-semibold text-slate-dark d-block small">Quincena 25 Neta</span>
-                <span className="text-muted small" style={{ fontSize: '11px' }}>{quincena25Result.legalNote}</span>
+                <span className="fw-bold text-slate-dark d-block small">Monto en tu bolsillo</span>
+                <span className="text-muted small font-sans" style={{ fontSize: '11px' }}>
+                  {monthlySalary <= 1500
+                    ? 'Pago obligatorio fijado por ley entre el 15 y el 25 de enero.'
+                    : 'Tu sueldo pasa de $1,500; la ley solo obliga a pagar hasta ese tope salarial.'}
+                </span>
               </div>
               <span className="fs-4 fw-bold font-monospace text-emerald">
-                {formatUSD(quincena25Result.netQuincena25)}
+                +{formatUSD(quincena25Result.netQuincena25)}
               </span>
             </div>
           </div>
@@ -361,21 +371,21 @@ export function BonusesView({
                 <div>
                   <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
                     <Calendar size={16} className="text-secondary" />
-                    <span>Aguinaldo de Ley (Arts. 196–202 C.T.)</span>
+                    <span>Aguinaldo (Gratificación de Fin de Año)</span>
                   </h6>
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>
-                    Ventana legal de entrega: 1 al 20 de diciembre
+                  <span className="small text-muted font-sans" style={{ fontSize: '12px' }}>
+                    Plazo legal de pago obligatorio: del 1 al 20 de diciembre
                   </span>
                 </div>
-                <span className="badge-subtle font-monospace" style={{ fontSize: '11px' }}>
-                  Exento ISSS / AFP
+                <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '11px' }}>
+                  Sin ISSS / AFP
                 </span>
               </div>
 
               <div className="p-3">
                 <div className="mb-3">
                   <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                    Antigüedad al 12 de diciembre:
+                    Tus años en la empresa (al 12 de diciembre):
                   </label>
                   <div className="row g-1">
                     {(
@@ -406,7 +416,7 @@ export function BonusesView({
                   <div className="p-3 bg-light rounded border mb-3">
                     <div className="row g-2 align-items-center mb-2">
                       <div className="col-12 col-sm-6">
-                        <label className="form-label small text-muted mb-0">Fecha de ingreso:</label>
+                        <label className="form-label small text-muted mb-0">Fecha de ingreso a trabajar:</label>
                       </div>
                       <div className="col-12 col-sm-6">
                         <input
@@ -431,58 +441,40 @@ export function BonusesView({
                       className="form-range"
                     />
                     <div className="text-end small font-monospace text-muted" style={{ fontSize: '11px' }}>
-                      {aguinaldoDaysUnder1} / 365 días al 12 dic.
+                      {aguinaldoDaysUnder1} / 365 días trabajados al 12 de diciembre
                     </div>
                   </div>
                 )}
 
-                <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>Tope de exención de Renta:</span>
-                  <div className="segmented-control">
-                    <button
-                      type="button"
-                      onClick={() => setAguinaldoExemptionRule('decreto_1500')}
-                      className={aguinaldoExemptionRule === 'decreto_1500' ? 'active' : ''}
-                    >
-                      Decreto $1,500
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAguinaldoExemptionRule('dos_minimos')}
-                      className={aguinaldoExemptionRule === 'dos_minimos' ? 'active' : ''}
-                    >
-                      2 Mínimos ($817.60)
-                    </button>
-                  </div>
-                </div>
-
-                <table className="table table-minimal table-sm small font-monospace mb-0">
+                <table className="table table-minimal table-sm small font-sans mb-0">
                   <tbody>
                     <tr>
                       <td className="text-muted">
-                        Salario diario ({formatUSD(aguinaldoResult.dailySalary)}) × {aguinaldoResult.equivalentDays} días:
+                        <strong>Cálculo:</strong> {aguinaldoResult.equivalentDays} días de sueldo ({formatUSD(aguinaldoResult.dailySalary)}/día)
                       </td>
-                      <td className="text-end fw-semibold text-slate-dark">{formatUSD(aguinaldoResult.grossAguinaldo)}</td>
+                      <td className="text-end fw-semibold text-slate-dark font-monospace">{formatUSD(aguinaldoResult.grossAguinaldo)}</td>
                     </tr>
                     <tr>
-                      <td className="text-muted">Monto exento de ISR:</td>
-                      <td className="text-end text-emerald fw-semibold">
-                        {formatUSD(aguinaldoResult.exemptAmount)}
+                      <td className="text-muted">
+                        <strong>Descuento de ISSS y AFP:</strong>
                       </td>
+                      <td className="text-end text-emerald fw-semibold font-monospace">$0.00 (Exento por ley)</td>
                     </tr>
                     {aguinaldoResult.taxableExcess > 0 ? (
                       <tr>
                         <td className="text-terracotta">
-                          ISR s/excedente ({formatUSD(aguinaldoResult.taxableExcess)}):
+                          <strong>Descuento de Renta:</strong> Se cobra solo sobre lo que supera {formatUSD(aguinaldoResult.exemptionLimit)}
                         </td>
-                        <td className="text-end font-monospace text-terracotta">
+                        <td className="text-end font-monospace text-terracotta fw-bold">
                           -{formatUSD(aguinaldoResult.isrWithheld)}
                         </td>
                       </tr>
                     ) : (
-                      <tr>
-                        <td className="text-muted">Retención ISR:</td>
-                        <td className="text-end text-emerald fw-semibold">$0.00</td>
+                      <tr className="bg-emerald-50">
+                        <td className="text-emerald-900">
+                          <strong>Descuento de Renta:</strong>
+                        </td>
+                        <td className="text-end text-emerald fw-bold font-monospace">$0.00 (Exento hasta $1,500)</td>
                       </tr>
                     )}
                   </tbody>
@@ -492,11 +484,15 @@ export function BonusesView({
 
             <div className="p-3 bg-slate-50 border-top d-flex justify-content-between align-items-center">
               <div>
-                <span className="fw-semibold text-slate-dark d-block small">Aguinaldo Líquido</span>
-                <span className="text-muted small" style={{ fontSize: '11px' }}>Exento por ley de ISSS y AFP</span>
+                <span className="fw-bold text-slate-dark d-block small">Monto en tu bolsillo</span>
+                <span className="text-muted small font-sans" style={{ fontSize: '11px' }}>
+                  {aguinaldoResult.taxableExcess > 0
+                    ? `Te descuentan renta únicamente sobre el excedente de ${formatUSD(aguinaldoResult.taxableExcess)}.`
+                    : 'Sin ningún descuento: te entregan el dinero completo sin tocar tu aguinaldo.'}
+                </span>
               </div>
               <span className="fs-4 fw-bold font-monospace text-emerald">
-                {formatUSD(aguinaldoResult.netAguinaldo)}
+                +{formatUSD(aguinaldoResult.netAguinaldo)}
               </span>
             </div>
           </div>
