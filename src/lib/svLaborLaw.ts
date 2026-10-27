@@ -1040,3 +1040,118 @@ export function calcHourlyAndOvertime(
     overtimeRates,
   };
 }
+
+// ============================================================================
+// CÁLCULO DE INCAPACIDADES MÉDICAS Y SUBSIDIOS (ISSS Y CÓDIGO DE TRABAJO)
+// ============================================================================
+
+export type IncapacityType = 'common_illness' | 'work_accident' | 'maternity';
+
+export interface IncapacityCalculationParams {
+  monthlySalary: number;
+  days: number;
+  type: IncapacityType;
+  /**
+   * Si el patrono paga voluntariamente el 100% en los días a su cargo en vez del 75% de ley.
+   */
+  employerPays100FirstDays?: boolean;
+}
+
+export interface IncapacityCalculationResult {
+  monthlySalary: number;
+  dailyRealSalary: number;
+  dailyCotizableSalary: number;
+  isSalaryCappedByISSS: boolean;
+  type: IncapacityType;
+  totalDays: number;
+  employerDays: number;
+  isssDays: number;
+  employerRate: number;
+  isssRate: number;
+  employerDailyAmount: number;
+  employerTotalPay: number;
+  isssDailySubsidio: number;
+  isssTotalSubsidio: number;
+  totalIncapacityPay: number;
+  regularEquivalentGross: number;
+  wageLoss: number;
+  maxDailySubsidioCap: number;
+}
+
+/**
+ * Calcula el desglose de pago de incapacidades según la Ley del ISSS y el Código de Trabajo de El Salvador:
+ *
+ * 1. Enfermedad Común:
+ *    - Días 1 a 3 (período de espera del ISSS): corre por cuenta del patrono al 75% del salario básico (Art. 307 C.T.).
+ *    - Día 4 en adelante: subsidio pagado por el ISSS al 75% del salario cotizable promedio (topado a $1,000/mes).
+ * 2. Accidente de Trabajo o Enfermedad Profesional (Riesgos Profesionales):
+ *    - Desde el día 1 corre a cargo del ISSS al 75% del salario cotizable diario (no hay período de espera de 3 días).
+ * 3. Maternidad (16 semanas / 112 días):
+ *    - Cubierto por el ISSS al 100% del salario cotizable diario (topado a $1,000/mes = $33.33/día).
+ */
+export function calcIncapacity({
+  monthlySalary,
+  days,
+  type,
+  employerPays100FirstDays = false,
+}: IncapacityCalculationParams): IncapacityCalculationResult {
+  const safeSalary = Math.max(0, monthlySalary);
+  const totalDays = Math.max(0, Math.floor(days));
+
+  const dailyRealSalary = round2(safeSalary / 30);
+  const cappedMonthly = Math.min(safeSalary, RATES.ISSS_CAP_MONTHLY);
+  const dailyCotizableSalary = round2(cappedMonthly / 30);
+  const isSalaryCappedByISSS = safeSalary > RATES.ISSS_CAP_MONTHLY;
+
+  let employerDays = 0;
+  let isssDays = 0;
+  let isssRate = 0.75;
+  const employerRate = employerPays100FirstDays ? 1.0 : 0.75;
+
+  if (type === 'common_illness') {
+    employerDays = Math.min(totalDays, 3);
+    isssDays = Math.max(0, totalDays - 3);
+    isssRate = 0.75;
+  } else if (type === 'work_accident') {
+    employerDays = 0;
+    isssDays = totalDays;
+    isssRate = 0.75;
+  } else if (type === 'maternity') {
+    employerDays = 0;
+    isssDays = totalDays;
+    isssRate = 1.0;
+  }
+
+  const employerDailyAmount = round2(dailyRealSalary * employerRate);
+  const employerTotalPay = round2(employerDailyAmount * employerDays);
+
+  const isssDailySubsidio = round2(dailyCotizableSalary * isssRate);
+  const isssTotalSubsidio = round2(isssDailySubsidio * isssDays);
+
+  const totalIncapacityPay = round2(employerTotalPay + isssTotalSubsidio);
+  const regularEquivalentGross = round2(dailyRealSalary * totalDays);
+  const wageLoss = round2(Math.max(0, regularEquivalentGross - totalIncapacityPay));
+  const maxDailySubsidioCap = round2((RATES.ISSS_CAP_MONTHLY / 30) * isssRate);
+
+  return {
+    monthlySalary: safeSalary,
+    dailyRealSalary,
+    dailyCotizableSalary,
+    isSalaryCappedByISSS,
+    type,
+    totalDays,
+    employerDays,
+    isssDays,
+    employerRate,
+    isssRate,
+    employerDailyAmount,
+    employerTotalPay,
+    isssDailySubsidio,
+    isssTotalSubsidio,
+    totalIncapacityPay,
+    regularEquivalentGross,
+    wageLoss,
+    maxDailySubsidioCap,
+  };
+}
+

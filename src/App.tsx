@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Trash2,
   Pencil,
+  Activity,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -55,6 +56,7 @@ import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { PayrollView } from './components/PayrollView.tsx';
 import { BonusesView } from './components/BonusesView.tsx';
 import { HourlyView } from './components/HourlyView.tsx';
+import { IncapacityView } from './components/IncapacityView.tsx';
 import {
   ExpensesView,
   type ExpenseCategory,
@@ -86,7 +88,7 @@ import Error404 from './pages/errors/Error404.tsx';
 import Error500 from './pages/errors/Error500.tsx';
 import Error503 from './pages/errors/Error503.tsx';
 
-type CalculatorTab = 'payroll' | 'bonuses' | 'hourly';
+type CalculatorTab = 'payroll' | 'bonuses' | 'hourly' | 'incapacity';
 
 const DEFAULT_EXPENSES: ExpenseItem[] = [
   {
@@ -943,6 +945,20 @@ function AppShell() {
             >
               <Clock size={14} />
               <span className="d-none d-sm-inline">Costo Hora</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCalcTab('incapacity');
+                if (!isCalculatorRoute) navigate('/');
+              }}
+              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                isCalculatorRoute && calcTab === 'incapacity' ? 'active' : ''
+              }`}
+            >
+              <Activity size={14} />
+              <span className="d-none d-sm-inline">Incapacidades</span>
             </button>
 
             <button
@@ -1981,6 +1997,12 @@ function AppShell() {
                       setBonusInput(String(amt));
                       setCalcTab('payroll');
                     }}
+                    formatUSD={formatUSD}
+                  />
+                )}
+                {calcTab === 'incapacity' && (
+                  <IncapacityView
+                    monthlySalary={monthlySalary}
                     formatUSD={formatUSD}
                   />
                 )}

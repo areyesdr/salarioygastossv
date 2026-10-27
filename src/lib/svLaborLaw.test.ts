@@ -8,6 +8,7 @@ import {
   calcQuincena25,
   calcHourlyAndOvertime,
   calcSeniorityFromHireDate,
+  calcIncapacity,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
 import {
@@ -209,6 +210,84 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(res10Plus.currentSeniorityBracket, '10-plus');
     assert.equal(res10Plus.aguinaldoSeniorityBracket, '10-plus');
     assert.equal(res10Plus.isEligibleForVacation, true);
+  });
+
+  it('calculates medical incapacities according to ISSS and Labor Code', () => {
+    // Caso 1: Enfermedad común de 3 días con salario de $600/mes ($20/día)
+    // Días 1 a 3 a cargo del patrono al 75% ($15/día). ISSS = $0
+    const res3Days = calcIncapacity({
+      monthlySalary: 600,
+      days: 3,
+      type: 'common_illness',
+    });
+    assert.equal(res3Days.employerDays, 3);
+    assert.equal(res3Days.isssDays, 0);
+    assert.equal(res3Days.employerDailyAmount, 15.0);
+    assert.equal(res3Days.employerTotalPay, 45.0);
+    assert.equal(res3Days.isssTotalSubsidio, 0.0);
+    assert.equal(res3Days.totalIncapacityPay, 45.0);
+    assert.equal(res3Days.regularEquivalentGross, 60.0);
+    assert.equal(res3Days.wageLoss, 15.0);
+
+    // Caso 2: Enfermedad común de 10 días con salario de $600/mes ($20/día)
+    // Días 1 a 3 patrono al 75% = 3 * $15 = $45
+    // Días 4 a 10 (7 días) ISSS al 75% = 7 * $15 = $105
+    const res10Days = calcIncapacity({
+      monthlySalary: 600,
+      days: 10,
+      type: 'common_illness',
+    });
+    assert.equal(res10Days.employerDays, 3);
+    assert.equal(res10Days.isssDays, 7);
+    assert.equal(res10Days.employerTotalPay, 45.0);
+    assert.equal(res10Days.isssDailySubsidio, 15.0);
+    assert.equal(res10Days.isssTotalSubsidio, 105.0);
+    assert.equal(res10Days.totalIncapacityPay, 150.0);
+
+    // Caso 3: Salario alto ($1,500/mes) que supera el tope del ISSS ($1,000/mes)
+    // Salario diario real = $50.00. Salario diario cotizable ISSS = $33.33
+    // 5 días de enfermedad común: 3 días patrono al 75% de $50 = 3 * $37.50 = $112.50
+    // 2 días ISSS al 75% de $33.33 = $25.00/día (tope máximo) -> 2 * $25 = $50.00
+    const resHigh = calcIncapacity({
+      monthlySalary: 1500,
+      days: 5,
+      type: 'common_illness',
+    });
+    assert.equal(resHigh.isSalaryCappedByISSS, true);
+    assert.equal(resHigh.dailyRealSalary, 50.0);
+    assert.equal(resHigh.dailyCotizableSalary, 33.33);
+    assert.equal(resHigh.employerDays, 3);
+    assert.equal(resHigh.isssDays, 2);
+    assert.equal(resHigh.employerDailyAmount, 37.5);
+    assert.equal(resHigh.employerTotalPay, 112.5);
+    assert.equal(resHigh.isssDailySubsidio, 25.0);
+    assert.equal(resHigh.isssTotalSubsidio, 50.0);
+    assert.equal(resHigh.totalIncapacityPay, 162.5);
+
+    // Caso 4: Accidente de trabajo (Riesgo profesional) de 6 días con salario de $600
+    // Desde el día 1 cubierto por ISSS al 75% = 6 * $15 = $90. Patrono = 0 días
+    const resAccident = calcIncapacity({
+      monthlySalary: 600,
+      days: 6,
+      type: 'work_accident',
+    });
+    assert.equal(resAccident.employerDays, 0);
+    assert.equal(resAccident.isssDays, 6);
+    assert.equal(resAccident.isssTotalSubsidio, 90.0);
+    assert.equal(resAccident.totalIncapacityPay, 90.0);
+
+    // Caso 5: Maternidad (112 días) con salario de $800
+    // ISSS cubre el 100% del salario cotizable ($800 / 30 = $26.67/día)
+    const resMaternity = calcIncapacity({
+      monthlySalary: 800,
+      days: 112,
+      type: 'maternity',
+    });
+    assert.equal(resMaternity.employerDays, 0);
+    assert.equal(resMaternity.isssDays, 112);
+    assert.equal(resMaternity.isssRate, 1.0);
+    assert.equal(resMaternity.isssDailySubsidio, 26.67);
+    assert.equal(resMaternity.isssTotalSubsidio, 2987.04);
   });
 });
 
