@@ -1,31 +1,31 @@
 @import "bootstrap/dist/css/bootstrap.min.css";
 
 :root {
-  --bs-body-bg: #f8fafc;
+  --bs-body-bg: #eaedf2;
   --bs-body-color: #1e293b;
   --bs-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --bs-font-monospace: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Fintech Minimalist Palette */
+  /* Fintech Minimalist Palette - Calming Eye-Comfort Light Mode */
   --color-slate-900: #0f172a;
   --color-slate-800: #1e293b;
   --color-slate-700: #334155;
   --color-slate-600: #475569;
   --color-slate-500: #64748b;
   --color-slate-400: #94a3b8;
-  --color-slate-200: #e2e8f0;
-  --color-slate-100: #f1f5f9;
-  --color-slate-50: #f8fafc;
+  --color-slate-200: #d5dce6;
+  --color-slate-100: #e2e7ef;
+  --color-slate-50: #eff3f7;
 
   --color-emerald-700: #047857;
   --color-emerald-600: #059669;
-  --color-emerald-50: #f0fdf4;
-  --color-emerald-100: #dcfce7;
-  --color-emerald-200: #bbf7d0;
+  --color-emerald-50: #e6f4ec;
+  --color-emerald-100: #d2edd9;
+  --color-emerald-200: #a8dfc1;
 
   --color-terracotta-700: #991b1b;
-  --color-terracotta-50: #fef2f2;
-  --color-terracotta-100: #fee2e2;
+  --color-terracotta-50: #fdf2f2;
+  --color-terracotta-100: #fce2e2;
 }
 
 /* Reglas estrictas de viewport para prevenir desbordamientos */
@@ -151,10 +151,10 @@ html, body {
 
 /* Soft Cards & Shadows */
 .card-soft {
-  background: #ffffff;
+  background: #f8fafc;
   border: 1px solid var(--color-slate-200);
   border-radius: 10px;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   width: 100%;
   max-width: 100%;
   overflow: hidden;
@@ -172,11 +172,11 @@ html, body {
 
 /* Background & Color Utilities */
 .bg-slate-50 {
-  background-color: #f8fafc !important;
+  background-color: #eff3f7 !important;
 }
 
 .bg-slate-100 {
-  background-color: #f1f5f9 !important;
+  background-color: #e2e7ef !important;
 }
 
 .bg-slate-900 {
@@ -200,7 +200,7 @@ html, body {
 }
 
 .border-slate-200 {
-  border-color: #e2e8f0 !important;
+  border-color: #d5dce6 !important;
 }
 
 /* Badges sobrios, nítidos y de alto contraste */
@@ -248,8 +248,8 @@ html, body {
 
 /* Modern Segmented Control Responsivo */
 .segmented-control {
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background-color: #e2e7ef;
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
   padding: 3px;
   display: flex;
@@ -276,7 +276,7 @@ html, body {
 }
 
 .segmented-control button.active {
-  background-color: #ffffff;
+  background-color: #f8fafc;
   color: var(--color-slate-900);
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
@@ -299,16 +299,17 @@ html, body {
 .table-minimal th {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-slate-500);
+  color: var(--color-slate-600);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border-bottom: 1px solid var(--color-slate-200);
   padding: 0.75rem 1rem;
+  background-color: #e2e7ef;
 }
 
 .table-minimal td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #e2e7ef;
   color: var(--color-slate-700);
 }
 
@@ -380,6 +381,81 @@ html, body {
 
 .text-terracotta {
   color: var(--color-terracotta-700) !important;
+}
+
+/* ==========================================================================
+   Modo Claro Amable a la Vista (Eye-Comfort Light Theme)
+   ========================================================================== */
+:root, [data-bs-theme="light"] {
+  --bs-body-bg: #eaedf2;
+  --bs-body-color: #1e293b;
+  --bs-tertiary-bg: #e2e7ef;
+  --bs-secondary-bg: #eff3f7;
+  --bs-border-color: #d5dce6;
+}
+
+[data-bs-theme="light"],
+[data-bs-theme="light"] body,
+body.bg-light {
+  background-color: #eaedf2 !important;
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .bg-light {
+  background-color: #e2e7ef !important;
+}
+
+[data-bs-theme="light"] .bg-white {
+  background-color: #f8fafc !important;
+}
+
+[data-bs-theme="light"] footer.bg-white,
+[data-bs-theme="light"] footer {
+  background-color: #e2e7ef !important;
+  border-color: #d5dce6 !important;
+}
+
+[data-bs-theme="light"] .card-soft {
+  background-color: #f8fafc !important;
+  border-color: #d5dce6 !important;
+}
+
+[data-bs-theme="light"] .form-control,
+[data-bs-theme="light"] .form-select,
+[data-bs-theme="light"] input[type="text"],
+[data-bs-theme="light"] input[type="number"],
+[data-bs-theme="light"] input[type="date"],
+[data-bs-theme="light"] select,
+[data-bs-theme="light"] textarea {
+  background-color: #fbfcfd;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+[data-bs-theme="light"] .form-control:focus,
+[data-bs-theme="light"] .form-select:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+}
+
+[data-bs-theme="light"] .table thead.bg-light th,
+[data-bs-theme="light"] .table thead.bg-light {
+  background-color: #e2e7ef !important;
+  color: #475569 !important;
+  border-color: #d5dce6 !important;
+}
+
+[data-bs-theme="light"] .badge.bg-light,
+[data-bs-theme="light"] .badge-subtle {
+  background-color: #e2e7ef !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-bs-theme="light"] .modal-content {
+  background-color: #f8fafc;
+  border-color: #d5dce6;
 }
 
 /* ==========================================================================

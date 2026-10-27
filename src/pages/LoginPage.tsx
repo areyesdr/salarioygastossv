@@ -167,7 +167,7 @@ export default function LoginPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ej. Axel Reyes"
+                placeholder="Ej. Carlos Martínez"
                 className="form-control"
                 autoComplete="name"
               />
