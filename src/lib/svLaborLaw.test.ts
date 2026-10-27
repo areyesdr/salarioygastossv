@@ -97,10 +97,10 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     const qProportional = calcQuincena25({
       monthlySalary: 1000,
       isFullYear: false,
-      daysWorkedToJan25: 182.5,
+      daysWorkedToJan25: 183,
     });
     assert.equal(qProportional.eligibleByLaw, true);
-    assert.equal(qProportional.netQuincena25, 250.34);
+    assert.equal(qProportional.netQuincena25, 250.68);
   });
 
   it('calculates hourly cost and overtime multipliers accurately', () => {
