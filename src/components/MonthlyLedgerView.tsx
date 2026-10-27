@@ -6,6 +6,7 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   type MonthLedger,
@@ -265,6 +266,10 @@ export function MonthlyLedgerView({
 
         {/* Acciones del Mes */}
         <div className="d-flex align-items-center gap-2">
+          <span className="badge-subtle font-monospace d-inline-flex align-items-center gap-1.5 py-1 px-2.5 text-slate-dark" style={{ fontSize: '11px' }}>
+            <CheckCircle2 size={12} className="text-emerald" />
+            <span>Sincronizado con Supabase</span>
+          </span>
           <button
             type="button"
             onClick={handleCopyFromPreviousMonth}
@@ -334,7 +339,7 @@ export function MonthlyLedgerView({
                   </span>
                 </div>
                 <span className="small text-muted" style={{ fontSize: '11px' }}>
-                  Período del 1 al 15 de {MONTH_NAMES_ES[selectedMonth - 1]}
+                  Gastos del 15 al 29 de {MONTH_NAMES_ES[selectedMonth - 1]}
                 </span>
               </div>
 
@@ -453,11 +458,11 @@ export function MonthlyLedgerView({
                   <input
                     type="number"
                     min="1"
-                    max="15"
+                    max="31"
                     value={q1Day}
                     onChange={(e) => setQ1Day(e.target.value)}
                     placeholder="Día"
-                    title="Día del mes (1 al 15)"
+                    title="Día del mes (15 al 29)"
                     className="form-control form-control-sm text-center font-monospace"
                   />
                 </div>
@@ -554,7 +559,7 @@ export function MonthlyLedgerView({
                   </span>
                 </div>
                 <span className="small text-muted" style={{ fontSize: '11px' }}>
-                  Período del 16 al 30/31 de {MONTH_NAMES_ES[selectedMonth - 1]}
+                  Gastos del 30 al 14
                 </span>
               </div>
 
@@ -672,12 +677,12 @@ export function MonthlyLedgerView({
                 <div className="col-3 col-sm-2">
                   <input
                     type="number"
-                    min="16"
+                    min="1"
                     max="31"
                     value={q2Day}
                     onChange={(e) => setQ2Day(e.target.value)}
                     placeholder="Día"
-                    title="Día del mes (16 al 31)"
+                    title="Día del mes (30 al 14)"
                     className="form-control form-control-sm text-center font-monospace"
                   />
                 </div>
