@@ -24,6 +24,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Gift,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -212,6 +213,18 @@ function AppShell() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    if (!showLawParamsModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowLawParamsModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showLawParamsModal]);
 
   // Vacation state
   const [vacationBonusPct, setVacationBonusPct] = useState<number>(30);
@@ -748,13 +761,11 @@ function AppShell() {
           </div>
 
           {/* Selector de Modo Oscuro / Sistema / Claro */}
-          <div className="btn-group p-0.5 bg-slate-800 rounded border border-slate-700 me-2" role="group">
+          <div className="theme-toggle-control me-2" role="group" aria-label="Selector de tema visual">
             <button
               type="button"
               title="Tema del sistema (detecta configuración del OS)"
-              className={`btn btn-sm py-1 px-2 border-0 ${
-                themeMode === 'system' ? 'btn-dark text-white fw-semibold' : 'text-slate-400'
-              }`}
+              className={`theme-toggle-btn ${themeMode === 'system' ? 'active' : ''}`}
               onClick={() => setThemeMode('system')}
             >
               <Monitor size={13} />
@@ -762,9 +773,7 @@ function AppShell() {
             <button
               type="button"
               title="Modo claro"
-              className={`btn btn-sm py-1 px-2 border-0 ${
-                themeMode === 'light' ? 'btn-light text-slate-900 fw-semibold' : 'text-slate-400'
-              }`}
+              className={`theme-toggle-btn ${themeMode === 'light' ? 'active' : ''}`}
               onClick={() => setThemeMode('light')}
             >
               <Sun size={13} />
@@ -772,9 +781,7 @@ function AppShell() {
             <button
               type="button"
               title="Modo oscuro"
-              className={`btn btn-sm py-1 px-2 border-0 ${
-                themeMode === 'dark' ? 'btn-dark text-white fw-semibold' : 'text-slate-400'
-              }`}
+              className={`theme-toggle-btn ${themeMode === 'dark' ? 'active' : ''}`}
               onClick={() => setThemeMode('dark')}
             >
               <Moon size={13} />
@@ -990,21 +997,18 @@ function AppShell() {
                       </div>
                     </div>
 
-                    {/* Fila de Fecha de Inicio de Labores & Antigüedad */}
-                    <div className="row g-3 mt-1">
+                    {/* Fila de Fecha de Inicio de Labores & Antigüedad y Aguinaldo */}
+                    <div className="row g-2.5 mt-0.5">
                       <div className="col-12 col-sm-6">
                         <label
                           htmlFor="hire-date-input"
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
+                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-block"
                           style={{ fontSize: '11px' }}
                         >
-                          <span>Fecha de Inicio de Labores</span>
-                          <span className="text-secondary fw-semibold font-monospace" style={{ fontSize: '11px' }}>
-                            {seniorityDetails.formattedSeniority}
-                          </span>
+                          Fecha de Inicio de Labores
                         </label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-white border-end-0 text-muted">
+                        <div className="input-group" style={{ height: '42px' }}>
+                          <span className="input-group-text border-end-0 text-muted px-2.5">
                             <Calendar size={15} />
                           </span>
                           <input
@@ -1013,19 +1017,37 @@ function AppShell() {
                             value={hireDate}
                             onChange={(e) => handleHireDateChange(e.target.value)}
                             className="form-control border-start-0 font-monospace text-slate-dark fw-semibold"
+                            style={{ height: '42px' }}
                           />
                         </div>
                       </div>
 
-                      <div className="col-12 col-sm-6 d-flex flex-column justify-content-end">
+                      <div className="col-12 col-sm-6">
+                        <label
+                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
+                          style={{ fontSize: '11px' }}
+                        >
+                          <span>Antigüedad y Aguinaldo</span>
+                          <span className="text-secondary font-monospace" style={{ fontSize: '10.5px' }}>
+                            Arts. 196–202 CT
+                          </span>
+                        </label>
                         <div
-                          className="p-2 bg-slate-50 rounded border d-flex align-items-center justify-content-between"
+                          className="px-3 rounded border bg-slate-50 d-flex align-items-center justify-content-between"
                           style={{ height: '42px' }}
                         >
-                          <span className="text-muted small" style={{ fontSize: '11px' }}>
-                            Aguinaldo al 12 Dic:
-                          </span>
-                          <span className="badge-subtle font-monospace fw-semibold" style={{ fontSize: '11px' }}>
+                          <div className="d-flex align-items-center gap-1.5 small font-monospace text-truncate me-2">
+                            <Clock size={13} className="text-slate-muted shrink-0" />
+                            <span className="text-slate-dark fw-semibold text-truncate" style={{ fontSize: '12px' }}>
+                              {seniorityDetails.formattedSeniority}
+                            </span>
+                          </div>
+                          <span
+                            className="badge-emerald font-monospace fw-semibold shrink-0"
+                            style={{ fontSize: '11px' }}
+                            title="Tramo de Aguinaldo según Código de Trabajo"
+                          >
+                            <Gift size={12} className="me-1" />
                             {seniorityDetails.aguinaldoLabel}
                           </span>
                         </div>
@@ -1073,41 +1095,90 @@ function AppShell() {
                 </div>
               </div>
 
-              {/* Fila Inferior de Métricas Secundarias Ordenadas */}
+              {/* Fila Inferior de Métricas Secundarias en Tarjetas de Alto Rendimiento */}
               <hr className="my-3 text-slate-200" />
-              <div className="row g-2 text-start small font-monospace">
+              <div className="row g-2.5 text-start">
+                {/* 1. Desglose de Descuentos de Ley */}
                 <div className="col-12 col-md-4">
-                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
-                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
-                      Desglose de Descuentos ({period === 'monthly' ? 'Mes' : 'Qna'}):
-                    </span>
-                    <span className="text-slate-dark">
-                      AFP: -{formatUSD(activePayroll.afpEmployee)} · ISSS: -{formatUSD(activePayroll.isssEmployee)} · ISR: -{formatUSD(activePayroll.isr)}
-                    </span>
+                  <div className="metric-tile">
+                    <div className="d-flex justify-content-between align-items-center mb-1.5">
+                      <span className="metric-tile-title">
+                        Descuentos ({period === 'monthly' ? 'Mes' : 'Qna'})
+                      </span>
+                      <span className="fw-bold text-terracotta font-monospace" style={{ fontSize: '12px' }}>
+                        -{formatUSD(activePayroll.totalEmployeeDeductions)}
+                      </span>
+                    </div>
+                    <div className="d-flex align-items-center justify-content-between pt-1.5 border-top gap-1 font-monospace">
+                      <div className="text-center flex-fill">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>AFP (7.25%)</span>
+                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
+                          -{formatUSD(activePayroll.afpEmployee)}
+                        </span>
+                      </div>
+                      <div className="text-center flex-fill border-start border-end px-1">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>ISSS (3%)</span>
+                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
+                          -{formatUSD(activePayroll.isssEmployee)}
+                        </span>
+                      </div>
+                      <div className="text-center flex-fill">
+                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>ISR Renta</span>
+                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
+                          {activePayroll.isr > 0 ? `-${formatUSD(activePayroll.isr)}` : '$0.00'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
+                {/* 2. Valor Hora Neta y Bruta */}
                 <div className="col-12 col-md-4">
-                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
-                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
-                      Valor de Hora Neta de Trabajo:
-                    </span>
-                    <strong className="text-slate-dark">{formatUSD(hourlyResult.netHourly)}/h</strong>
-                    <span className="text-muted ms-1 font-sans" style={{ fontSize: '11px' }}>
-                      (Bruta: {formatUSD(hourlyResult.grossHourly)}/h)
-                    </span>
+                  <div className="metric-tile">
+                    <div className="d-flex justify-content-between align-items-center mb-1.5">
+                      <span className="metric-tile-title">
+                        Valor de Hora de Trabajo
+                      </span>
+                      <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
+                        44h / semana
+                      </span>
+                    </div>
+                    <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
+                      <div>
+                        <span className="fs-6 fw-bold font-monospace text-slate-dark">
+                          {formatUSD(hourlyResult.netHourly)}
+                        </span>
+                        <span className="text-muted font-sans small"> /h líquida</span>
+                      </div>
+                      <span className="badge-subtle font-monospace" style={{ fontSize: '10.5px' }}>
+                        Bruta: {formatUSD(hourlyResult.grossHourly)}/h
+                      </span>
+                    </div>
                   </div>
                 </div>
 
+                {/* 3. Prestaciones Anuales Estimadas */}
                 <div className="col-12 col-md-4">
-                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200 h-100">
-                    <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
-                      Bonos Anuales Estimados:
-                    </span>
-                    <strong className="text-emerald">+{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}</strong>
-                    <span className="text-muted ms-1 font-sans" style={{ fontSize: '11px' }}>
-                      (Vacación + Aguinaldo + Q25)
-                    </span>
+                  <div className="metric-tile">
+                    <div className="d-flex justify-content-between align-items-center mb-1.5">
+                      <span className="metric-tile-title">
+                        Prestaciones Anuales de Ley
+                      </span>
+                      <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
+                        Vac + Agui + Q25
+                      </span>
+                    </div>
+                    <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
+                      <div>
+                        <span className="fs-6 fw-bold font-monospace text-emerald">
+                          +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
+                        </span>
+                        <span className="text-muted font-sans small"> neto estimado</span>
+                      </div>
+                      <span className="small text-muted font-monospace" style={{ fontSize: '10.5px' }}>
+                        {formatUSD(activePayroll.grossTotal)} total
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1121,9 +1192,21 @@ function AppShell() {
         <div
           className="modal fade show d-block"
           tabIndex={-1}
-          style={{ backgroundColor: 'rgba(15, 23, 42, 0.45)', zIndex: 1060 }}
+          style={{ backgroundColor: 'rgba(15, 23, 42, 0.55)', zIndex: 1060 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowLawParamsModal(false);
+            }
+          }}
         >
-          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+          <div
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowLawParamsModal(false);
+              }
+            }}
+          >
             <div className="modal-content shadow border-0 rounded-3">
               <div className="modal-header border-bottom py-3 px-4">
                 <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
