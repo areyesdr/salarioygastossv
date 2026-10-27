@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowUpRight } from 'lucide-react';
+import { Clock, ArrowUpRight } from 'lucide-react';
 import {
   round2,
   type HourlyAndOvertimeResult,
@@ -34,192 +34,181 @@ export function HourlyView({
   return (
     <motion.div
       key="tab-hourly"
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
-      className="space-y-6"
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.25 }}
+      className="container-fluid px-0"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs space-y-4">
-          <div>
-            <h2 className="font-serif-editorial text-lg font-semibold">
-              Configuración de Jornada Laboral
-            </h2>
-            <p className="text-xs text-[#65635E]">
-              El Código de Trabajo usa 30 días contables al mes, pero puedes evaluar tu costo por hora sobre
-              los días efectivos que realmente trabajas (p. ej. 22 días lun-vie).
-            </p>
-          </div>
+      <div className="row g-4 mb-4">
+        {/* Configuración de Jornada */}
+        <div className="col-12 col-lg-5">
+          <div className="card shadow-sm border-0 h-100">
+            <div className="card-header bg-white border-bottom py-3">
+              <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                <Clock className="text-primary" size={20} />
+                <span>Configuración de Jornada Laboral</span>
+              </h5>
+              <p className="card-subtitle text-muted small mb-0">
+                Ajusta los días efectivos trabajados para contrastar tu hora contable vs real
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E2DFD7]">
-              <label className="text-[11px] font-semibold uppercase text-[#65635E] block">
-                Días al mes
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="31"
-                value={daysPerMonth}
-                onChange={(e) => setDaysPerMonth(Math.max(1, Math.min(31, Number(e.target.value) || 30)))}
-                className="mt-1 w-full text-xl font-mono-tabular font-semibold bg-white border border-[#DFDCD2] rounded-lg px-2.5 py-1"
-              />
-              <div className="flex gap-1 mt-2">
-                {[
-                  { label: '30d (Ley)', val: 30 },
-                  { label: '24d (L-S)', val: 24 },
-                  { label: '22d (L-V)', val: 22 },
-                ].map((d) => (
-                  <button
-                    key={d.val}
-                    type="button"
-                    onClick={() => setDaysPerMonth(d.val)}
-                    className={`text-[10px] font-mono-tabular px-2 py-0.5 rounded-md border cursor-pointer ${
-                      daysPerMonth === d.val
-                        ? 'bg-[#0F4C3A] text-white border-[#0F4C3A]'
-                        : 'bg-white text-[#65635E] border-[#DFDCD2]'
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
+            <div className="card-body">
+              <div className="row g-3 mb-3">
+                <div className="col-6">
+                  <label className="form-label small fw-bold text-muted">Días al mes:</label>
+                  <div className="input-group mb-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={daysPerMonth}
+                      onChange={(e) => setDaysPerMonth(Math.max(1, Math.min(31, Number(e.target.value) || 30)))}
+                      className="form-control font-monospace fw-bold"
+                    />
+                    <span className="input-group-text">días</span>
+                  </div>
+                  <div className="btn-group btn-group-sm w-100">
+                    <button
+                      type="button"
+                      onClick={() => setDaysPerMonth(30)}
+                      className={`btn ${daysPerMonth === 30 ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                      30 (Ley)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDaysPerMonth(22)}
+                      className={`btn ${daysPerMonth === 22 ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                      22 (L-V)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="col-6">
+                  <label className="form-label small fw-bold text-muted">Horas por jornada:</label>
+                  <div className="input-group mb-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={hoursPerDay}
+                      onChange={(e) => setHoursPerDay(Math.max(1, Math.min(12, Number(e.target.value) || 8)))}
+                      className="form-control font-monospace fw-bold"
+                    />
+                    <span className="input-group-text">hrs</span>
+                  </div>
+                  <div className="btn-group btn-group-sm w-100">
+                    <button
+                      type="button"
+                      onClick={() => setHoursPerDay(8)}
+                      className={`btn ${hoursPerDay === 8 ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                      8h Diurna
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHoursPerDay(7)}
+                      className={`btn ${hoursPerDay === 7 ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    >
+                      7h Nocturna
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="p-3 rounded-xl bg-[#FAF9F5] border border-[#E2DFD7]">
-              <label className="text-[11px] font-semibold uppercase text-[#65635E] block">
-                Horas por día
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="12"
-                value={hoursPerDay}
-                onChange={(e) => setHoursPerDay(Math.max(1, Math.min(12, Number(e.target.value) || 8)))}
-                className="mt-1 w-full text-xl font-mono-tabular font-semibold bg-white border border-[#DFDCD2] rounded-lg px-2.5 py-1"
-              />
-              <div className="flex gap-1 mt-2">
-                {[
-                  { label: '8h Diurna', val: 8 },
-                  { label: '7h Nocturna', val: 7 },
-                ].map((h) => (
-                  <button
-                    key={h.val}
-                    type="button"
-                    onClick={() => setHoursPerDay(h.val)}
-                    className={`text-[10px] font-mono-tabular px-2 py-0.5 rounded-md border cursor-pointer ${
-                      hoursPerDay === h.val
-                        ? 'bg-[#0F4C3A] text-white border-[#0F4C3A]'
-                        : 'bg-white text-[#65635E] border-[#DFDCD2]'
-                    }`}
-                  >
-                    {h.label}
-                  </button>
-                ))}
+              <div className="p-3 bg-light rounded border small font-monospace">
+                <div className="d-flex justify-content-between mb-1">
+                  <span className="text-muted">Total horas en el mes:</span>
+                  <strong>{hourlyResult.totalHoursPerMonth} horas/mes</strong>
+                </div>
+                <div className="d-flex justify-content-between">
+                  <span className="text-muted">Hora base legal para extras (30d):</span>
+                  <strong>{formatUSD(hourlyResult.legalBaseHourly)}/h</strong>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-[#F6F5F0] border border-[#E2DFD7] text-xs space-y-1.5">
-            <div className="flex justify-between">
-              <span className="text-[#65635E]">Total horas computadas al mes:</span>
-              <span className="font-mono-tabular font-semibold">
-                {hourlyResult.totalHoursPerMonth} horas/mes
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[#65635E]">Hora base legal para cálculo de extras (30d):</span>
-              <span className="font-mono-tabular font-semibold">
-                {formatUSD(hourlyResult.legalBaseHourly)}/hora
-              </span>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs flex flex-col justify-between">
-            <div>
-              <span className="text-xs font-mono-tabular uppercase text-[#0F4C3A] font-semibold">
-                Valor Neto Real de tu Tiempo
-              </span>
-              <h3 className="font-serif-editorial text-lg font-semibold mt-1">
-                Salario Líquido por Hora
-              </h3>
-              <p className="text-xs text-[#65635E] mt-1">
-                Lo que realmente queda disponible para tus gastos por cada hora trabajada después de ISSS, AFP
-                y Renta.
-              </p>
+        {/* 4 Métricas de Costo Diario y Horario */}
+        <div className="col-12 col-lg-7">
+          <div className="row g-3">
+            <div className="col-12 col-sm-6">
+              <div className="card shadow-sm border-0 h-100 p-3 card-hover-shadow">
+                <span className="badge bg-success-subtle text-success border border-success-subtle align-self-start mb-2">
+                  Ingreso Líquido Real
+                </span>
+                <h6 className="text-muted small fw-bold mb-1">Salario Líquido por Hora</h6>
+                <div className="fs-2 fw-bold font-monospace text-success mb-2">
+                  {formatUSD(hourlyResult.netHourly)}
+                  <span className="fs-6 text-muted fw-normal">/h</span>
+                </div>
+                <p className="text-muted small mb-0">
+                  Lo que efectivamente recibes disponible por cada hora trabajada después de ISSS, AFP y Renta.
+                </p>
+              </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-[#EFECE6] flex items-baseline justify-between">
-              <span className="text-xs text-[#65635E]">Hora líquida:</span>
-              <span className="text-3xl font-mono-tabular font-bold text-[#0F4C3A]">
-                {formatUSD(hourlyResult.netHourly)}
-              </span>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs flex flex-col justify-between">
-            <div>
-              <span className="text-xs font-mono-tabular uppercase text-[#65635E] font-semibold">
-                Valor Nominal Antes de Descuentos
-              </span>
-              <h3 className="font-serif-editorial text-lg font-semibold mt-1">
-                Salario Bruto por Hora
-              </h3>
-              <p className="text-xs text-[#65635E] mt-1">
-                Se pierde{' '}
-                <strong className="font-mono-tabular text-[#B91C1C]">
-                  {formatUSD(round2(hourlyResult.grossHourly - hourlyResult.netHourly))}
-                </strong>{' '}
-                por cada hora en descuentos de ley.
-              </p>
+            <div className="col-12 col-sm-6">
+              <div className="card shadow-sm border-0 h-100 p-3 card-hover-shadow">
+                <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle align-self-start mb-2">
+                  Salario Bruto Contratado
+                </span>
+                <h6 className="text-muted small fw-bold mb-1">Salario Bruto por Hora</h6>
+                <div className="fs-2 fw-bold font-monospace text-dark mb-2">
+                  {formatUSD(hourlyResult.grossHourly)}
+                  <span className="fs-6 text-muted fw-normal">/h</span>
+                </div>
+                <p className="text-muted small mb-0">
+                  Deducción legal por hora:{' '}
+                  <span className="text-danger fw-bold font-monospace">
+                    -{formatUSD(round2(hourlyResult.grossHourly - hourlyResult.netHourly))}
+                  </span>
+                </p>
+              </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-[#EFECE6] flex items-baseline justify-between">
-              <span className="text-xs text-[#65635E]">Hora bruta:</span>
-              <span className="text-3xl font-mono-tabular font-bold text-[#141413]">
-                {formatUSD(hourlyResult.grossHourly)}
-              </span>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-xs text-[#65635E] block">Ingreso Líquido por Día</span>
-              <span className="text-xs text-[#65635E]">({daysPerMonth} días/mes)</span>
+            <div className="col-12 col-sm-6">
+              <div className="card shadow-sm border-0 p-3 bg-light">
+                <span className="text-muted small d-block">Valor Líquido por Día ({daysPerMonth} días):</span>
+                <span className="fs-4 fw-bold font-monospace text-success">
+                  {formatUSD(hourlyResult.netDaily)}/día
+                </span>
+              </div>
             </div>
-            <span className="text-2xl font-mono-tabular font-bold text-[#0F4C3A]">
-              {formatUSD(hourlyResult.netDaily)}/día
-            </span>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs flex items-center justify-between">
-            <div>
-              <span className="text-xs text-[#65635E] block">Salario Bruto por Día</span>
-              <span className="text-xs text-[#65635E]">({daysPerMonth} días/mes)</span>
+            <div className="col-12 col-sm-6">
+              <div className="card shadow-sm border-0 p-3 bg-light">
+                <span className="text-muted small d-block">Valor Bruto por Día ({daysPerMonth} días):</span>
+                <span className="fs-4 fw-bold font-monospace text-dark">
+                  {formatUSD(hourlyResult.grossDaily)}/día
+                </span>
+              </div>
             </div>
-            <span className="text-2xl font-mono-tabular font-bold text-[#141413]">
-              {formatUSD(hourlyResult.grossDaily)}/día
-            </span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#DFDCD2] p-5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[#EFECE6]">
+      {/* Tabla de Horas Extra y Recargos de Ley */}
+      <div className="card shadow-sm border-0 mb-4">
+        <div className="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
           <div>
-            <h3 className="font-serif-editorial text-lg font-semibold">
-              Calculadora de Horas Extra, Nocturnidad, Descanso y Asueto
-            </h3>
-            <p className="text-xs text-[#65635E]">
-              Tarifas calculadas según los recargos del Código de Trabajo de El Salvador sobre tu hora legal (
-              {formatUSD(hourlyResult.legalBaseHourly)}/h)
+            <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+              <Clock className="text-danger" size={20} />
+              <span>Calculadora de Horas Extra, Nocturnidad, Descanso y Asueto</span>
+            </h5>
+            <p className="card-subtitle text-muted small mb-0">
+              Tarifas según recargos del Código de Trabajo sobre tu hora legal ({formatUSD(hourlyResult.legalBaseHourly)}/h)
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <span className="text-[11px] text-[#65635E] block">Total Bruto Horas Extra:</span>
-              <span className="text-lg font-mono-tabular font-bold text-[#0F4C3A]">
+
+          <div className="d-flex align-items-center gap-3">
+            <div className="text-end">
+              <span className="small text-muted d-block">Subtotal Horas Extra:</span>
+              <span className="fs-5 fw-bold font-monospace text-success">
                 +{formatUSD(totalSimulatedOvertimeUsd)}
               </span>
             </div>
@@ -227,58 +216,59 @@ export function HourlyView({
               <button
                 type="button"
                 onClick={() => onSimulateOvertimeInPayroll(totalSimulatedOvertimeUsd)}
-                className="px-3 py-2 rounded-xl bg-[#0F4C3A] text-white text-xs font-medium flex items-center gap-1.5 hover:bg-[#0F4C3A]/90 cursor-pointer"
+                className="btn btn-primary btn-sm d-flex align-items-center gap-1.5"
               >
                 <span>Simular en Planilla</span>
-                <ArrowUpRight className="w-3.5 h-3.5" />
+                <ArrowUpRight size={14} />
               </button>
             )}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-[#E2DFD7] text-xs text-[#65635E] text-left">
-                <th className="py-2.5 font-medium">Tipo de Hora / Recargo</th>
-                <th className="py-2.5 font-medium">Base Legal y Multiplicador</th>
-                <th className="py-2.5 font-medium text-right">Valor por Hora</th>
-                <th className="py-2.5 font-medium text-center w-36">Horas en el Mes</th>
-                <th className="py-2.5 font-medium text-right">Subtotal Bruto</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EFECE6]">
-              {hourlyResult.overtimeRates.map((rate) => {
-                const qty = overtimeHoursMap[rate.id] || 0;
-                const subtotal = round2(rate.hourlyRateUsd * qty);
-                return (
-                  <tr key={rate.id} className={qty > 0 ? 'bg-[#0F4C3A]/4' : ''}>
-                    <td className="py-3 pr-3 font-medium text-[#141413]">{rate.label}</td>
-                    <td className="py-3 pr-3 text-xs text-[#65635E]">{rate.legalBasis}</td>
-                    <td className="py-3 pr-3 text-right font-mono-tabular font-semibold">
-                      {formatUSD(rate.hourlyRateUsd)}
-                    </td>
-                    <td className="py-3 px-2 text-center">
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={qty}
-                        onChange={(e) => {
-                          const val = Math.max(0, Number(e.target.value) || 0);
-                          setOvertimeHoursMap((prev) => ({ ...prev, [rate.id]: val }));
-                        }}
-                        className="w-20 text-center font-mono-tabular font-semibold bg-white border border-[#DFDCD2] rounded-lg py-1 focus:border-[#0F4C3A] focus:outline-none"
-                      />
-                    </td>
-                    <td className="py-3 pl-3 text-right font-mono-tabular font-semibold text-[#0F4C3A]">
-                      {formatUSD(subtotal)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="card-body p-0">
+          <div className="table-responsive">
+            <table className="table table-hover align-middle mb-0 font-monospace small">
+              <thead className="table-light">
+                <tr>
+                  <th scope="col" className="ps-4">Tipo de Hora / Recargo</th>
+                  <th scope="col">Base Legal y Multiplicador</th>
+                  <th scope="col" className="text-end">Valor Hora (USD)</th>
+                  <th scope="col" className="text-center" style={{ width: '140px' }}>Horas Mes</th>
+                  <th scope="col" className="text-end pe-4">Subtotal Bruto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hourlyResult.overtimeRates.map((rate) => {
+                  const qty = overtimeHoursMap[rate.id] || 0;
+                  const subtotal = round2(rate.hourlyRateUsd * qty);
+                  return (
+                    <tr key={rate.id} className={qty > 0 ? 'table-success' : ''}>
+                      <td className="ps-4 fw-semibold text-dark font-sans">{rate.label}</td>
+                      <td className="text-muted font-sans small">{rate.legalBasis}</td>
+                      <td className="text-end fw-bold">{formatUSD(rate.hourlyRateUsd)}</td>
+                      <td className="text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={qty}
+                          onChange={(e) => {
+                            const val = Math.max(0, Number(e.target.value) || 0);
+                            setOvertimeHoursMap((prev) => ({ ...prev, [rate.id]: val }));
+                          }}
+                          className="form-control form-control-sm text-center font-monospace fw-bold mx-auto"
+                          style={{ width: '80px' }}
+                        />
+                      </td>
+                      <td className="text-end pe-4 fw-bold text-success">
+                        {formatUSD(subtotal)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </motion.div>

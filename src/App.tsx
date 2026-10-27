@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   BrowserRouter,
   Routes,
@@ -7,16 +7,21 @@ import {
   useNavigate,
   useLocation,
 } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 import {
   Scale,
   Calendar,
   Clock,
   Wallet,
-  Shield,
   UserCheck,
   LogIn,
+  LogOut,
   AlertTriangle,
+  SlidersHorizontal,
+  Gift,
+  ChevronDown,
+  User,
+  Shield,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -171,6 +176,22 @@ function AppShell() {
   const [period, setPeriod] = useState<PayPeriod>('monthly');
   const [calcTab, setCalcTab] = useState<CalculatorTab>('payroll');
 
+  // UI state for dropdown and modal
+  const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
+  const [showLawParamsModal, setShowLawParamsModal] = useState<boolean>(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Vacation state
   const [vacationBonusPct, setVacationBonusPct] = useState<number>(30);
   const [vacationMode, setVacationMode] = useState<'bonus_only' | 'full_advance'>('bonus_only');
@@ -279,7 +300,6 @@ function AppShell() {
     }
   }, [monthlySalary, extraMonthlyBonus, period, seniority, daysPerMonth, hoursPerDay, expenses, bonusGoals]);
 
-  // ID Matching: Only expose expenses and bonus goals owned by the logged-in user (or also allow admin to use their own or default user records)
   const effectiveOwnerUser = useMemo(() => {
     if (!user) return null;
     if (user.role === 'admin') {
@@ -471,6 +491,7 @@ function AppShell() {
   const applyPresetSalary = (amount: number) => {
     setMonthlySalary(amount);
     setSalaryInput(amount.toFixed(2).replace(/\.00$/, ''));
+    setShowLawParamsModal(false);
   };
 
   const handleAddExpense = (e: React.FormEvent) => {
@@ -555,186 +576,228 @@ function AppShell() {
   const isCalculatorRoute = location.pathname === '/';
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F6F5F0] text-[#141413]">
-      {/* Top Security & Role Switcher Strip */}
-      <div className="bg-[#141413] text-[#EFECE6] text-[11px] border-b border-[#2C2B29]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-mono-tabular uppercase text-emerald-400 font-semibold">
-              RBAC / Sesión:
-            </span>
-            {user?.loggedIn ? (
-              <span className="font-mono-tabular">
-                {user.name} ({user.role === 'admin' ? 'Administrador' : 'Usuario Registrado'} · ID:{' '}
-                {user.id})
-              </span>
-            ) : (
-              <span className="font-mono-tabular text-amber-300">
-                Invitado (Anónimo · Solo calculadora pública)
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[#9E9A8E] hidden sm:inline">Cambiar vista de rol:</span>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className={`px-2 py-0.5 rounded font-mono-tabular cursor-pointer ${
-                !user ? 'bg-amber-500 text-[#141413] font-semibold' : 'bg-[#2C2B29] text-[#EFECE6]'
-              }`}
-            >
-              Invitado
-            </button>
-            <button
-              type="button"
-              onClick={() => loginAs('user')}
-              className={`px-2 py-0.5 rounded font-mono-tabular cursor-pointer ${
-                user?.role === 'user'
-                  ? 'bg-emerald-500 text-[#141413] font-semibold'
-                  : 'bg-[#2C2B29] text-[#EFECE6]'
-              }`}
-            >
-              Rol Usuario
-            </button>
-            <button
-              type="button"
-              onClick={() => loginAs('admin')}
-              className={`px-2 py-0.5 rounded font-mono-tabular cursor-pointer ${
-                user?.role === 'admin'
-                  ? 'bg-emerald-500 text-[#141413] font-semibold'
-                  : 'bg-[#2C2B29] text-[#EFECE6]'
-              }`}
-            >
-              Rol Admin
-            </button>
-            <span className="text-[#4A4945]">|</span>
-            <Link to="/admin" className="hover:underline text-emerald-300 font-mono-tabular">
-              /admin
-            </Link>
-            <Link to="/terminos" className="hover:underline text-[#C7C3B8]">
-              TyC
-            </Link>
-            <Link to="/privacidad" className="hover:underline text-[#C7C3B8]">
-              Privacidad ARCO
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navigation Header */}
-      <header className="border-b border-[#E2DFD7] bg-white/90 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#0F4C3A] text-white flex items-center justify-center font-mono-tabular font-semibold text-sm shadow-xs">
+    <div className="min-h-screen d-flex flex-column bg-light">
+      {/* Navbar Principal Simplificado y Limpio */}
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm py-2">
+        <div className="container-fluid">
+          {/* Brand limpio sin subtitulos redundantes */}
+          <Link to="/" className="navbar-brand d-flex align-items-center gap-2 fw-bold me-4">
+            <span className="badge bg-white text-primary fs-6 font-monospace py-1 px-2 shadow-xs">
               SV
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-serif-editorial text-xl font-semibold tracking-tight text-[#141413]">
-                  Salario y Gastos SV
-                </span>
-                <span className="text-[11px] font-mono-tabular uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#0F4C3A]/10 text-[#0F4C3A] font-medium">
-                  Ley 2026 · Q25 2027
-                </span>
-              </div>
-              <p className="text-xs text-[#65635E]">
-                ISSS, AFP, Renta, Vacación 30%, Aguinaldo, Quincena 25, Costo por Hora y Presupuesto
-              </p>
-            </div>
+            </span>
+            <span className="fs-5">Salario y Gastos SV</span>
           </Link>
 
-          <nav className="flex items-center gap-1 bg-[#EFECE6] p-1 rounded-xl overflow-x-auto">
-            {(
-              [
-                { id: 'payroll', label: 'Descuentos y Renta', icon: Scale },
-                { id: 'bonuses', label: 'Bonos de Ley y Q25', icon: Calendar },
-                { id: 'hourly', label: 'Costo Hora y Extras', icon: Clock },
-              ] as const
-            ).map((tab) => {
-              const Icon = tab.icon;
-              const isActive = isCalculatorRoute && calcTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => {
-                    setCalcTab(tab.id);
-                    if (!isCalculatorRoute) navigate('/');
-                  }}
-                  className={`relative px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                    isActive ? 'text-[#141413]' : 'text-[#65635E] hover:text-[#141413]'
-                  }`}
+          {/* Menú de navegación y sesión */}
+          <div className="d-flex align-items-center gap-2 ms-auto">
+            {/* Tabs de Navegación Principal */}
+            <div className="btn-group shadow-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('payroll');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm d-flex align-items-center gap-1.5 ${
+                  isCalculatorRoute && calcTab === 'payroll' ? 'btn-light fw-bold text-primary' : 'btn-outline-light'
+                }`}
+              >
+                <Scale size={15} />
+                <span className="d-none d-md-inline">Descuentos &amp; Renta</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('bonuses');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm d-flex align-items-center gap-1.5 ${
+                  isCalculatorRoute && calcTab === 'bonuses' ? 'btn-light fw-bold text-primary' : 'btn-outline-light'
+                }`}
+              >
+                <Calendar size={15} />
+                <span className="d-none d-md-inline">Bonos de Ley</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('hourly');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm d-flex align-items-center gap-1.5 ${
+                  isCalculatorRoute && calcTab === 'hourly' ? 'btn-light fw-bold text-primary' : 'btn-outline-light'
+                }`}
+              >
+                <Clock size={15} />
+                <span className="d-none d-md-inline">Costo Hora</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/mis-gastos')}
+                className={`btn btn-sm d-flex align-items-center gap-1.5 ${
+                  isExpensesRoute ? 'btn-light fw-bold text-primary' : 'btn-outline-light'
+                }`}
+              >
+                <Wallet size={15} />
+                <span className="d-none d-md-inline">Mis Gastos</span>
+              </button>
+            </div>
+
+            {/* Menú Desplegable de Perfil / Sesión y Roles (Simplificado) */}
+            <div className="position-relative" ref={profileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu((prev) => !prev)}
+                className="btn btn-sm btn-outline-light d-flex align-items-center gap-1.5"
+                aria-expanded={showProfileMenu}
+              >
+                {user?.loggedIn ? (
+                  <>
+                    <UserCheck size={15} />
+                    <span className="d-none d-sm-inline fw-semibold">{user.name}</span>
+                    <span className="badge bg-white text-primary text-uppercase" style={{ fontSize: '10px' }}>
+                      {user.role}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <User size={15} />
+                    <span className="d-none d-sm-inline">Invitado</span>
+                  </>
+                )}
+                <ChevronDown size={13} className="text-white-50" />
+              </button>
+
+              {/* Contenido del Dropdown */}
+              {showProfileMenu && (
+                <div
+                  className="dropdown-menu dropdown-menu-end show shadow-sm p-2 mt-1 border"
+                  style={{ minWidth: '240px', zIndex: 1050 }}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeMainTab"
-                      className="absolute inset-0 bg-white rounded-lg shadow-xs border border-[#E2DFD7]"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <Icon className="w-3.5 h-3.5 relative z-10 text-[#0F4C3A]" />
-                  <span className="relative z-10">{tab.label}</span>
-                </button>
-              );
-            })}
+                  <div className="px-2 py-1 mb-2 border-bottom">
+                    <span className="small text-muted d-block">Sesión actual</span>
+                    <strong className="text-dark d-block">
+                      {user?.loggedIn ? user.name : 'Modo Invitado (Público)'}
+                    </strong>
+                    {user?.loggedIn && (
+                      <span className="text-muted small font-monospace d-block" style={{ fontSize: '11px' }}>
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
 
-            {/* Protected Route Tab: /mis-gastos */}
-            <button
-              type="button"
-              onClick={() => navigate('/mis-gastos')}
-              className={`relative px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                isExpensesRoute ? 'text-[#141413]' : 'text-[#65635E] hover:text-[#141413]'
-              }`}
-            >
-              {isExpensesRoute && (
-                <motion.div
-                  layoutId="activeMainTab"
-                  className="absolute inset-0 bg-white rounded-lg shadow-xs border border-[#E2DFD7]"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-              <Wallet className="w-3.5 h-3.5 relative z-10 text-[#0F4C3A]" />
-              <span className="relative z-10">Mis Gastos</span>
-            </button>
+                  <div className="px-2 mb-2">
+                    <span className="small text-muted d-block mb-1">Cambiar vista / rol:</span>
+                    <div className="btn-group btn-group-sm w-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setShowProfileMenu(false);
+                        }}
+                        className={`btn btn-xs ${!user ? 'btn-primary' : 'btn-outline-secondary'}`}
+                      >
+                        Invitado
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          loginAs('user');
+                          setShowProfileMenu(false);
+                        }}
+                        className={`btn btn-xs ${user?.role === 'user' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                      >
+                        Usuario
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          loginAs('admin');
+                          setShowProfileMenu(false);
+                        }}
+                        className={`btn btn-xs ${user?.role === 'admin' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                      >
+                        Admin
+                      </button>
+                    </div>
+                  </div>
 
-            {user?.loggedIn ? (
-              <Link
-                to="/login"
-                className="px-3 py-2 rounded-lg text-xs font-medium text-[#0F4C3A] flex items-center gap-1 whitespace-nowrap"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{user.role === 'admin' ? 'Admin' : 'Mi Cuenta'}</span>
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="px-3 py-2 rounded-lg text-xs font-medium bg-[#0F4C3A] text-white flex items-center gap-1 whitespace-nowrap"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Entrar</span>
-              </Link>
-            )}
-          </nav>
-        </div>
-      </header>
+                  <div className="dropdown-divider my-1" />
 
-      {/* Persistent Salary Input & Live KPI Strip on Calculator & Expenses routes */}
-      {(isCalculatorRoute || isExpensesRoute) && (
-        <section className="border-b border-[#E2DFD7] bg-[#FAF9F5]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-              <div className="lg:col-span-6 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-6 bg-white p-3 rounded-xl border border-[#DFDCD2] shadow-2xs focus-within:border-[#0F4C3A] transition-colors">
-                    <label
-                      htmlFor="salary-input"
-                      className="block text-[11px] font-semibold uppercase tracking-wider text-[#65635E]"
+                  {user?.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="dropdown-item small py-1.5 d-flex align-items-center gap-2"
                     >
-                      Salario Base Mensual (USD)
+                      <Shield size={14} className="text-primary" />
+                      <span>Panel de Administración</span>
+                    </Link>
+                  )}
+
+                  <Link
+                    to="/terminos"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="dropdown-item small py-1.5"
+                  >
+                    Términos y Condiciones
+                  </Link>
+                  <Link
+                    to="/privacidad"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="dropdown-item small py-1.5"
+                  >
+                    Privacidad y Derechos ARCO
+                  </Link>
+
+                  <div className="dropdown-divider my-1" />
+
+                  {user?.loggedIn ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setShowProfileMenu(false);
+                      }}
+                      className="dropdown-item small py-1.5 text-danger d-flex align-items-center gap-1.5"
+                    >
+                      <LogOut size={14} />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="dropdown-item small py-1.5 text-primary fw-semibold d-flex align-items-center gap-1.5"
+                    >
+                      <LogIn size={14} />
+                      <span>Iniciar Sesión</span>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Salarial con Jerarquía Clara: Input Salario + Salario Líquido Destacado */}
+      {(isCalculatorRoute || isExpensesRoute) && (
+        <section className="bg-white border-bottom py-3 shadow-xs">
+          <div className="container-fluid">
+            <div className="row g-3 align-items-center">
+              {/* Controles de Salario, Bonos y Frecuencia */}
+              <div className="col-12 col-lg-7">
+                <div className="row g-2 align-items-end">
+                  <div className="col-12 col-sm-6">
+                    <label htmlFor="salary-input" className="form-label small fw-bold text-muted text-uppercase mb-1">
+                      Salario Base ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
                     </label>
-                    <div className="mt-1 flex items-baseline gap-1">
-                      <span className="text-lg font-mono-tabular text-[#65635E]">$</span>
+                    <div className="input-group input-group-lg shadow-xs">
+                      <span className="input-group-text bg-light font-monospace fw-bold text-muted">$</span>
                       <input
                         id="salary-input"
                         type="number"
@@ -742,21 +805,18 @@ function AppShell() {
                         step="10"
                         value={salaryInput}
                         onChange={(e) => handleSalaryTextChange(e.target.value)}
-                        className="w-full text-2xl font-mono-tabular font-semibold text-[#141413] bg-transparent focus:outline-none"
+                        className="form-control font-monospace fw-bold fs-3 text-dark"
                         placeholder="1000.00"
                       />
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3 bg-white p-3 rounded-xl border border-[#DFDCD2] shadow-2xs focus-within:border-[#0F4C3A] transition-colors">
-                    <label
-                      htmlFor="bonus-input"
-                      className="block text-[11px] font-semibold uppercase tracking-wider text-[#65635E]"
-                    >
-                      Bono / Comisión Mes
+                  <div className="col-6 col-sm-3">
+                    <label htmlFor="bonus-input" className="form-label small fw-bold text-muted text-uppercase mb-1">
+                      Bono / Comisión
                     </label>
-                    <div className="mt-1 flex items-baseline gap-1">
-                      <span className="text-base font-mono-tabular text-[#65635E]">$</span>
+                    <div className="input-group input-group-lg shadow-xs">
+                      <span className="input-group-text bg-light font-monospace text-muted">$</span>
                       <input
                         id="bonus-input"
                         type="number"
@@ -764,111 +824,112 @@ function AppShell() {
                         step="10"
                         value={bonusInput}
                         onChange={(e) => handleBonusTextChange(e.target.value)}
-                        className="w-full text-xl font-mono-tabular font-medium text-[#141413] bg-transparent focus:outline-none"
+                        className="form-control font-monospace fw-semibold fs-5 text-dark"
                         placeholder="0.00"
                       />
                     </div>
                   </div>
 
-                  <div className="sm:col-span-3 bg-white p-2 rounded-xl border border-[#DFDCD2] flex flex-col justify-between">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#65635E] px-1">
-                      Frecuencia de Pago
-                    </span>
-                    <div className="grid grid-cols-2 gap-1 bg-[#EFECE6] p-1 rounded-lg mt-1">
-                      {(['monthly', 'biweekly'] as const).map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => setPeriod(p)}
-                          className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                            period === p ? 'text-[#141413]' : 'text-[#65635E]'
-                          }`}
-                        >
-                          {period === p && (
-                            <motion.div
-                              layoutId="periodPill"
-                              className="absolute inset-0 bg-white rounded-md shadow-2xs"
-                              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                            />
-                          )}
-                          <span className="relative z-10">{p === 'monthly' ? 'Mensual' : 'Quincenal'}</span>
-                        </button>
-                      ))}
+                  <div className="col-6 col-sm-3">
+                    <label className="form-label small fw-bold text-muted text-uppercase mb-1">Frecuencia</label>
+                    <div className="btn-group w-100 shadow-xs" role="group" style={{ height: '48px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPeriod('monthly')}
+                        className={`btn ${period === 'monthly' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                      >
+                        Mes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPeriod('biweekly')}
+                        className={`btn ${period === 'biweekly' ? 'btn-primary fw-bold' : 'btn-outline-secondary'}`}
+                      >
+                        Quincena
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] text-[#65635E] mr-1">Referencias:</span>
-                  {[
-                    { label: 'Mín. Comercio $408.80', value: MINIMUM_WAGES_2026.comercio.monthly },
-                    { label: 'Mín. Maquila $402.32', value: MINIMUM_WAGES_2026.maquila.monthly },
-                    { label: 'Exento ISR $550', value: 606.06 },
-                    { label: '$800', value: 800 },
-                    { label: 'Tope ISSS $1,000', value: 1000 },
-                    { label: 'Tope Q25 $1,500', value: 1500 },
-                    { label: '$2,200', value: 2200 },
-                  ].map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => applyPresetSalary(preset.value)}
-                      className={`text-[11px] font-mono-tabular px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                        Math.abs(monthlySalary - preset.value) < 0.05
-                          ? 'bg-[#0F4C3A] text-white border-[#0F4C3A]'
-                          : 'bg-white text-[#4A4945] border-[#DFDCD2] hover:border-[#0F4C3A]/50'
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+                {/* Enlace sutil para abrir parámetros y tablas de ley sin saturar */}
+                <div className="mt-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowLawParamsModal(true)}
+                    className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1.5"
+                  >
+                    <SlidersHorizontal size={14} className="text-primary" />
+                    <span className="small">Ver parámetros de ley y salarios mínimos de referencia</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white p-3.5 rounded-xl border border-[#DFDCD2]">
-                  <span className="text-[11px] text-[#65635E] block">
-                    Líquido {period === 'monthly' ? 'Mensual' : 'Quincenal'}
+              {/* Hero Block: Salario Líquido Prominente */}
+              <div className="col-12 col-lg-5">
+                <div className="p-3 bg-success-subtle rounded border border-success-subtle d-flex flex-column justify-content-center">
+                  <span className="text-success-emphasis text-uppercase fw-bold small">
+                    Salario Líquido a Recibir ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
                   </span>
-                  <div className="mt-1 text-lg sm:text-xl font-mono-tabular font-semibold text-[#0F4C3A]">
+                  <div className="fs-2 fw-bold font-monospace text-success lh-1 my-1">
                     {formatUSD(activePayroll.netPay)}
                   </div>
-                  <span className="text-[11px] font-mono-tabular text-[#65635E]">
+                  <span className="text-muted small font-monospace">
                     {period === 'monthly'
-                      ? `${formatUSD(biweeklyPayroll.netPay)} / quincena`
-                      : `${formatUSD(monthlyPayroll.netPay)} / mes`}
+                      ? `${formatUSD(biweeklyPayroll.netPay)} por quincena`
+                      : `${formatUSD(monthlyPayroll.netPay)} por mes`}
                   </span>
                 </div>
+              </div>
+            </div>
 
-                <div className="bg-white p-3.5 rounded-xl border border-[#DFDCD2]">
-                  <span className="text-[11px] text-[#65635E] block">Descuentos de Ley</span>
-                  <div className="mt-1 text-lg sm:text-xl font-mono-tabular font-semibold text-[#B91C1C]">
-                    -{formatUSD(activePayroll.totalEmployeeDeductions)}
+            {/* Fila Compacta de Métricas Secundarias */}
+            <hr className="my-2.5 text-muted opacity-25" />
+            <div className="row g-2 text-start small font-monospace">
+              <div className="col-12 col-md-4">
+                <div className="d-flex align-items-center gap-2 p-1.5 border rounded bg-light">
+                  <div className="p-1 bg-white rounded text-danger border">
+                    <Scale size={16} />
                   </div>
-                  <span className="text-[11px] font-mono-tabular text-[#65635E]">
-                    {activePayroll.effectiveDeductionPct}% · {activePayroll.isrDetail.bracketLabel}
-                  </span>
+                  <div>
+                    <span className="text-muted d-block" style={{ fontSize: '11px' }}>Descuentos de Ley:</span>
+                    <strong className="text-danger">
+                      -{formatUSD(activePayroll.totalEmployeeDeductions)} ({activePayroll.effectiveDeductionPct}%)
+                    </strong>
+                  </div>
                 </div>
+              </div>
 
-                <div className="bg-white p-3.5 rounded-xl border border-[#DFDCD2]">
-                  <span className="text-[11px] text-[#65635E] block">Valor Hora Neta</span>
-                  <div className="mt-1 text-lg sm:text-xl font-mono-tabular font-semibold text-[#141413]">
-                    {formatUSD(hourlyResult.netHourly)}
-                    <span className="text-xs font-normal text-[#65635E]">/h</span>
+              <div className="col-12 col-md-4">
+                <div className="d-flex align-items-center gap-2 p-1.5 border rounded bg-light">
+                  <div className="p-1 bg-white rounded text-primary border">
+                    <Clock size={16} />
                   </div>
-                  <span className="text-[11px] font-mono-tabular text-[#65635E]">
-                    Bruta: {formatUSD(hourlyResult.grossHourly)}/h
-                  </span>
+                  <div>
+                    <span className="text-muted d-block" style={{ fontSize: '11px' }}>Valor Hora Neta:</span>
+                    <strong className="text-primary">
+                      {formatUSD(hourlyResult.netHourly)}/h
+                    </strong>
+                    <span className="text-muted ms-1" style={{ fontSize: '11px' }}>
+                      (Bruta: {formatUSD(hourlyResult.grossHourly)}/h)
+                    </span>
+                  </div>
                 </div>
+              </div>
 
-                <div className="bg-white p-3.5 rounded-xl border border-[#DFDCD2]">
-                  <span className="text-[11px] text-[#65635E] block">Bonos Anuales (Neto)</span>
-                  <div className="mt-1 text-lg sm:text-xl font-mono-tabular font-semibold text-[#0F4C3A]">
-                    +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
+              <div className="col-12 col-md-4">
+                <div className="d-flex align-items-center gap-2 p-1.5 border rounded bg-light">
+                  <div className="p-1 bg-white rounded text-success border">
+                    <Gift size={16} />
                   </div>
-                  <span className="text-[11px] font-mono-tabular text-[#65635E]">
-                    Vac. + Agui. + Q25
-                  </span>
+                  <div>
+                    <span className="text-muted d-block" style={{ fontSize: '11px' }}>Bonos Anuales Estimados:</span>
+                    <strong className="text-success">
+                      +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
+                    </strong>
+                    <span className="text-muted ms-1" style={{ fontSize: '11px' }}>
+                      (Vac + Agui + Q25)
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -876,10 +937,166 @@ function AppShell() {
         </section>
       )}
 
-      {/* Central Router with ProtectedRoute Guards */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Modal de Parámetros de Ley y Salarios Mínimos */}
+      {showLawParamsModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content shadow">
+              <div className="modal-header">
+                <h5 className="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+                  <SlidersHorizontal size={18} className="text-primary" />
+                  <span>Parámetros Oficiales y Salarios de Ley (El Salvador)</span>
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowLawParamsModal(false)}
+                />
+              </div>
+
+              <div className="modal-body">
+                <h6 className="fw-bold text-muted text-uppercase small mb-2">
+                  1. Salarios Mínimos Vigentes
+                </h6>
+                <div className="table-responsive mb-3">
+                  <table className="table table-sm table-bordered align-middle mb-0 font-monospace small">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Sector Económico</th>
+                        <th>Mensual</th>
+                        <th>Quincenal</th>
+                        <th className="text-center">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-sans">Comercio y Servicios</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.comercio.monthly)}</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.comercio.monthly / 2)}</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.comercio.monthly)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="font-sans">Industria / Maquila</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.maquila.monthly)}</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.maquila.monthly / 2)}</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.maquila.monthly)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="font-sans">Agropecuario (Café / Caña)</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.agropecuario.monthly)}</td>
+                        <td>{formatUSD(MINIMUM_WAGES_2026.agropecuario.monthly / 2)}</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.agropecuario.monthly)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <h6 className="fw-bold text-muted text-uppercase small mb-2">
+                  2. Topes Legales y Límites de Deducción
+                </h6>
+                <div className="table-responsive">
+                  <table className="table table-sm table-bordered align-middle mb-0 font-monospace small">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Concepto Legal</th>
+                        <th>Límite / Techo</th>
+                        <th>Efecto de Ley</th>
+                        <th className="text-center">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-sans">Techo Cotizable ISSS</td>
+                        <td>$1,000.00 / mes</td>
+                        <td className="font-sans text-muted">Deducción máxima empleado: $30.00</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(1000)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar $1,000
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="font-sans">Techo Quincena 25 (Decreto 499)</td>
+                        <td>$1,500.00 nominal</td>
+                        <td className="font-sans text-muted">100% exento de ISSS, AFP y Renta</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(1500)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar $1,500
+                          </button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="font-sans">Límite Tramo I ISR (Exento)</td>
+                        <td>$550.00 imponible</td>
+                        <td className="font-sans text-muted">Equivale a aprox. $606.06 nominal</td>
+                        <td className="text-center">
+                          <button
+                            type="button"
+                            onClick={() => applyPresetSalary(606.06)}
+                            className="btn btn-xs btn-outline-primary py-0.5 px-2"
+                          >
+                            Cargar $606.06
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => setShowLawParamsModal(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contenido Principal con Router */}
+      <main className="container-fluid py-4 flex-grow-1">
         <Routes>
-          {/* RUTA PÚBLICA PRINCIPAL: Calculadora de Salario, Bonos y Horas */}
           <Route
             path="/"
             element={
@@ -953,18 +1170,15 @@ function AppShell() {
             }
           />
 
-          {/* RUTAS PÚBLICAS DE AUTENTICACIÓN Y CUMPLIMIENTO LEGAL SV */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/terminos" element={<TerminosPage />} />
           <Route path="/privacidad" element={<PrivacidadPage />} />
 
-          {/* CATÁLOGO DE PÁGINAS DE ERROR HTTP */}
           <Route path="/401" element={<Error401 />} />
           <Route path="/403" element={<Error403 />} />
           <Route path="/500" element={<Error500 />} />
           <Route path="/503" element={<Error503 />} />
 
-          {/* RUTA PROTEGIDA: Solo usuarios autenticados (RBAC + ID Matching) */}
           <Route
             element={
               <ProtectedRoute isAllowed={canAccessPrivateRoute(user)} redirectTo="/401" />
@@ -1012,7 +1226,6 @@ function AppShell() {
             />
           </Route>
 
-          {/* RUTA DE ADMINISTRACIÓN: Solo rol admin (redirige a /403 si es usuario común) */}
           <Route
             element={
               <ProtectedRoute isAllowed={canAccessAdminRoute(user)} redirectTo="/403" />
@@ -1021,42 +1234,37 @@ function AppShell() {
             <Route path="/admin" element={<AdminPanel />} />
           </Route>
 
-          {/* ERROR 404: Captura cualquier URL que no exista */}
           <Route path="*" element={<Error404 />} />
         </Routes>
       </main>
 
-      {/* Footer with Legal Disclaimer, Provider Identification (Ley de Comercio Electrónico SV) & Links */}
-      <footer className="border-t border-[#E2DFD7] bg-white mt-12 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 text-xs text-[#65635E]">
-          {/* Disclaimer Banner */}
-          <div className="p-3.5 rounded-xl bg-[#FAF9F5] border border-[#E2DFD7] flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              <strong className="text-[#141413]">Aviso Legal y Exoneración de Responsabilidad:</strong> Los
-              cálculos de ISSS, AFP, Renta (ISR), Vacación 30%, Aguinaldo y Quincena 25 son estrictamente{' '}
-              <strong>informativos, ilustrativos y referenciales</strong>. No sustituyen la asesoría legal,
-              contable, financiera ni las liquidaciones oficiales del Ministerio de Trabajo (MTPS), Ministerio
-              de Hacienda, ISSS o AFP. Sujeto a las leyes de la República de El Salvador y jurisdicción de San
-              Salvador.
-            </p>
+      {/* Footer Bootstrap 5 con Disclaimer y Enlaces */}
+      <footer className="bg-white border-top py-4 mt-auto">
+        <div className="container-fluid space-y-3">
+          <div className="alert alert-warning py-2 px-3 small mb-3 d-flex align-items-start gap-2">
+            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-warning-emphasis" />
+            <div style={{ fontSize: '12px' }}>
+              <strong>Aviso Legal y Exoneración de Responsabilidad:</strong> Los cálculos de ISSS, AFP, Renta
+              (ISR), Vacación 30%, Aguinaldo y Quincena 25 son estrictamente informativos, ilustrativos y
+              referenciales. No sustituyen la asesoría legal, contable ni las liquidaciones oficiales del
+              Ministerio de Trabajo (MTPS), Ministerio de Hacienda, ISSS o AFP. Sujeto a las leyes de la
+              República de El Salvador y tribunales de San Salvador.
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small text-muted">
             <div>
-              <strong className="text-[#141413]">Salario y Gastos SV</strong> · Proveedor: Axel Reyes (San
-              Salvador, El Salvador · <span className="font-mono-tabular">axel.f.reyes.a@gmail.com</span>)
+              <strong className="text-dark">Salario y Gastos SV</strong> · Titular: Axel Reyes (San Salvador,
+              El Salvador · <span className="font-monospace">axel.f.reyes.a@gmail.com</span>)
             </div>
-            <div className="flex flex-wrap items-center gap-4 font-medium">
-              <Link to="/terminos" className="text-[#0F4C3A] hover:underline flex items-center gap-1">
-                <Scale className="w-3.5 h-3.5" />
-                <span>Términos y Condiciones</span>
+            <div className="d-flex flex-wrap gap-3">
+              <Link to="/terminos" className="text-decoration-none text-muted">
+                Términos y Condiciones
               </Link>
-              <Link to="/privacidad" className="text-[#0F4C3A] hover:underline flex items-center gap-1">
-                <Shield className="w-3.5 h-3.5" />
-                <span>Política de Privacidad y Derechos ARCO</span>
+              <Link to="/privacidad" className="text-decoration-none text-muted">
+                Privacidad y Derechos ARCO
               </Link>
-              <Link to="/admin" className="text-[#65635E] hover:text-[#141413]">
+              <Link to="/admin" className="text-decoration-none text-muted">
                 Panel Admin
               </Link>
             </div>

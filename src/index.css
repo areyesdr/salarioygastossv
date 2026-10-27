@@ -1,41 +1,53 @@
-@import "tailwindcss";
+/* Bootstrap 5 & Bootswatch Zephyr Theme */
+@import "bootswatch/dist/zephyr/bootstrap.min.css";
 
-@layer base {
-  :root {
-    --font-serif: 'Newsreader', Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  }
-
-  body {
-    font-family: var(--font-sans);
-    background-color: #F6F5F0;
-    color: #141413;
-    margin: 0;
-  }
+:root {
+  --bs-font-sans-serif: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bs-font-monospace: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.font-serif-editorial {
-  font-family: var(--font-serif);
+body {
+  font-family: var(--bs-font-sans-serif);
+  background-color: #f4f6f9;
+  color: #212529;
+  -webkit-font-smoothing: antialiased;
 }
 
-.font-mono-tabular {
-  font-family: var(--font-mono);
+.font-monospace {
+  font-family: var(--bs-font-monospace) !important;
   font-variant-numeric: tabular-nums;
 }
 
-/* Custom subtle scrollbars for tables */
+/* Custom subtle scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #EFECE6;
+  background: #e9ecef;
 }
 ::-webkit-scrollbar-thumb {
-  background: #C7C3B8;
+  background: #ced4da;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9E9A8E;
+  background: #adb5bd;
+}
+
+/* Card hover lift effect for financial stat cards */
+.card-hover-shadow {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-hover-shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Custom progress bar transitions */
+.salary-breakdown-bar {
+  height: 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  background-color: #e9ecef;
 }
