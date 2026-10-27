@@ -7,6 +7,7 @@ import {
   calcAguinaldo,
   calcQuincena25,
   calcHourlyAndOvertime,
+  calcSeniorityFromHireDate,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
 import {
@@ -181,4 +182,33 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(details.q1.netPay + details.q2.netPay, 800.0);
     assert.equal(details.q1.totalEmployeeDeductions + details.q2.totalEmployeeDeductions, monthly.totalEmployeeDeductions);
   });
+
+  it('calculates exact seniority, aguinaldo bracket and proportional days from hire date', () => {
+    // Caso 1: Trabajador con más de 3 años al 12 dic 2026
+    const res3Years = calcSeniorityFromHireDate('2023-01-15', '2026-10-26');
+    assert.equal(res3Years.years, 3);
+    assert.equal(res3Years.months, 9);
+    assert.equal(res3Years.currentSeniorityBracket, '3-to-10');
+    assert.equal(res3Years.aguinaldoSeniorityBracket, '3-to-10');
+    assert.equal(res3Years.aguinaldoDaysWorked, 365);
+    assert.equal(res3Years.isEligibleForRenunciaVoluntaria, true);
+
+    // Caso 2: Trabajador que ingresó el 1 de julio de 2026 (menos de 1 año)
+    const resUnder1 = calcSeniorityFromHireDate('2026-07-01', '2026-10-26');
+    assert.equal(resUnder1.years, 0);
+    assert.equal(resUnder1.months, 3);
+    assert.equal(resUnder1.currentSeniorityBracket, 'under-1');
+    assert.equal(resUnder1.aguinaldoSeniorityBracket, 'under-1');
+    // Días desde 2026-07-01 hasta 2026-12-12 = 31 (jul) + 31 (ago) + 30 (sep) + 31 (oct) + 30 (nov) + 12 (dic) = 165 días
+    assert.equal(resUnder1.aguinaldoDaysWorked, 165);
+    assert.equal(resUnder1.isEligibleForRenunciaVoluntaria, false);
+
+    // Caso 3: Trabajador con más de 10 años
+    const res10Plus = calcSeniorityFromHireDate('2014-03-01', '2026-10-26');
+    assert.equal(res10Plus.years, 12);
+    assert.equal(res10Plus.currentSeniorityBracket, '10-plus');
+    assert.equal(res10Plus.aguinaldoSeniorityBracket, '10-plus');
+    assert.equal(res10Plus.isEligibleForVacation, true);
+  });
 });
+

@@ -9,6 +9,7 @@ import {
   type Quincena25CalculationResult,
   type SeniorityBracket,
   type AguinaldoExemptionRule,
+  type SeniorityCalculationResult,
 } from '../lib/svLaborLaw.ts';
 
 interface BonusesViewProps {
@@ -44,6 +45,9 @@ interface BonusesViewProps {
   splitDays: [number, number, number];
   setSplitDays: (v: [number, number, number]) => void;
   formatUSD: (val: number) => string;
+  hireDate?: string;
+  onHireDateChange?: (v: string) => void;
+  seniorityDetails?: SeniorityCalculationResult;
 }
 
 export function BonusesView({
@@ -79,6 +83,9 @@ export function BonusesView({
   splitDays,
   setSplitDays,
   formatUSD,
+  hireDate,
+  onHireDateChange,
+  seniorityDetails,
 }: BonusesViewProps) {
   return (
     <motion.div
@@ -89,6 +96,35 @@ export function BonusesView({
       transition={{ duration: 0.2 }}
       className="container-fluid px-0"
     >
+      {/* Banner de Sincronización: Fecha de Inicio de Labores y Antigüedad */}
+      <div className="card-soft p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div className="d-flex align-items-center gap-2">
+          <Calendar size={18} className="text-secondary" />
+          <div>
+            <span className="fw-semibold text-slate-dark d-block" style={{ fontSize: '13px' }}>
+              Fecha de Inicio de Labores
+            </span>
+            <span className="text-muted small" style={{ fontSize: '12px' }}>
+              Define automáticamente tu antigüedad acumulada y los tramos de Aguinaldo y Quincena 25.
+            </span>
+          </div>
+        </div>
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          <input
+            type="date"
+            value={hireDate || ''}
+            onChange={(e) => onHireDateChange?.(e.target.value)}
+            className="form-control form-control-sm font-monospace fw-semibold"
+            style={{ width: '160px' }}
+          />
+          {seniorityDetails && (
+            <span className="badge-subtle font-monospace py-1.5 px-2.5">
+              Antigüedad: {seniorityDetails.formattedSeniority}
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* Resumen Anual de Prestaciones */}
       <div className="card-soft mb-4">
         <div className="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">

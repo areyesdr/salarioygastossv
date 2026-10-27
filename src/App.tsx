@@ -21,6 +21,9 @@ import {
   User,
   Shield,
   RotateCcw,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -28,6 +31,7 @@ import {
   calcAguinaldo,
   calcQuincena25,
   calcHourlyAndOvertime,
+  calcSeniorityFromHireDate,
   MINIMUM_WAGES_2026,
   round2,
   type PayPeriod,
@@ -42,6 +46,7 @@ import {
   filterOwnedResources,
 } from './lib/security.ts';
 import { useAuth } from './context/AuthContext.tsx';
+import { useTheme } from './context/ThemeContext.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { PayrollView } from './components/PayrollView.tsx';
 import { BonusesView } from './components/BonusesView.tsx';
@@ -178,6 +183,7 @@ const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
 function AppShell() {
   const { user, logout } = useAuth();
+  const { themeMode, setThemeMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -187,6 +193,9 @@ function AppShell() {
   const [bonusInput, setBonusInput] = useState<string>('0');
   const [period, setPeriod] = useState<PayPeriod>('monthly');
   const [calcTab, setCalcTab] = useState<CalculatorTab>('payroll');
+
+  // Fecha de inicio de labores global
+  const [hireDate, setHireDate] = useState<string>('2023-01-16');
 
   // UI state for dropdown and modal
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
@@ -213,14 +222,30 @@ function AppShell() {
   // Aguinaldo state
   const [seniority, setSeniority] = useState<SeniorityBracket>('1-to-3');
   const [aguinaldoDaysUnder1, setAguinaldoDaysUnder1] = useState<number>(210);
-  const [aguinaldoHireDate, setAguinaldoHireDate] = useState<string>('2026-05-15');
+  const [aguinaldoHireDate, setAguinaldoHireDate] = useState<string>('2023-01-16');
   const [aguinaldoExemptionRule, setAguinaldoExemptionRule] = useState<AguinaldoExemptionRule>('decreto_1500');
 
   // Quincena 25 state
   const [q25FullYear, setQ25FullYear] = useState<boolean>(true);
   const [q25DaysWorked, setQ25DaysWorked] = useState<number>(250);
-  const [q25HireDate, setQ25HireDate] = useState<string>('2026-05-15');
+  const [q25HireDate, setQ25HireDate] = useState<string>('2023-01-16');
   const [q25VoluntaryAboveCap, setQ25VoluntaryAboveCap] = useState<boolean>(false);
+
+  // Cálculo de antigüedad exacta y sincronización con prestaciones
+  const seniorityDetails = useMemo(() => {
+    return calcSeniorityFromHireDate(hireDate);
+  }, [hireDate]);
+
+  const handleHireDateChange = (newDate: string) => {
+    setHireDate(newDate);
+    const details = calcSeniorityFromHireDate(newDate);
+    setSeniority(details.aguinaldoSeniorityBracket);
+    setAguinaldoDaysUnder1(details.aguinaldoDaysWorked);
+    setAguinaldoHireDate(newDate);
+    setQ25FullYear(details.q25IsFullYear);
+    setQ25DaysWorked(details.q25DaysWorked);
+    setQ25HireDate(newDate);
+  };
 
   // Hourly & overtime state
   const [daysPerMonth, setDaysPerMonth] = useState<number>(30);
@@ -311,6 +336,16 @@ function AppShell() {
       if (parsed.seniority) {
         setSeniority(parsed.seniority);
       }
+      if (typeof parsed.hireDate === 'string' && parsed.hireDate) {
+        setHireDate(parsed.hireDate);
+        const details = calcSeniorityFromHireDate(parsed.hireDate);
+        setSeniority(details.aguinaldoSeniorityBracket);
+        setAguinaldoDaysUnder1(details.aguinaldoDaysWorked);
+        setAguinaldoHireDate(parsed.hireDate);
+        setQ25FullYear(details.q25IsFullYear);
+        setQ25DaysWorked(details.q25DaysWorked);
+        setQ25HireDate(parsed.hireDate);
+      }
       if (typeof parsed.daysPerMonth === 'number') setDaysPerMonth(parsed.daysPerMonth);
       if (typeof parsed.hoursPerDay === 'number') setHoursPerDay(parsed.hoursPerDay);
       if (Array.isArray(parsed.expenses)) {
@@ -345,6 +380,7 @@ function AppShell() {
           seniority,
           daysPerMonth,
           hoursPerDay,
+          hireDate,
           expenses,
           bonusGoals,
         })
@@ -352,7 +388,7 @@ function AppShell() {
     } catch {
       // Ignore quota errors
     }
-  }, [monthlySalary, extraMonthlyBonus, period, seniority, daysPerMonth, hoursPerDay, expenses, bonusGoals]);
+  }, [monthlySalary, extraMonthlyBonus, period, seniority, daysPerMonth, hoursPerDay, hireDate, expenses, bonusGoals]);
 
   const effectiveOwnerUser = useMemo(() => {
     if (!user) return null;
@@ -711,8 +747,42 @@ function AppShell() {
             </button>
           </div>
 
+          {/* Selector de Modo Oscuro / Sistema / Claro */}
+          <div className="btn-group p-0.5 bg-slate-800 rounded border border-slate-700 me-2" role="group">
+            <button
+              type="button"
+              title="Tema del sistema (detecta configuración del OS)"
+              className={`btn btn-sm py-1 px-2 border-0 ${
+                themeMode === 'system' ? 'btn-dark text-white fw-semibold' : 'text-slate-400'
+              }`}
+              onClick={() => setThemeMode('system')}
+            >
+              <Monitor size={13} />
+            </button>
+            <button
+              type="button"
+              title="Modo claro"
+              className={`btn btn-sm py-1 px-2 border-0 ${
+                themeMode === 'light' ? 'btn-light text-slate-900 fw-semibold' : 'text-slate-400'
+              }`}
+              onClick={() => setThemeMode('light')}
+            >
+              <Sun size={13} />
+            </button>
+            <button
+              type="button"
+              title="Modo oscuro"
+              className={`btn btn-sm py-1 px-2 border-0 ${
+                themeMode === 'dark' ? 'btn-dark text-white fw-semibold' : 'text-slate-400'
+              }`}
+              onClick={() => setThemeMode('dark')}
+            >
+              <Moon size={13} />
+            </button>
+          </div>
+
           {/* Área de Autenticación Sobria a la Derecha */}
-          <div className="d-flex align-items-center ms-3">
+          <div className="d-flex align-items-center ms-1">
             {user?.loggedIn ? (
               <div className="position-relative" ref={profileMenuRef}>
                 <button
@@ -916,6 +986,48 @@ function AppShell() {
                           >
                             Quincena
                           </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Fila de Fecha de Inicio de Labores & Antigüedad */}
+                    <div className="row g-3 mt-1">
+                      <div className="col-12 col-sm-6">
+                        <label
+                          htmlFor="hire-date-input"
+                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
+                          style={{ fontSize: '11px' }}
+                        >
+                          <span>Fecha de Inicio de Labores</span>
+                          <span className="text-secondary fw-semibold font-monospace" style={{ fontSize: '11px' }}>
+                            {seniorityDetails.formattedSeniority}
+                          </span>
+                        </label>
+                        <div className="input-group">
+                          <span className="input-group-text bg-white border-end-0 text-muted">
+                            <Calendar size={15} />
+                          </span>
+                          <input
+                            id="hire-date-input"
+                            type="date"
+                            value={hireDate}
+                            onChange={(e) => handleHireDateChange(e.target.value)}
+                            className="form-control border-start-0 font-monospace text-slate-dark fw-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="col-12 col-sm-6 d-flex flex-column justify-content-end">
+                        <div
+                          className="p-2 bg-slate-50 rounded border d-flex align-items-center justify-content-between"
+                          style={{ height: '42px' }}
+                        >
+                          <span className="text-muted small" style={{ fontSize: '11px' }}>
+                            Aguinaldo al 12 Dic:
+                          </span>
+                          <span className="badge-subtle font-monospace fw-semibold" style={{ fontSize: '11px' }}>
+                            {seniorityDetails.aguinaldoLabel}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1219,6 +1331,9 @@ function AppShell() {
                     splitDays={splitDays}
                     setSplitDays={setSplitDays}
                     formatUSD={formatUSD}
+                    hireDate={hireDate}
+                    onHireDateChange={handleHireDateChange}
+                    seniorityDetails={seniorityDetails}
                   />
                 )}
                 {calcTab === 'hourly' && (

@@ -578,6 +578,200 @@ export function calcDaysBetweenInclusive(startDateStr: string, cutoffDateStr: st
   return Math.min(365, Math.max(0, diffDays));
 }
 
+export interface SeniorityCalculationResult {
+  hireDate: string;
+  years: number;
+  months: number;
+  days: number;
+  totalDays: number;
+  formattedSeniority: string;
+  currentSeniorityBracket: SeniorityBracket;
+  aguinaldoCutoffDate: string;
+  aguinaldoSeniorityBracket: SeniorityBracket;
+  aguinaldoDaysWorked: number;
+  aguinaldoLabel: string;
+  q25CutoffDate: string;
+  q25IsFullYear: boolean;
+  q25DaysWorked: number;
+  isEligibleForVacation: boolean;
+  isEligibleForRenunciaVoluntaria: boolean;
+  indemnizacionYearsEquivalent: number;
+}
+
+/**
+ * Calcula la antigüedad exacta (años, meses y días) y determina automáticamente
+ * los tramos y proporcionales legales de Aguinaldo, Quincena 25 y Vacaciones.
+ */
+export function calcSeniorityFromHireDate(
+  hireDateStr: string,
+  referenceDateStr?: string
+): SeniorityCalculationResult {
+  const defaultYear = 2026;
+  if (!hireDateStr || !hireDateStr.trim()) {
+    return {
+      hireDate: '',
+      years: 0,
+      months: 0,
+      days: 0,
+      totalDays: 0,
+      formattedSeniority: 'Sin fecha registrada',
+      currentSeniorityBracket: '1-to-3',
+      aguinaldoCutoffDate: `${defaultYear}-12-12`,
+      aguinaldoSeniorityBracket: '1-to-3',
+      aguinaldoDaysWorked: 365,
+      aguinaldoLabel: '1 a menos de 3 años (15 días)',
+      q25CutoffDate: '2027-01-25',
+      q25IsFullYear: true,
+      q25DaysWorked: 365,
+      isEligibleForVacation: true,
+      isEligibleForRenunciaVoluntaria: true,
+      indemnizacionYearsEquivalent: 1,
+    };
+  }
+
+  const hire = new Date(`${hireDateStr}T00:00:00`);
+  const ref = referenceDateStr ? new Date(`${referenceDateStr}T00:00:00`) : new Date();
+
+  if (Number.isNaN(hire.getTime()) || hire > ref) {
+    return {
+      hireDate: hireDateStr,
+      years: 0,
+      months: 0,
+      days: 0,
+      totalDays: 0,
+      formattedSeniority: 'Fecha no válida o futura',
+      currentSeniorityBracket: 'under-1',
+      aguinaldoCutoffDate: `${ref.getFullYear()}-12-12`,
+      aguinaldoSeniorityBracket: 'under-1',
+      aguinaldoDaysWorked: 0,
+      aguinaldoLabel: 'Menos de 1 año (0 días)',
+      q25CutoffDate: '2027-01-25',
+      q25IsFullYear: false,
+      q25DaysWorked: 0,
+      isEligibleForVacation: false,
+      isEligibleForRenunciaVoluntaria: false,
+      indemnizacionYearsEquivalent: 0,
+    };
+  }
+
+  let y = ref.getFullYear() - hire.getFullYear();
+  let m = ref.getMonth() - hire.getMonth();
+  let d = ref.getDate() - hire.getDate();
+
+  if (d < 0) {
+    const prevMonthLastDay = new Date(ref.getFullYear(), ref.getMonth(), 0).getDate();
+    d += prevMonthLastDay;
+    m -= 1;
+  }
+  if (m < 0) {
+    m += 12;
+    y -= 1;
+  }
+
+  const diffMs = ref.getTime() - hire.getTime();
+  const totalDays = Math.max(0, Math.floor(diffMs / 86_400_000));
+
+  const parts: string[] = [];
+  if (y > 0) parts.push(`${y} ${y === 1 ? 'año' : 'años'}`);
+  if (m > 0) parts.push(`${m} ${m === 1 ? 'mes' : 'meses'}`);
+  if (d > 0 || parts.length === 0) parts.push(`${d} ${d === 1 ? 'día' : 'días'}`);
+  const formattedSeniority = parts.join(', ');
+
+  let currentSeniorityBracket: SeniorityBracket = 'under-1';
+  if (y >= 10) currentSeniorityBracket = '10-plus';
+  else if (y >= 3) currentSeniorityBracket = '3-to-10';
+  else if (y >= 1) currentSeniorityBracket = '1-to-3';
+
+  // Aguinaldo computation at December 12 of reference year
+  const agYear = ref.getFullYear();
+  const agCutoff = new Date(`${agYear}-12-12T00:00:00`);
+  let agBracket: SeniorityBracket = 'under-1';
+  let agDays = 365;
+  let agLabel = 'Menos de 1 año (proporcional)';
+
+  if (hire > agCutoff) {
+    agBracket = 'under-1';
+    agDays = 0;
+    agLabel = 'Menos de 1 año (0 días al 12 dic.)';
+  } else {
+    let agY = agCutoff.getFullYear() - hire.getFullYear();
+    let agM = agCutoff.getMonth() - hire.getMonth();
+    let agD = agCutoff.getDate() - hire.getDate();
+    if (agD < 0) {
+      const prev = new Date(agCutoff.getFullYear(), agCutoff.getMonth(), 0).getDate();
+      agD += prev;
+      agM -= 1;
+    }
+    if (agM < 0) {
+      agM += 12;
+      agY -= 1;
+    }
+
+    if (agY >= 10) {
+      agBracket = '10-plus';
+      agDays = 365;
+      agLabel = '10 años o más (21 días de salario)';
+    } else if (agY >= 3) {
+      agBracket = '3-to-10';
+      agDays = 365;
+      agLabel = '3 a menos de 10 años (19 días de salario)';
+    } else if (agY >= 1) {
+      agBracket = '1-to-3';
+      agDays = 365;
+      agLabel = '1 a menos de 3 años (15 días de salario)';
+    } else {
+      agBracket = 'under-1';
+      const daysWorked = Math.floor((agCutoff.getTime() - hire.getTime()) / 86_400_000) + 1;
+      agDays = Math.min(365, Math.max(0, daysWorked));
+      agLabel = `Menos de 1 año (${agDays} días al 12 dic.)`;
+    }
+  }
+
+  // Quincena 25 al 25 de enero
+  const q25Year = agYear >= 2027 ? agYear : 2027;
+  const q25Cutoff = new Date(`${q25Year}-01-25T00:00:00`);
+  let q25IsFullYear = false;
+  let q25DaysWorked = 365;
+
+  if (hire <= q25Cutoff) {
+    const qDiff = Math.floor((q25Cutoff.getTime() - hire.getTime()) / 86_400_000) + 1;
+    if (qDiff >= 365) {
+      q25IsFullYear = true;
+      q25DaysWorked = 365;
+    } else {
+      q25IsFullYear = false;
+      q25DaysWorked = Math.max(0, qDiff);
+    }
+  } else {
+    q25IsFullYear = false;
+    q25DaysWorked = 0;
+  }
+
+  const isEligibleForVacation = totalDays >= 200 || y >= 1;
+  const isEligibleForRenunciaVoluntaria = y >= 2;
+  const indemnizacionYearsEquivalent = round2(y + (m * 30 + d) / 365);
+
+  return {
+    hireDate: hireDateStr,
+    years: y,
+    months: m,
+    days: d,
+    totalDays,
+    formattedSeniority,
+    currentSeniorityBracket,
+    aguinaldoCutoffDate: `${agYear}-12-12`,
+    aguinaldoSeniorityBracket: agBracket,
+    aguinaldoDaysWorked: agDays,
+    aguinaldoLabel: agLabel,
+    q25CutoffDate: `${q25Year}-01-25`,
+    q25IsFullYear,
+    q25DaysWorked,
+    isEligibleForVacation,
+    isEligibleForRenunciaVoluntaria,
+    indemnizacionYearsEquivalent,
+  };
+}
+
 export function calcAguinaldo(options: AguinaldoCalculationOptions): AguinaldoCalculationResult {
   const salary = Math.max(0, options.monthlySalary);
   const dailySalary = salary / 30;
