@@ -17,6 +17,7 @@ import {
   calcIncapacity,
   type IncapacityType,
   RATES,
+  round2,
 } from '../lib/svLaborLaw';
 
 interface IncapacityViewProps {
@@ -308,29 +309,49 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
 
                 {/* 2. Subsidio ISSS */}
                 <div className="col-12 col-sm-6">
-                  <div className="p-3 rounded border h-100 bg-white">
-                    <div className="d-flex align-items-center justify-content-between mb-2">
-                      <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                        <ShieldAlert size={14} className="text-primary" />
-                        <span>Subsidio del ISSS</span>
-                      </span>
-                      <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style={{ fontSize: '10px' }}>
-                        {result.isssDays} día(s)
-                      </span>
+                  <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
+                    <div>
+                      <div className="d-flex align-items-center justify-content-between mb-2">
+                        <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
+                          <ShieldAlert size={14} className="text-primary" />
+                          <span>Subsidio del ISSS</span>
+                        </span>
+                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style={{ fontSize: '10px' }}>
+                          {result.isssDays} día(s)
+                        </span>
+                      </div>
+                      <div className="fs-4 fw-bold font-monospace text-primary mb-1">
+                        {formatUSD(result.isssTotalSubsidio)}
+                      </div>
                     </div>
-                    <div className="fs-4 fw-bold font-monospace text-primary mb-1">
-                      {formatUSD(result.isssTotalSubsidio)}
-                    </div>
-                    <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
-                      {result.isssDays > 0 ? (
-                        <>
-                          Subsidio directo del ISSS a {formatUSD(result.isssDailySubsidio)} diarios (
-                          {(result.isssRate * 100).toFixed(0)}% del salario cotizable).
-                        </>
-                      ) : (
-                        'No aplica subsidio del ISSS (período de espera no superado).'
-                      )}
-                    </span>
+
+                    {result.isssDays > 0 ? (
+                      <div className="mt-2 pt-2 border-top font-monospace" style={{ fontSize: '11px' }}>
+                        <div className="d-flex justify-content-between text-muted">
+                          <span>Base diaria ISSS (100%):</span>
+                          <span className="fw-semibold text-slate-dark">
+                            {formatUSD(result.dailyCotizableSalary)}/día
+                            {result.isSalaryCappedByISSS && ' (Topado)'}
+                          </span>
+                        </div>
+                        <div className="d-flex justify-content-between text-primary">
+                          <span>Subsidio ISSS ({(result.isssRate * 100).toFixed(0)}%):</span>
+                          <span className="fw-bold">{formatUSD(result.isssDailySubsidio)}/día</span>
+                        </div>
+                        {result.isssRate < 1 && (
+                          <div className="d-flex justify-content-between text-muted">
+                            <span>No cubierto (25%):</span>
+                            <span className="text-terracotta">
+                              -{formatUSD(round2(result.dailyRealSalary - result.isssDailySubsidio))}/día
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
+                        No aplica subsidio del ISSS (período de espera no superado).
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -340,19 +361,55 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                 <div className="p-2.5 rounded bg-warning-subtle border border-warning-subtle small d-flex align-items-start gap-2 mb-2">
                   <AlertCircle size={15} className="text-warning-emphasis shrink-0 mt-0.5" />
                   <div className="text-slate-dark font-sans" style={{ fontSize: '11.5px' }}>
-                    <strong>Tope de Cotización Aplicado:</strong> Tu salario ({formatUSD(monthlySalary)}) supera el
-                    techo legal del ISSS de {formatUSD(RATES.ISSS_CAP_MONTHLY)}/mes ($33.33/día). Por Ley del Seguro Social,
-                    el subsidio diario máximo del ISSS es de {formatUSD(result.maxDailySubsidioCap)}/día.
+                    <strong>Tope de Cotización Aplicado:</strong> Tu salario real es de {formatUSD(monthlySalary)} ({formatUSD(result.dailyRealSalary)}/día),
+                    pero el ISSS solo cotiza hasta {formatUSD(RATES.ISSS_CAP_MONTHLY)}/mes ($33.33/día).
+                    El 100% que toma el ISSS son $33.33/día y te paga el 75%: {formatUSD(result.maxDailySubsidioCap)}/día.
                   </div>
                 </div>
               )}
 
-              {/* Nota sobre Exención Tributaria de Subsidios */}
-              <div className="p-2.5 rounded bg-emerald-50 border border-emerald-200 small d-flex align-items-start gap-2">
-                <CheckCircle2 size={15} className="text-emerald shrink-0 mt-0.5" />
-                <div className="text-emerald-900 font-sans" style={{ fontSize: '11.5px' }}>
-                  <strong>Exención de Ley:</strong> Según el Art. 52 de la Ley del Seguro Social, los subsidios en dinero
-                  otorgados por el ISSS no sufren retenciones de ISSS ni AFP.
+              {/* Tabla Comparativa de Descuentos (AFP, ISSS, Renta) */}
+              <div className="p-3 rounded bg-light border mb-2">
+                <span className="small fw-semibold text-slate-dark d-block mb-1.5 font-sans" style={{ fontSize: '12px' }}>
+                  ¿Lleva descuentos de AFP, ISSS o Renta?
+                </span>
+                <div className="table-responsive">
+                  <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11px' }}>
+                    <thead>
+                      <tr className="text-muted">
+                        <th>Concepto</th>
+                        <th className="text-center">Descuento AFP</th>
+                        <th className="text-center">Descuento ISSS</th>
+                        <th className="text-center">Retención Renta</th>
+                        <th className="text-end">Monto que recibes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="fw-semibold text-slate-dark">
+                          Patrono (Días 1-3)
+                        </td>
+                        <td className="text-center text-muted">Sí (7.25%)</td>
+                        <td className="text-center text-muted">Sí (3%)</td>
+                        <td className="text-center text-muted">Sí (Tramo ISR)</td>
+                        <td className="text-end font-monospace text-slate-dark">
+                          En tu planilla quincenal
+                        </td>
+                      </tr>
+                      <tr className="bg-emerald-50 text-emerald-950">
+                        <td className="fw-bold text-emerald-900 d-flex align-items-center gap-1">
+                          <CheckCircle2 size={12} className="text-emerald" />
+                          <span>Subsidio ISSS (Día 4+)</span>
+                        </td>
+                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
+                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
+                        <td className="text-center fw-semibold text-emerald-800">Exento (0%)</td>
+                        <td className="text-end font-monospace fw-bold text-emerald">
+                          {formatUSD(result.isssTotalSubsidio)} (100% neto)
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
