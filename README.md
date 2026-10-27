@@ -1,6 +1,6 @@
 # Salario y Gastos SV
 
-Aplicación web en React, TypeScript y Tailwind CSS para el cálculo exacto de descuentos de ley, prestaciones laborales, costo real por hora trabajada y control de gastos personales en El Salvador (normativa vigente 2026 y obligatoriedad de Quincena 25 en 2027).
+Aplicación web en React 19, TypeScript, React Router, Motion y Tailwind CSS para el cálculo exacto de descuentos de ley, prestaciones laborales, costo real por hora trabajada y control de gastos personales en El Salvador (normativa vigente 2026 y obligatoriedad de Quincena 25 en 2027).
 
 ## Qué resuelve esta aplicación
 
@@ -15,7 +15,7 @@ Aplicación web en React, TypeScript y Tailwind CSS para el cálculo exacto de d
    - **Vacación Anual (Art. 177 Código de Trabajo)**:
      - Cálculo de 15 días de salario base más el recargo legal del **30%** sobre dichos 15 días (`(Salario / 2) * 30%`).
      - Comparativa entre las dos modalidades habituales de pago en planilla:
-       1. *Depósito solo del bono 30%*: el salario quincenal ordinario sigue su curso normal y el 30% se deposita íntegro o con retención aproximada.
+       1. *Depósito solo del bono 30%*: el salario quincenal ordinario sigue su curso normal y el 30% se deposita por separado.
        2. *Pago adelantado completo (15 días + 30%)*: liquidación conjunta con deducción de AFP, ISSS e ISR diferencial.
      - Opción para dividir la vacación en tramos (Semana Santa, Fiestas Agostinas, Fin de año) y modalidad de Sector Público (Ley de Salarios / Servicio Civil).
    - **Aguinaldo (Arts. 196 a 202 Código de Trabajo y Decretos 669, 670 y 673)**:
@@ -23,7 +23,7 @@ Aplicación web en React, TypeScript y Tailwind CSS para el cálculo exacto de d
        - **1 a menos de 3 años**: 15 días de salario.
        - **3 a menos de 10 años**: 19 días de salario.
        - **10 años o más**: 21 días de salario.
-       - **Menos de 1 año**: cálculo proporcional por días o meses trabajados hasta el 12 de diciembre (`(Salario / 30 * 15) * (días / 365)`).
+       - **Menos de 1 año**: cálculo proporcional por días trabajados hasta el 12 de diciembre (`(Salario / 30 * 15) * (días / 365)`).
      - Ventana de pago autorizada entre el **1 de octubre y el 20 de diciembre** (Decretos 669 y 670).
      - Exención de ISR hasta **`$1,500.00`** (Decreto 673) o regla general de 2 salarios mínimos del sector comercio (`$817.60`), con cálculo de ISR únicamente sobre el excedente.
    - **Quincena 25 (Decreto Legislativo N.º 499, obligatoria en enero de 2027)**:
@@ -40,11 +40,21 @@ Aplicación web en React, TypeScript y Tailwind CSS para el cálculo exacto de d
      - Trabajo en día de descanso (`1.50x` diurno / `1.75x` nocturno).
      - Trabajo en día de asueto remunerado (`2.00x` diurno / `2.25x` nocturno).
 
-4. **Control de gastos personales y destino de bonos**:
+4. **Control de gastos personales y destino de bonos (`/mis-gastos`)**:
    - Registro de gastos fijos y variables clasificados por categoría y por quincena (1.ª quincena, 2.ª quincena o mensual).
    - Conversión automática de cada gasto a **horas de trabajo neto**, permitiendo visualizar cuántas horas reales de jornada requiere cubrir cada compromiso financiero.
    - Distribución y presupuesto para los ingresos extraordinarios del año (`Vacación 30%`, `Aguinaldo` y `Quincena 25`).
-   - Persistencia automática en `localStorage` del navegador.
+
+5. **Seguridad, Control de Accesos (RBAC + ID Matching) y Cumplimiento Legal en El Salvador**:
+   - **Rutas Protegidas (`ProtectedRoute.tsx`) y Roles**:
+     - *Invitado (Anónimo)*: Acceso a la calculadora pública (`/`), `/login`, `/terminos` y `/privacidad`. Si intenta acceder a `/mis-gastos` es redirigido a `/401`.
+     - *Usuario Registrado (`user`)*: Acceso a `/mis-gastos` con validación de propiedad (`ID Matching` por `ownerId`), impidiendo modificar o consultar registros de terceros. Si intenta acceder a `/admin` es redirigido a `/403`.
+     - *Administrador (`admin`)*: Acceso a `/admin` con métricas globales anonimizadas del sistema.
+   - **Catálogo de Páginas de Error y Límite de Errores (`ErrorBoundary`)**:
+     - Vistas dedicadas para estados `401 (No autenticado)`, `403 (Acceso denegado)`, `404 (No encontrado)`, `500 (Error interno capturado por react-error-boundary sin exponer trazas sensibles)` y `502/503 (Mantenimiento temporal)`.
+   - **Términos y Condiciones (`/terminos`) y Política de Privacidad con Derechos ARCO (`/privacidad`)**:
+     - Cláusulas de exoneración de responsabilidad (disclaimer), margen de error, propiedad intelectual, identificación del proveedor conforme a la Ley de Comercio Electrónico de El Salvador y jurisdicción en los tribunales de San Salvador.
+     - Panel interactivo para ejercer **Derechos ARCO** (Acceso/exportación en `.json`, Rectificación de datos y Cancelación/borrado total de cuenta e historial).
 
 ---
 
@@ -68,18 +78,9 @@ Aplicación web en React, TypeScript y Tailwind CSS para el cálculo exacto de d
 | **Tramo III** | `$447.63` a `$1,019.05` | `20%` | `$30.00` | `$447.62` |
 | **Tramo IV** | `$1,019.06` en adelante | `30%` | `$144.28` | `$1,019.05` |
 
-### Salarios mínimos vigentes por sector (desde junio 2025 / vigentes 2026)
-
-- **Comercio, servicios, industria e ingenios**: `$408.80` mensuales.
-- **Maquila textil y confección**: `$402.32` mensuales.
-- **Beneficios de café y recolección de caña**: `$305.23` mensuales.
-- **Sector agropecuario, pesca y recolección de café**: `$272.53` mensuales.
-
 ---
 
 ## Requisitos y ejecución con `pnpm`
-
-Este proyecto utiliza `pnpm` para la gestión de paquetes.
 
 ```bash
 # Instalar dependencias
@@ -88,8 +89,11 @@ pnpm install
 # Ejecutar entorno de desarrollo
 pnpm dev
 
-# Ejecutar pruebas unitarias del motor de cálculo laboral
+# Ejecutar pruebas unitarias (cálculos laborales + seguridad RBAC / ID Matching)
 pnpm test
+
+# Auditar vulnerabilidades de dependencias
+pnpm audit
 
 # Compilar para producción
 pnpm build
