@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, LogIn, UserCheck, Shield, CheckCircle2, UserPlus, Sparkles } from 'lucide-react';
+import { Lock, LogIn, CheckCircle2, UserPlus, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
-import { type UserRole } from '../lib/security.ts';
 
-type AuthFormMode = 'login' | 'register' | 'demo';
+type AuthFormMode = 'login' | 'register';
 
 export default function LoginPage() {
   const {
@@ -12,16 +11,14 @@ export default function LoginPage() {
     isSupabaseConnected,
     loginWithCredentials,
     registerWithCredentials,
-    loginAs,
     logout,
   } = useAuth();
   const navigate = useNavigate();
 
   const [formMode, setFormMode] = useState<AuthFormMode>('login');
-  const [name, setName] = useState('Usuario Pruebas');
-  const [email, setEmail] = useState('test@salariosv.com');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -37,14 +34,13 @@ export default function LoginPage() {
       return;
     }
 
-    if (formMode === 'demo') {
-      loginAs(selectedRole, email, name, true);
-      navigate(selectedRole === 'admin' ? '/admin' : '/');
+    if (!email || !password) {
+      setErrorMsg('Ingresa tu correo y contraseña.');
       return;
     }
 
-    if (!email || !password) {
-      setErrorMsg('Ingresa tu correo y contraseña.');
+    if (formMode === 'register' && !name.trim()) {
+      setErrorMsg('Ingresa tu nombre completo.');
       return;
     }
 
@@ -73,11 +69,6 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleStartFreshTestUser = () => {
-    loginAs('user', 'test@salariosv.com', 'Usuario Pruebas', true);
-    navigate('/');
   };
 
   return (
@@ -126,21 +117,13 @@ export default function LoginPage() {
               </div>
               <span className="badge-subtle font-monospace">Activa</span>
             </div>
-            <div className="d-flex gap-2 pt-1 border-top">
-              <button
-                type="button"
-                onClick={handleStartFreshTestUser}
-                className="btn btn-sm btn-outline-secondary py-1 px-2.5 flex-grow-1"
-                style={{ fontSize: '11px' }}
-              >
-                Reiniciar cuenta a cero
-              </button>
+            <div className="pt-1 border-top">
               <button
                 type="button"
                 onClick={async () => {
                   await logout();
                 }}
-                className="btn btn-sm btn-outline-danger py-1 px-2.5"
+                className="btn btn-sm btn-outline-danger py-1 px-3 w-100"
                 style={{ fontSize: '11px' }}
               >
                 Cerrar sesión
@@ -149,7 +132,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Selector de Modo */}
+        {/* Selector de Modo: Solo Iniciar Sesión o Registrarse */}
         <div className="segmented-control mb-4">
           <button
             type="button"
@@ -171,16 +154,6 @@ export default function LoginPage() {
           >
             Registrarse
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFormMode('demo');
-              setErrorMsg('');
-            }}
-            className={formMode === 'demo' ? 'active' : ''}
-          >
-            Modo Demo
-          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="small">
@@ -196,6 +169,7 @@ export default function LoginPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej. Axel Reyes"
                 className="form-control"
+                autoComplete="name"
               />
             </div>
           )}
@@ -211,75 +185,24 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@correo.com"
               className="form-control font-monospace"
+              autoComplete="email"
             />
           </div>
 
-          {formMode !== 'demo' && (
-            <div className="mb-3">
-              <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                Contraseña
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                className="form-control"
-              />
-            </div>
-          )}
-
-          {formMode === 'demo' && (
-            <div className="mb-3">
-              <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1.5" style={{ fontSize: '11px' }}>
-                Tipo de Perfil de Prueba
-              </label>
-              <div className="row g-2">
-                <div className="col-6">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('user')}
-                    className={`w-100 p-2.5 rounded text-start border transition ${
-                      selectedRole === 'user'
-                        ? 'border-dark bg-slate-50 text-slate-dark'
-                        : 'border-slate-200 bg-white text-muted'
-                    }`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="fw-semibold d-flex align-items-center gap-2">
-                      <UserCheck size={14} className="text-secondary" />
-                      <span>Usuario</span>
-                    </div>
-                    <span className="small text-muted d-block mt-0.5" style={{ fontSize: '11px' }}>
-                      Cálculos de ley
-                    </span>
-                  </button>
-                </div>
-
-                <div className="col-6">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRole('admin')}
-                    className={`w-100 p-2.5 rounded text-start border transition ${
-                      selectedRole === 'admin'
-                        ? 'border-dark bg-slate-50 text-slate-dark'
-                        : 'border-slate-200 bg-white text-muted'
-                    }`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="fw-semibold d-flex align-items-center gap-2">
-                      <Shield size={14} className="text-secondary" />
-                      <span>Administrador</span>
-                    </div>
-                    <span className="small text-muted d-block mt-0.5" style={{ fontSize: '11px' }}>
-                      Parámetros de ley
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="mb-3">
+            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+              Contraseña
+            </label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Ingresa tu contraseña"
+              className="form-control"
+              autoComplete={formMode === 'register' ? 'new-password' : 'current-password'}
+            />
+          </div>
 
           <div className="form-check mb-3">
             <input
@@ -326,15 +249,10 @@ export default function LoginPage() {
                 <LogIn size={15} />
                 <span>Iniciar Sesión</span>
               </>
-            ) : formMode === 'register' ? (
+            ) : (
               <>
                 <UserPlus size={15} />
                 <span>Crear Cuenta</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={15} />
-                <span>Cargar Modo Demo</span>
               </>
             )}
           </button>
