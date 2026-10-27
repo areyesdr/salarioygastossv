@@ -3,132 +3,117 @@ import { Scale, AlertTriangle, Shield, FileText, Building, ArrowLeft } from 'luc
 
 export default function TerminosPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container py-4" style={{ maxWidth: '840px' }}>
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0F4C3A] hover:underline"
+          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5"
+          style={{ fontSize: '12px' }}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft size={13} />
           <span>Volver a la Calculadora</span>
         </Link>
-        <span className="text-xs font-mono-tabular text-[#65635E]">
+        <span className="small text-muted font-monospace" style={{ fontSize: '11px' }}>
           Última actualización: Octubre 2026
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#DFDCD2] p-6 sm:p-8 shadow-2xs space-y-6">
-        <div className="border-b border-[#EFECE6] pb-4">
-          <span className="text-xs font-mono-tabular uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#0F4C3A]/10 text-[#0F4C3A] font-semibold">
+      <div className="card-soft p-4 p-sm-5 space-y-4">
+        <div className="border-bottom pb-3 mb-4">
+          <span className="badge bg-slate-100 text-slate-700 border border-slate-200 font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
             Marco Legal · República de El Salvador
           </span>
-          <h1 className="font-serif-editorial text-2xl sm:text-3xl font-semibold mt-2 text-[#141413]">
+          <h4 className="fw-semibold text-slate-dark mb-1">
             Términos y Condiciones de Uso (TyC)
-          </h1>
-          <p className="text-sm text-[#65635E] mt-1">
-            Condiciones legales que regulan el acceso y uso de la plataforma Salario y Gastos SV.
+          </h4>
+          <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
+            Condiciones legales que regulan el acceso y uso de la plataforma Salario SV.
           </p>
         </div>
 
-        {/* 1. Exoneración de responsabilidad (Disclaimer) */}
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[#B45309] font-semibold text-base">
-            <AlertTriangle className="w-5 h-5 shrink-0" />
-            <h2 className="font-serif-editorial text-lg text-[#141413]">
+        {/* 1. Exoneración de responsabilidad */}
+        <section className="mb-4">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <AlertTriangle size={16} className="text-secondary" />
+            <h6 className="fw-semibold text-slate-dark mb-0">
               1. Exoneración de Responsabilidad (Disclaimer Financiero y Laboral)
-            </h2>
+            </h6>
           </div>
-          <p className="text-sm text-[#4A4945] leading-relaxed">
-            Todos los cálculos de descuentos de ley (ISSS, AFP, Renta), prestaciones laborales (Vacación 30%,
+          <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
+            Todos los cálculos de deducciones de ley (ISSS, AFP, Renta), prestaciones laborales (Vacación 30%,
             Aguinaldo, Quincena 25), costos por hora y proyecciones presupuestarias generados por{' '}
-            <strong>Salario y Gastos SV</strong> son de carácter estrictamente{' '}
+            <strong className="text-slate-dark">Salario SV</strong> son de carácter estrictamente{' '}
             <strong>informativo, ilustrativo y referencial</strong>. Esta herramienta no constituye ni
-            sustituye la asesoría legal, contable, tributaria, financiera ni el dictamen oficial de un
-            especialista en Recursos Humanos o Derecho Laboral.
+            sustituye la asesoría legal, contable, tributaria ni el dictamen oficial de un especialista en
+            Derecho Laboral o Recursos Humanos.
           </p>
         </section>
 
         {/* 2. Margen de error */}
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[#0F4C3A] font-semibold text-base">
-            <Scale className="w-5 h-5 shrink-0" />
-            <h2 className="font-serif-editorial text-lg text-[#141413]">
+        <section className="mb-4">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Scale size={16} className="text-secondary" />
+            <h6 className="fw-semibold text-slate-dark mb-0">
               2. Margen de Error y Discrepancias en Planilla
-            </h2>
+            </h6>
           </div>
-          <p className="text-sm text-[#4A4945] leading-relaxed">
-            Debido a criterios internos de redondeo contable de cada empleador, reformas legislativas,
-            retenciones acumuladas o recalculo semestral/anual del Impuesto sobre la Renta (junio y diciembre),
-            el titular de la plataforma no se hace responsable por diferencias o discrepancias entre los
-            montos estimados en esta aplicación y las liquidaciones oficiales emitidas por el Ministerio de
-            Trabajo y Previsión Social (MTPS), el Ministerio de Hacienda, el Instituto Salvadoreño del Seguro
-            Social (ISSS) o las Administradoras de Fondos de Pensiones (AFP).
+          <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
+            Debido a políticas internas de redondeo de cada empresa, reformas tributarias, tramos variables o
+            recalculo semestral del Impuesto sobre la Renta (junio y diciembre), el titular de la plataforma no se hace
+            responsable por diferencias entre los montos estimados en esta aplicación y las liquidaciones oficiales
+            emitidas por el Ministerio de Trabajo y Previsión Social (MTPS), Ministerio de Hacienda, ISSS o AFP.
           </p>
         </section>
 
         {/* 3. Propiedad Intelectual */}
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[#0F4C3A] font-semibold text-base">
-            <FileText className="w-5 h-5 shrink-0" />
-            <h2 className="font-serif-editorial text-lg text-[#141413]">
+        <section className="mb-4">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <FileText size={16} className="text-secondary" />
+            <h6 className="fw-semibold text-slate-dark mb-0">
               3. Propiedad Intelectual
-            </h2>
+            </h6>
           </div>
-          <p className="text-sm text-[#4A4945] leading-relaxed">
-            El diseño visual, interfaz de usuario, estructura de código, algoritmos de simulación tributaria y
-            documentación de <strong>Salario y Gastos SV</strong> se encuentran protegidos por la legislación
-            aplicable en materia de propiedad intelectual. Queda prohibida la reproducción comercial,
-            redistribución no autorizada o suplantación de identidad de la plataforma sin autorización expresa
-            de su titular.
+          <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
+            El diseño visual, interfaz de usuario, estructura de código y algoritmos de cálculo tributario de{' '}
+            <strong className="text-slate-dark">Salario SV</strong> se encuentran protegidos por la legislación aplicable.
+            Queda prohibida su reproducción no autorizada o explotación comercial sin el consentimiento expreso del titular.
           </p>
         </section>
 
-        {/* 4. Reglas de registro y uso */}
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[#0F4C3A] font-semibold text-base">
-            <Shield className="w-5 h-5 shrink-0" />
-            <h2 className="font-serif-editorial text-lg text-[#141413]">
-              4. Reglas de Registro, Custodia de Credenciales y Veracidad
-            </h2>
+        {/* 4. Reglas de uso */}
+        <section className="mb-4">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Shield size={16} className="text-secondary" />
+            <h6 className="fw-semibold text-slate-dark mb-0">
+              4. Reglas de Registro y Custodia de Credenciales
+            </h6>
           </div>
-          <p className="text-sm text-[#4A4945] leading-relaxed">
-            El usuario registrado es el único responsable de mantener la confidencialidad de su contraseña y
-            sesión activa, así como de la exactitud y veracidad de los montos salariales, bonos y registros de
-            gastos ingresados en su cuenta personal. Queda prohibido intentar vulnerar los controles de acceso
-            o consultar registros pertenecientes a otros usuarios.
+          <p className="text-muted small leading-relaxed mb-0" style={{ fontSize: '13px' }}>
+            El usuario registrado es responsable de la confidencialidad de su cuenta y de la exactitud de los datos
+            personales ingresados en su sesión. Se prohíbe cualquier intento de vulnerar los controles de acceso o
+            consultar información de terceros.
           </p>
         </section>
 
-        {/* 5. Ley de Comercio Electrónico y Jurisdicción de El Salvador */}
-        <section className="space-y-2 pt-2 border-t border-[#EFECE6]">
-          <div className="flex items-center gap-2 text-[#0F4C3A] font-semibold text-base">
-            <Building className="w-5 h-5 shrink-0" />
-            <h2 className="font-serif-editorial text-lg text-[#141413]">
-              5. Identificación del Proveedor y Jurisdicción Aplicable (El Salvador)
-            </h2>
+        {/* 5. Ley de Comercio Electrónico */}
+        <section className="pt-3 border-top">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Building size={16} className="text-secondary" />
+            <h6 className="fw-semibold text-slate-dark mb-0">
+              5. Identificación del Proveedor y Jurisdicción (El Salvador)
+            </h6>
           </div>
-          <div className="p-4 rounded-xl bg-[#F6F5F0] border border-[#E2DFD7] text-xs sm:text-sm text-[#4A4945] space-y-1.5">
-            <p>
-              En cumplimiento con la <strong>Ley de Comercio Electrónico de la República de El Salvador</strong>
-              , se informa a los usuarios los datos de identificación y contacto del proveedor del servicio:
+          <div className="p-3 rounded bg-slate-50 border border-slate-200 small text-muted" style={{ fontSize: '12px' }}>
+            <p className="mb-2">
+              En cumplimiento con la <strong>Ley de Comercio Electrónico de la República de El Salvador</strong>, se detallan los datos de contacto del responsable:
             </p>
-            <ul className="list-disc pl-5 space-y-1 font-mono-tabular text-xs text-[#141413]">
-              <li>
-                <strong>Titular / Proveedor:</strong> Axel Reyes (Desarrollo Independiente · Salario y Gastos
-                SV)
-              </li>
-              <li>
-                <strong>Domicilio:</strong> San Salvador, República de El Salvador
-              </li>
-              <li>
-                <strong>Correo electrónico de contacto y soporte legal:</strong> axel.f.reyes.a@gmail.com
-              </li>
+            <ul className="list-unstyled mb-2 font-monospace space-y-1">
+              <li><strong>Titular / Desarrollador:</strong> Axel Reyes</li>
+              <li><strong>Domicilio:</strong> San Salvador, República de El Salvador</li>
+              <li><strong>Contacto:</strong> axel.f.reyes.a@gmail.com</li>
             </ul>
-            <p className="pt-2 text-xs text-[#65635E]">
-              <strong>Jurisdicción aplicable:</strong> Cualquier controversia o interpretación derivada del uso
-              de esta aplicación se regirá por las leyes vigentes de la{' '}
-              <strong>República de El Salvador</strong>, sometiéndose las partes a la jurisdicción de los
-              tribunales competentes del distrito judicial de <strong>San Salvador</strong>.
+            <p className="mb-0">
+              Cualquier controversia se regirá bajo las leyes de la <strong>República de El Salvador</strong>, con competencia exclusiva en los tribunales de San Salvador.
             </p>
           </div>
         </section>

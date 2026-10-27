@@ -5,38 +5,42 @@ export default function Error401() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-[#DFDCD2] p-8 text-center shadow-2xs space-y-5">
-        <div className="w-12 h-12 rounded-2xl bg-[#B45309]/10 text-[#B45309] flex items-center justify-center mx-auto">
-          <Lock className="w-6 h-6" />
+    <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
+      <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
+        <div
+          className="rounded-circle d-flex align-items-center justify-content-center text-slate-dark mx-auto mb-3"
+          style={{ width: '48px', height: '48px', backgroundColor: '#f1f5f9' }}
+        >
+          <Lock size={22} className="text-secondary" />
         </div>
-        <div className="space-y-2">
-          <span className="text-xs font-mono-tabular uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#B45309]/10 text-[#B45309] font-semibold">
-            Estado HTTP 401 · No Autenticado
-          </span>
-          <h1 className="font-serif-editorial text-2xl font-semibold text-[#141413]">
-            Inicia sesión para ver tus gastos
-          </h1>
-          <p className="text-sm text-[#65635E]">
-            La sección de historial de gastos personales y metas de bonos requiere una sesión activa para
-            proteger tu privacidad financiera.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
+
+        <span className="badge bg-light text-secondary border font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
+          Estado HTTP 401 · No Autenticado
+        </span>
+
+        <h5 className="fw-semibold text-slate-dark mb-2">
+          Inicia sesión para ver tus gastos
+        </h5>
+
+        <p className="text-muted small mb-4" style={{ fontSize: '13px' }}>
+          La sección de historial presupuestario y metas de bonos requiere una sesión activa para proteger la confidencialidad de tus datos.
+        </p>
+
+        <div className="d-flex flex-column flex-sm-row gap-2 justify-content-center">
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="px-4 py-2.5 rounded-xl bg-[#0F4C3A] text-white text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#0F4C3A]/90 cursor-pointer"
+            className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-3 fw-semibold"
           >
-            <LogIn className="w-4 h-4" />
-            <span>Ir a Iniciar Sesión</span>
+            <LogIn size={14} />
+            <span>Iniciar Sesión</span>
           </button>
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="px-4 py-2.5 rounded-xl bg-[#EFECE6] text-[#141413] text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#E2DFD7] cursor-pointer"
+            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-3"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft size={14} />
             <span>Calculadora Pública</span>
           </button>
         </div>

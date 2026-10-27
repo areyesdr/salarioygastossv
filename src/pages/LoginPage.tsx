@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Shield, LogIn, UserCheck, Lock } from 'lucide-react';
+import { Lock, LogIn, UserCheck, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 import { type UserRole } from '../lib/security.ts';
 
@@ -26,143 +26,164 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10">
-      <div className="bg-white rounded-2xl border border-[#DFDCD2] p-6 sm:p-8 shadow-2xs space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#0F4C3A] text-white flex items-center justify-center">
-            <Lock className="w-5 h-5" />
+    <div className="container py-5" style={{ maxWidth: '480px' }}>
+      <div className="card-soft p-4 p-sm-5">
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <div
+            className="rounded-3 d-flex align-items-center justify-content-center text-white"
+            style={{ width: '42px', height: '42px', backgroundColor: '#0f172a' }}
+          >
+            <Lock size={20} />
           </div>
           <div>
-            <h1 className="font-serif-editorial text-xl font-semibold text-[#141413]">
-              Acceso y Control de Sesión
-            </h1>
-            <p className="text-xs text-[#65635E]">
-              Autenticación con Control de Acceso Basado en Roles (RBAC)
-            </p>
+            <h5 className="fw-semibold text-slate-dark mb-0">Iniciar Sesión</h5>
+            <span className="small text-muted" style={{ fontSize: '12px' }}>
+              Acceso seguro y gestión de registros financieros
+            </span>
           </div>
         </div>
 
         {user?.loggedIn && (
-          <div className="p-3.5 rounded-xl bg-[#0F4C3A]/8 border border-[#0F4C3A]/20 text-xs flex items-center justify-between">
+          <div className="p-3 rounded bg-slate-50 border border-slate-200 small mb-4 d-flex justify-content-between align-items-center">
             <div>
-              <span className="font-semibold text-[#0F4C3A] block">Sesión activa: {user.name}</span>
-              <span className="font-mono-tabular text-[#4A4945]">
+              <strong className="text-slate-dark d-block">Sesión activa: {user.name}</strong>
+              <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
                 Rol: {user.role.toUpperCase()} · ID: {user.id}
               </span>
             </div>
             <button
               type="button"
               onClick={logout}
-              className="px-2.5 py-1 rounded-lg bg-white border border-[#DFDCD2] text-[#B91C1C] font-medium cursor-pointer"
+              className="btn btn-sm btn-outline-danger py-1 px-2"
+              style={{ fontSize: '11px' }}
             >
               Cerrar sesión
             </button>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold uppercase text-[#65635E] mb-1">Nombre / Titular</label>
+        <form onSubmit={handleSubmit} className="small">
+          <div className="mb-3">
+            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+              Nombre de Usuario
+            </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#DFDCD2] bg-[#FAF9F5] focus:bg-white focus:border-[#0F4C3A] focus:outline-none"
+              className="form-control"
             />
           </div>
 
-          <div>
-            <label className="block font-semibold uppercase text-[#65635E] mb-1">Correo electrónico</label>
+          <div className="mb-3">
+            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+              Correo Electrónico
+            </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#DFDCD2] bg-[#FAF9F5] focus:bg-white focus:border-[#0F4C3A] focus:outline-none font-mono-tabular"
+              className="form-control font-monospace"
             />
           </div>
 
-          <div>
-            <label className="block font-semibold uppercase text-[#65635E] mb-1">Contraseña</label>
+          <div className="mb-3">
+            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+              Contraseña
+            </label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-[#DFDCD2] bg-[#FAF9F5] focus:bg-white focus:border-[#0F4C3A] focus:outline-none"
+              className="form-control"
             />
           </div>
 
-          <div>
-            <label className="block font-semibold uppercase text-[#65635E] mb-1.5">
-              Rol de acceso (Simulación RBAC)
+          <div className="mb-3">
+            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1.5" style={{ fontSize: '11px' }}>
+              Tipo de Perfil
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedRole('user')}
-                className={`p-2.5 rounded-xl border text-left cursor-pointer ${
-                  selectedRole === 'user'
-                    ? 'border-[#0F4C3A] bg-[#0F4C3A]/8 text-[#141413]'
-                    : 'border-[#DFDCD2] text-[#65635E]'
-                }`}
-              >
-                <div className="font-semibold flex items-center gap-1">
-                  <UserCheck className="w-3.5 h-3.5 text-[#0F4C3A]" />
-                  <span>Usuario Registrado</span>
-                </div>
-                <span className="text-[11px] block mt-0.5">Acceso a /mis-gastos (Bloquea /admin → 403)</span>
-              </button>
+            <div className="row g-2">
+              <div className="col-6">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('user')}
+                  className={`w-100 p-2.5 rounded text-start border transition ${
+                    selectedRole === 'user'
+                      ? 'border-dark bg-slate-50 text-slate-dark'
+                      : 'border-slate-200 bg-white text-muted'
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="fw-semibold d-flex align-items-center gap-1.5">
+                    <UserCheck size={14} className="text-secondary" />
+                    <span>Usuario</span>
+                  </div>
+                  <span className="small text-muted d-block mt-0.5" style={{ fontSize: '11px' }}>
+                    Historial personal
+                  </span>
+                </button>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedRole('admin')}
-                className={`p-2.5 rounded-xl border text-left cursor-pointer ${
-                  selectedRole === 'admin'
-                    ? 'border-[#0F4C3A] bg-[#0F4C3A]/8 text-[#141413]'
-                    : 'border-[#DFDCD2] text-[#65635E]'
-                }`}
-              >
-                <div className="font-semibold flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5 text-[#0F4C3A]" />
-                  <span>Administrador</span>
-                </div>
-                <span className="text-[11px] block mt-0.5">Acceso a /admin y métricas globales</span>
-              </button>
+              <div className="col-6">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('admin')}
+                  className={`w-100 p-2.5 rounded text-start border transition ${
+                    selectedRole === 'admin'
+                      ? 'border-dark bg-slate-50 text-slate-dark'
+                      : 'border-slate-200 bg-white text-muted'
+                  }`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="fw-semibold d-flex align-items-center gap-1.5">
+                    <Shield size={14} className="text-secondary" />
+                    <span>Administrador</span>
+                  </div>
+                  <span className="small text-muted d-block mt-0.5" style={{ fontSize: '11px' }}>
+                    Parámetros legales
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <label className="flex items-start gap-2.5 pt-1 cursor-pointer text-[#4A4945]">
+          <div className="form-check mb-3">
             <input
               type="checkbox"
+              id="acceptTermsCheck"
               checked={acceptedTerms}
               onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-[#0F4C3A]"
+              className="form-check-input"
             />
-            <span>
-              He leído y acepto los{' '}
-              <Link to="/terminos" className="text-[#0F4C3A] underline font-medium">
-                Términos y Condiciones (Disclaimer Legal)
+            <label htmlFor="acceptTermsCheck" className="form-check-label text-muted" style={{ fontSize: '12px' }}>
+              Acepto los{' '}
+              <Link to="/terminos" className="text-slate-dark fw-semibold text-decoration-underline">
+                Términos y Condiciones
               </Link>{' '}
               y la{' '}
-              <Link to="/privacidad" className="text-[#0F4C3A] underline font-medium">
-                Política de Privacidad (Derechos ARCO)
+              <Link to="/privacidad" className="text-slate-dark fw-semibold text-decoration-underline">
+                Política de Privacidad (ARCO)
               </Link>
               .
-            </span>
-          </label>
+            </label>
+          </div>
 
           {errorMsg && (
-            <div className="p-2.5 rounded-lg bg-[#B91C1C]/10 text-[#B91C1C] font-medium">{errorMsg}</div>
+            <div className="p-2.5 rounded bg-light border border-danger text-danger mb-3 font-medium small">
+              {errorMsg}
+            </div>
           )}
 
           <button
             type="submit"
-            className="w-full py-2.5 px-4 rounded-xl bg-[#0F4C3A] text-white font-semibold flex items-center justify-center gap-2 hover:bg-[#0F4C3A]/90 cursor-pointer"
+            className="btn btn-dark w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold"
           >
-            <LogIn className="w-4 h-4" />
-            <span>Iniciar Sesión Segura</span>
+            <LogIn size={15} />
+            <span>Iniciar Sesión</span>
           </button>
         </form>
       </div>

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { CheckCircle2, AlertCircle, Info, Calendar, Gift, Plane, Check } from 'lucide-react';
+import { Calendar, Gift, Plane, Check } from 'lucide-react';
 import {
   RATES,
   round2,
@@ -83,93 +83,108 @@ export function BonusesView({
   return (
     <motion.div
       key="tab-bonuses"
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.25 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
       className="container-fluid px-0"
     >
-      {/* Resumen Anual de Bonos */}
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+      {/* Resumen Anual de Prestaciones */}
+      <div className="card-soft mb-4">
+        <div className="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
           <div>
-            <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-              <Calendar className="text-primary" size={20} />
+            <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+              <Calendar size={17} className="text-secondary" />
               <span>Calendario Anual de Prestaciones y Bonos de Ley</span>
-            </h5>
-            <p className="card-subtitle text-muted small mb-0">
-              Resumen de ingresos extraordinarios garantizados por la legislación salvadoreña
-            </p>
+            </h6>
+            <span className="small text-muted" style={{ fontSize: '12px' }}>
+              Ingresos extraordinarios estipulados por la legislación laboral de El Salvador
+            </span>
           </div>
-          <span className="badge bg-success-subtle text-success border border-success-subtle fs-6 font-monospace py-2 px-3">
-            Total Anual Neto: +{formatUSD(totalAnnualNetBonuses)}
-          </span>
+          <div className="card-net-hero py-1.5 px-3 d-inline-flex align-items-center gap-2">
+            <span className="small text-muted">Total Anual Neto:</span>
+            <span className="fw-bold font-monospace text-emerald fs-6">
+              +{formatUSD(totalAnnualNetBonuses)}
+            </span>
+          </div>
         </div>
 
-        <div className="card-body">
+        <div className="p-3">
           <div className="row g-3">
             {/* Hito 1: Quincena 25 */}
             <div className="col-12 col-md-4">
-              <div className="card h-100 border bg-light shadow-2xs">
-                <div className="card-body">
+              <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
+                <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-primary">15 – 25 Enero</span>
-                    <span className="badge bg-dark">Obligatoria 2027</span>
-                  </div>
-                  <h6 className="card-title fw-bold text-dark">Quincena 25 (Decreto 499)</h6>
-                  <p className="card-text text-muted small mb-3">
-                    50% salario nominal (hasta $1,500), 100% libre de ISSS, AFP y Renta.
-                  </p>
-                  <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                    <span className="small text-muted">Líquido a recibir:</span>
-                    <span className="fs-5 fw-bold font-monospace text-primary">
-                      {formatUSD(quincena25Result.netQuincena25)}
+                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                      15 – 25 Enero
+                    </span>
+                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                      Obligatoria 2027
                     </span>
                   </div>
+                  <h6 className="fw-semibold text-slate-dark mb-1">Quincena 25 (Decreto 499)</h6>
+                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                    50% salario nominal (hasta $1,500), 100% exento de deducciones.
+                  </p>
+                </div>
+                <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>Líquido:</span>
+                  <span className="fs-5 fw-bold font-monospace text-emerald">
+                    {formatUSD(quincena25Result.netQuincena25)}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Hito 2: Vacación 30% */}
             <div className="col-12 col-md-4">
-              <div className="card h-100 border bg-light shadow-2xs">
-                <div className="card-body">
+              <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
+                <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-warning text-dark">Anual / Tramos</span>
-                    <span className="badge bg-secondary">Art. 177 C.T.</span>
-                  </div>
-                  <h6 className="card-title fw-bold text-dark">Vacación Anual (15 días + 30%)</h6>
-                  <p className="card-text text-muted small mb-3">
-                    Recargo legal del 30% sobre 15 días ({formatUSD(vacationResult.bonus30Gross)} bruto).
-                  </p>
-                  <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                    <span className="small text-muted">Bono 30% neto est.:</span>
-                    <span className="fs-5 fw-bold font-monospace text-dark">
-                      {formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
+                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                      Anual / Tramos
+                    </span>
+                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                      Art. 177 C.T.
                     </span>
                   </div>
+                  <h6 className="fw-semibold text-slate-dark mb-1">Vacación Anual (15 días + 30%)</h6>
+                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                    Recargo legal del 30% sobre la quincena de descanso.
+                  </p>
+                </div>
+                <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>Bono 30% neto est.:</span>
+                  <span className="fs-5 fw-bold font-monospace text-slate-dark">
+                    {formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Hito 3: Aguinaldo */}
             <div className="col-12 col-md-4">
-              <div className="card h-100 border bg-light shadow-2xs">
-                <div className="card-body">
+              <div className="p-3 rounded border bg-slate-50 h-100 d-flex flex-column justify-content-between">
+                <div>
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="badge bg-danger">1 Oct – 20 Dic</span>
-                    <span className="badge bg-secondary">15/19/21 días</span>
-                  </div>
-                  <h6 className="card-title fw-bold text-dark">Aguinaldo de Ley</h6>
-                  <p className="card-text text-muted small mb-3">
-                    Sin descuento de ISSS ni AFP. Exento de ISR hasta {formatUSD(aguinaldoResult.exemptionLimit)}.
-                  </p>
-                  <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                    <span className="small text-muted">Líquido a recibir:</span>
-                    <span className="fs-5 fw-bold font-monospace text-success">
-                      {formatUSD(aguinaldoResult.netAguinaldo)}
+                    <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                      1 Oct – 20 Dic
+                    </span>
+                    <span className="badge bg-slate-100 text-slate-700 border border-slate-200" style={{ fontSize: '10px' }}>
+                      Arts. 196–202
                     </span>
                   </div>
+                  <h6 className="fw-semibold text-slate-dark mb-1">Aguinaldo de Ley</h6>
+                  <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                    Sin descuentos de ISSS/AFP. Exento de Renta hasta {formatUSD(aguinaldoResult.exemptionLimit)}.
+                  </p>
+                </div>
+                <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>Líquido:</span>
+                  <span className="fs-5 fw-bold font-monospace text-emerald">
+                    {formatUSD(aguinaldoResult.netAguinaldo)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -179,276 +194,272 @@ export function BonusesView({
 
       {/* Detalle en Cuadrícula: Quincena 25 y Aguinaldo */}
       <div className="row g-4 mb-4">
-        {/* TARJETA 1: QUINCENA 25 (DECRETO 499) */}
+        {/* TARJETA 1: QUINCENA 25 */}
         <div className="col-12 col-lg-6">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-              <div>
-                <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                  <Gift className="text-primary" size={20} />
-                  <span>Quincena 25 (Enero · Decreto 499)</span>
-                </h5>
-                <p className="card-subtitle text-muted small mb-0">
-                  Obligatoria para todo empleador a partir de enero de 2027
-                </p>
-              </div>
-              {quincena25Result.eligibleByLaw ? (
-                <span className="badge bg-success d-flex align-items-center gap-1">
-                  <CheckCircle2 size={13} /> Elegible por ley
-                </span>
-              ) : (
-                <span className="badge bg-warning text-dark d-flex align-items-center gap-1">
-                  <AlertCircle size={13} /> &gt; $1,500 tope
-                </span>
-              )}
-            </div>
-
-            <div className="card-body">
-              <div className="mb-3">
-                <label className="form-label small fw-bold text-muted">Antigüedad al 25 de enero:</label>
-                <div className="btn-group w-100" role="group">
-                  <button
-                    type="button"
-                    onClick={() => setQ25FullYear(true)}
-                    className={`btn btn-sm ${q25FullYear ? 'btn-primary' : 'btn-outline-secondary'}`}
-                  >
-                    1 año o más (100% de la cuota)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQ25FullYear(false)}
-                    className={`btn btn-sm ${!q25FullYear ? 'btn-primary' : 'btn-outline-secondary'}`}
-                  >
-                    Menos de 1 año (Proporcional)
-                  </button>
+          <div className="card-soft h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+                    <Gift size={16} className="text-secondary" />
+                    <span>Quincena 25 (Decreto Legislativo 499)</span>
+                  </h6>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>
+                    Obligatoria a partir de enero de 2027
+                  </span>
                 </div>
+                <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '11px' }}>
+                  {quincena25Result.eligibleByLaw ? 'Elegible por ley' : '> $1,500 tope'}
+                </span>
               </div>
 
-              {!q25FullYear && (
-                <div className="p-3 bg-light rounded border mb-3">
-                  <div className="row g-2 align-items-center mb-2">
-                    <div className="col-12 col-sm-6">
-                      <label className="form-label small text-muted mb-0">Fecha de ingreso:</label>
-                    </div>
-                    <div className="col-12 col-sm-6">
-                      <input
-                        type="date"
-                        value={q25HireDate}
-                        onChange={(e) => {
-                          setQ25HireDate(e.target.value);
-                          const days = calcDaysBetweenInclusive(e.target.value, '2027-01-25');
-                          if (days > 0) setQ25DaysWorked(days);
-                        }}
-                        className="form-control form-control-sm font-monospace"
-                      />
-                    </div>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="365"
-                    value={q25DaysWorked}
-                    onChange={(e) => setQ25DaysWorked(Number(e.target.value))}
-                    className="form-range"
-                  />
-                  <div className="text-end small font-monospace text-muted">
-                    {q25DaysWorked} / 365 días computados
-                  </div>
-                </div>
-              )}
-
-              {monthlySalary > RATES.QUINCENA_25_CAP && (
-                <div className="form-check form-switch mb-3 p-2 bg-light rounded border">
-                  <input
-                    type="checkbox"
-                    checked={q25VoluntaryAboveCap}
-                    onChange={(e) => setQ25VoluntaryAboveCap(e.target.checked)}
-                    id="switchVoluntaryQ25"
-                    className="form-check-input ms-0 me-2"
-                  />
-                  <label htmlFor="switchVoluntaryQ25" className="form-check-label small">
-                    Simular pago voluntario de la empresa (salario supera $1,500)
+              <div className="p-3">
+                <div className="mb-3">
+                  <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                    Antigüedad al 25 de enero:
                   </label>
+                  <div className="segmented-control w-100">
+                    <button
+                      type="button"
+                      onClick={() => setQ25FullYear(true)}
+                      className={`w-50 ${q25FullYear ? 'active' : ''}`}
+                    >
+                      1 año o más (100%)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQ25FullYear(false)}
+                      className={`w-50 ${!q25FullYear ? 'active' : ''}`}
+                    >
+                      Menos de 1 año (Proporcional)
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              <table className="table table-sm table-borderless small font-monospace mb-0">
-                <tbody>
-                  <tr>
-                    <td className="text-muted">Base (50% salario mensual):</td>
-                    <td className="text-end fw-bold">{formatUSD(round2(monthlySalary * 0.5))}</td>
-                  </tr>
-                  <tr>
-                    <td className="text-muted">Factor de antigüedad:</td>
-                    <td className="text-end fw-bold">
-                      {round2(quincena25Result.proportionFactor * 100)}% ({quincena25Result.daysWorked} días)
-                    </td>
-                  </tr>
-                  <tr className="table-success">
-                    <td className="text-success fw-bold">Descuentos ISSS, AFP y Renta:</td>
-                    <td className="text-end text-success fw-bold">$0.00 (Exento 100%)</td>
-                  </tr>
-                </tbody>
-              </table>
+                {!q25FullYear && (
+                  <div className="p-3 bg-light rounded border mb-3">
+                    <div className="row g-2 align-items-center mb-2">
+                      <div className="col-12 col-sm-6">
+                        <label className="form-label small text-muted mb-0">Fecha de ingreso:</label>
+                      </div>
+                      <div className="col-12 col-sm-6">
+                        <input
+                          type="date"
+                          value={q25HireDate}
+                          onChange={(e) => {
+                            setQ25HireDate(e.target.value);
+                            const days = calcDaysBetweenInclusive(e.target.value, '2027-01-25');
+                            if (days > 0) setQ25DaysWorked(days);
+                          }}
+                          className="form-control form-control-sm font-monospace"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="365"
+                      value={q25DaysWorked}
+                      onChange={(e) => setQ25DaysWorked(Number(e.target.value))}
+                      className="form-range"
+                    />
+                    <div className="text-end small font-monospace text-muted" style={{ fontSize: '11px' }}>
+                      {q25DaysWorked} / 365 días computados
+                    </div>
+                  </div>
+                )}
+
+                {monthlySalary > RATES.QUINCENA_25_CAP && (
+                  <div className="form-check form-switch mb-3 p-2 bg-light rounded border">
+                    <input
+                      type="checkbox"
+                      checked={q25VoluntaryAboveCap}
+                      onChange={(e) => setQ25VoluntaryAboveCap(e.target.checked)}
+                      id="switchVoluntaryQ25"
+                      className="form-check-input ms-0 me-2"
+                    />
+                    <label htmlFor="switchVoluntaryQ25" className="form-check-label small text-muted">
+                      Simular pago voluntario de la empresa (salario superior a $1,500)
+                    </label>
+                  </div>
+                )}
+
+                <table className="table table-minimal table-sm small font-monospace mb-0">
+                  <tbody>
+                    <tr>
+                      <td className="text-muted">Base de cálculo (50% salario mensual):</td>
+                      <td className="text-end fw-semibold text-slate-dark">{formatUSD(round2(monthlySalary * 0.5))}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-muted">Factor de antigüedad:</td>
+                      <td className="text-end text-slate-dark">
+                        {round2(quincena25Result.proportionFactor * 100)}% ({quincena25Result.daysWorked} días)
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="text-muted">Deducciones ISSS, AFP y Renta:</td>
+                      <td className="text-end text-emerald fw-semibold">$0.00 (Exento 100%)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div className="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
+            <div className="p-3 bg-slate-50 border-top d-flex justify-content-between align-items-center">
               <div>
-                <span className="fw-bold text-dark text-uppercase small d-block">
-                  Quincena 25 Neta a Recibir
-                </span>
-                <span className="text-muted small">{quincena25Result.legalNote}</span>
+                <span className="fw-semibold text-slate-dark d-block small">Quincena 25 Neta</span>
+                <span className="text-muted small" style={{ fontSize: '11px' }}>{quincena25Result.legalNote}</span>
               </div>
-              <span className="fs-3 fw-bold font-monospace text-primary">
+              <span className="fs-4 fw-bold font-monospace text-emerald">
                 {formatUSD(quincena25Result.netQuincena25)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* TARJETA 2: AGUINALDO DE LEY */}
+        {/* TARJETA 2: AGUINALDO */}
         <div className="col-12 col-lg-6">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-              <div>
-                <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                  <Calendar className="text-danger" size={20} />
-                  <span>Aguinaldo por Antigüedad (Arts. 196–202 C.T.)</span>
-                </h5>
-                <p className="card-subtitle text-muted small mb-0">
-                  Ventana legal de pago: 1 de octubre al 20 de diciembre
-                </p>
-              </div>
-              <span className="badge bg-secondary font-monospace">Exento ISSS/AFP</span>
-            </div>
-
-            <div className="card-body">
-              <div className="mb-3">
-                <label className="form-label small fw-bold text-muted">Antigüedad al 12 de diciembre:</label>
-                <div className="row g-1">
-                  {(
-                    [
-                      { id: 'under-1', title: '< 1 año', sub: 'Proporcional' },
-                      { id: '1-to-3', title: '1 a < 3 años', sub: '15 días' },
-                      { id: '3-to-10', title: '3 a < 10 años', sub: '19 días' },
-                      { id: '10-plus', title: '10+ años', sub: '21 días' },
-                    ] as const
-                  ).map((b) => (
-                    <div key={b.id} className="col-3">
-                      <button
-                        type="button"
-                        onClick={() => setSeniority(b.id)}
-                        className={`btn btn-sm w-100 p-2 text-center ${
-                          seniority === b.id ? 'btn-primary' : 'btn-outline-secondary'
-                        }`}
-                      >
-                        <div className="fw-bold" style={{ fontSize: '11px' }}>{b.title}</div>
-                        <div className="small font-monospace">{b.sub}</div>
-                      </button>
-                    </div>
-                  ))}
+          <div className="card-soft h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+                    <Calendar size={16} className="text-secondary" />
+                    <span>Aguinaldo de Ley (Arts. 196–202 C.T.)</span>
+                  </h6>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>
+                    Ventana legal de entrega: 1 al 20 de diciembre
+                  </span>
                 </div>
-              </div>
-
-              {seniority === 'under-1' && (
-                <div className="p-3 bg-light rounded border mb-3">
-                  <div className="row g-2 align-items-center mb-2">
-                    <div className="col-12 col-sm-6">
-                      <label className="form-label small text-muted mb-0">Fecha de ingreso:</label>
-                    </div>
-                    <div className="col-12 col-sm-6">
-                      <input
-                        type="date"
-                        value={aguinaldoHireDate}
-                        onChange={(e) => {
-                          setAguinaldoHireDate(e.target.value);
-                          const year = new Date().getFullYear();
-                          const days = calcDaysBetweenInclusive(e.target.value, `${year}-12-12`);
-                          if (days > 0) setAguinaldoDaysUnder1(days);
-                        }}
-                        className="form-control form-control-sm font-monospace"
-                      />
-                    </div>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="365"
-                    value={aguinaldoDaysUnder1}
-                    onChange={(e) => setAguinaldoDaysUnder1(Number(e.target.value))}
-                    className="form-range"
-                  />
-                  <div className="text-end small font-monospace text-muted">
-                    {aguinaldoDaysUnder1} / 365 días al 12 dic.
-                  </div>
-                </div>
-              )}
-
-              <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                <span className="small text-muted">Tope de exención de Renta:</span>
-                <div className="btn-group btn-group-sm">
-                  <button
-                    type="button"
-                    onClick={() => setAguinaldoExemptionRule('decreto_1500')}
-                    className={`btn btn-sm ${
-                      aguinaldoExemptionRule === 'decreto_1500' ? 'btn-dark' : 'btn-outline-secondary'
-                    }`}
-                  >
-                    Decreto $1,500
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAguinaldoExemptionRule('dos_minimos')}
-                    className={`btn btn-sm ${
-                      aguinaldoExemptionRule === 'dos_minimos' ? 'btn-dark' : 'btn-outline-secondary'
-                    }`}
-                  >
-                    2 Mínimos ($817.60)
-                  </button>
-                </div>
-              </div>
-
-              <table className="table table-sm table-borderless small font-monospace mb-0">
-                <tbody>
-                  <tr>
-                    <td className="text-muted">
-                      Salario diario ({formatUSD(aguinaldoResult.dailySalary)}) × {aguinaldoResult.equivalentDays} días:
-                    </td>
-                    <td className="text-end fw-bold">{formatUSD(aguinaldoResult.grossAguinaldo)}</td>
-                  </tr>
-                  <tr>
-                    <td className="text-muted">Monto exento de ISR:</td>
-                    <td className="text-end text-success fw-bold">
-                      {formatUSD(aguinaldoResult.exemptAmount)}
-                    </td>
-                  </tr>
-                  {aguinaldoResult.taxableExcess > 0 ? (
-                    <tr className="table-danger">
-                      <td className="text-danger fw-bold">
-                        ISR s/excedente ({formatUSD(aguinaldoResult.taxableExcess)}):
-                      </td>
-                      <td className="text-end text-danger fw-bold">
-                        -{formatUSD(aguinaldoResult.isrWithheld)}
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <td className="text-muted">Retención ISR:</td>
-                      <td className="text-end text-success fw-bold">$0.00</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
-              <div>
-                <span className="fw-bold text-dark text-uppercase small d-block">
-                  Aguinaldo Líquido a Recibir
+                <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '11px' }}>
+                  Exento ISSS / AFP
                 </span>
-                <span className="text-muted small">Pago libre de ISSS y AFP</span>
               </div>
-              <span className="fs-3 fw-bold font-monospace text-success">
+
+              <div className="p-3">
+                <div className="mb-3">
+                  <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                    Antigüedad al 12 de diciembre:
+                  </label>
+                  <div className="row g-1">
+                    {(
+                      [
+                        { id: 'under-1', title: '< 1 año', sub: 'Proporcional' },
+                        { id: '1-to-3', title: '1 a < 3 años', sub: '15 días' },
+                        { id: '3-to-10', title: '3 a < 10 años', sub: '19 días' },
+                        { id: '10-plus', title: '10+ años', sub: '21 días' },
+                      ] as const
+                    ).map((b) => (
+                      <div key={b.id} className="col-3">
+                        <button
+                          type="button"
+                          onClick={() => setSeniority(b.id)}
+                          className={`btn btn-sm w-100 p-1.5 text-center border ${
+                            seniority === b.id ? 'btn-dark' : 'btn-light text-muted'
+                          }`}
+                        >
+                          <div className="fw-semibold" style={{ fontSize: '11px' }}>{b.title}</div>
+                          <div className="small font-monospace" style={{ fontSize: '10px' }}>{b.sub}</div>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {seniority === 'under-1' && (
+                  <div className="p-3 bg-light rounded border mb-3">
+                    <div className="row g-2 align-items-center mb-2">
+                      <div className="col-12 col-sm-6">
+                        <label className="form-label small text-muted mb-0">Fecha de ingreso:</label>
+                      </div>
+                      <div className="col-12 col-sm-6">
+                        <input
+                          type="date"
+                          value={aguinaldoHireDate}
+                          onChange={(e) => {
+                            setAguinaldoHireDate(e.target.value);
+                            const year = new Date().getFullYear();
+                            const days = calcDaysBetweenInclusive(e.target.value, `${year}-12-12`);
+                            if (days > 0) setAguinaldoDaysUnder1(days);
+                          }}
+                          className="form-control form-control-sm font-monospace"
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="365"
+                      value={aguinaldoDaysUnder1}
+                      onChange={(e) => setAguinaldoDaysUnder1(Number(e.target.value))}
+                      className="form-range"
+                    />
+                    <div className="text-end small font-monospace text-muted" style={{ fontSize: '11px' }}>
+                      {aguinaldoDaysUnder1} / 365 días al 12 dic.
+                    </div>
+                  </div>
+                )}
+
+                <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>Tope de exención de Renta:</span>
+                  <div className="segmented-control">
+                    <button
+                      type="button"
+                      onClick={() => setAguinaldoExemptionRule('decreto_1500')}
+                      className={aguinaldoExemptionRule === 'decreto_1500' ? 'active' : ''}
+                    >
+                      Decreto $1,500
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAguinaldoExemptionRule('dos_minimos')}
+                      className={aguinaldoExemptionRule === 'dos_minimos' ? 'active' : ''}
+                    >
+                      2 Mínimos ($817.60)
+                    </button>
+                  </div>
+                </div>
+
+                <table className="table table-minimal table-sm small font-monospace mb-0">
+                  <tbody>
+                    <tr>
+                      <td className="text-muted">
+                        Salario diario ({formatUSD(aguinaldoResult.dailySalary)}) × {aguinaldoResult.equivalentDays} días:
+                      </td>
+                      <td className="text-end fw-semibold text-slate-dark">{formatUSD(aguinaldoResult.grossAguinaldo)}</td>
+                    </tr>
+                    <tr>
+                      <td className="text-muted">Monto exento de ISR:</td>
+                      <td className="text-end text-emerald fw-semibold">
+                        {formatUSD(aguinaldoResult.exemptAmount)}
+                      </td>
+                    </tr>
+                    {aguinaldoResult.taxableExcess > 0 ? (
+                      <tr>
+                        <td className="text-muted" style={{ color: '#991b1b' }}>
+                          ISR s/excedente ({formatUSD(aguinaldoResult.taxableExcess)}):
+                        </td>
+                        <td className="text-end font-monospace" style={{ color: '#991b1b' }}>
+                          -{formatUSD(aguinaldoResult.isrWithheld)}
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <td className="text-muted">Retención ISR:</td>
+                        <td className="text-end text-emerald fw-semibold">$0.00</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 border-top d-flex justify-content-between align-items-center">
+              <div>
+                <span className="fw-semibold text-slate-dark d-block small">Aguinaldo Líquido</span>
+                <span className="text-muted small" style={{ fontSize: '11px' }}>Exento por ley de ISSS y AFP</span>
+              </div>
+              <span className="fs-4 fw-bold font-monospace text-emerald">
                 {formatUSD(aguinaldoResult.netAguinaldo)}
               </span>
             </div>
@@ -456,134 +467,122 @@ export function BonusesView({
         </div>
       </div>
 
-      {/* TARJETA 3: VACACIÓN ANUAL (15 DÍAS + 30%) Y TRAMOS */}
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-header bg-white border-bottom py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+      {/* TARJETA 3: VACACIÓN ANUAL */}
+      <div className="card-soft mb-4">
+        <div className="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
           <div>
-            <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-              <Plane className="text-warning" size={20} />
-              <span>Vacación Anual: Comparativa de Modalidades y División en Períodos</span>
-            </h5>
-            <p className="card-subtitle text-muted small mb-0">
-              Art. 177 Código de Trabajo · 15 días continuos con el 30% de recargo sobre dicha quincena
-            </p>
+            <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+              <Plane size={16} className="text-secondary" />
+              <span>Vacación Anual: Modalidades y Tramos (Art. 177 Código de Trabajo)</span>
+            </h6>
+            <span className="small text-muted" style={{ fontSize: '12px' }}>
+              15 días continuos de descanso remunerado con el 30% de recargo de ley
+            </span>
           </div>
 
-          <div className="d-flex align-items-center gap-2">
-            <div className="btn-group btn-group-sm">
-              <button
-                type="button"
-                onClick={() => setVacationSector('privado')}
-                className={`btn ${vacationSector === 'privado' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              >
-                Sector Privado (30%)
-              </button>
-              <button
-                type="button"
-                onClick={() => setVacationSector('publico')}
-                className={`btn ${vacationSector === 'publico' ? 'btn-primary' : 'btn-outline-secondary'}`}
-              >
-                Sector Público (Servicio Civil)
-              </button>
-            </div>
+          <div className="segmented-control">
+            <button
+              type="button"
+              onClick={() => setVacationSector('privado')}
+              className={vacationSector === 'privado' ? 'active' : ''}
+            >
+              Sector Privado (30%)
+            </button>
+            <button
+              type="button"
+              onClick={() => setVacationSector('publico')}
+              className={vacationSector === 'publico' ? 'active' : ''}
+            >
+              Sector Público (Ley de Salarios)
+            </button>
           </div>
         </div>
 
-        <div className="card-body">
+        <div className="p-3">
           {vacationSector === 'publico' ? (
-            <div className="alert alert-info d-flex align-items-start gap-2 mb-0">
-              <Info size={20} className="shrink-0 mt-1" />
-              <div>
-                <strong className="d-block">Régimen de Servicio Civil / Ley de Salarios (Sector Público)</strong>
-                En el sector público las vacaciones corresponden a descanso remunerado dentro de los 3 períodos
-                oficiales (Semana Santa, Fiestas Agostinas y Fin de Año), percibiendo el salario ordinario íntegro (
-                {formatUSD(monthlyNetPay)} líquidos), sin recargo del 30% salvo contrato colectivo institucional.
-              </div>
+            <div className="p-3 rounded bg-light border text-muted small">
+              <strong className="text-slate-dark d-block mb-1">Régimen de Servicio Civil y Ley de Salarios</strong>
+              En el sector público salvadoreño, las vacaciones corresponden a descanso pagado en tres períodos oficiales
+              (Semana Santa, Fiestas Agostinas y Fin de Año), percibiendo el salario ordinario íntegro ({formatUSD(monthlyNetPay)} netos), sin recargo del 30% salvo contrato colectivo específico.
             </div>
           ) : (
             <div className="row g-4">
               <div className="col-12 col-lg-7">
                 <div className="row g-3">
-                  {/* Práctica A: Depósito solo del bono 30% */}
+                  {/* Modalidad A: Solo Bono 30% */}
                   <div className="col-12 col-md-6">
                     <div
                       onClick={() => setVacationMode('bonus_only')}
-                      className={`card h-100 p-3 border cursor-pointer ${
-                        vacationMode === 'bonus_only' ? 'border-primary bg-primary-subtle' : 'bg-light'
+                      className={`p-3 rounded border cursor-pointer h-100 d-flex flex-column justify-content-between ${
+                        vacationMode === 'bonus_only' ? 'bg-slate-50 border-secondary' : 'bg-white'
                       }`}
+                      style={{ cursor: 'pointer' }}
                     >
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <span className="badge bg-primary">Práctica A · Solo 30%</span>
-                        {vacationMode === 'bonus_only' && <Check size={16} className="text-primary" />}
+                      <div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
+                            Práctica A
+                          </span>
+                          {vacationMode === 'bonus_only' && <Check size={14} className="text-emerald" />}
+                        </div>
+                        <h6 className="fw-semibold text-slate-dark mb-1">Depósito solo del Bono 30%</h6>
+                        <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
+                          La quincena se paga en la fecha habitual y se añade el 30% adicional:
+                        </p>
+                        <ul className="list-unstyled small font-monospace text-muted mb-3" style={{ fontSize: '11px' }}>
+                          <li className="d-flex justify-content-between">
+                            <span>Bono 30% Bruto:</span>
+                            <span className="fw-semibold text-slate-dark">{formatUSD(vacationResult.bonus30Gross)}</span>
+                          </li>
+                          <li className="d-flex justify-content-between">
+                            <span>- Deducciones de ley:</span>
+                            <span>-{formatUSD(round2(vacationResult.bonusOnlyMode.afp + vacationResult.bonusOnlyMode.isss + vacationResult.bonusOnlyMode.isrEstimated))}</span>
+                          </li>
+                        </ul>
                       </div>
-                      <h6 className="fw-bold text-dark">Depósito exclusivo del Bono 30%</h6>
-                      <p className="text-muted small mb-3">
-                        Tu quincena ordinaria se deposita normal en planilla y la empresa te abona el 30% vacacional:
-                      </p>
-                      <ul className="list-unstyled small font-monospace space-y-1 mb-3">
-                        <li className="d-flex justify-content-between">
-                          <span className="text-muted">Bono 30% Bruto:</span>
-                          <strong>{formatUSD(vacationResult.bonus30Gross)}</strong>
-                        </li>
-                        <li className="d-flex justify-content-between text-warning-emphasis">
-                          <span>- AFP s/bono:</span>
-                          <span>-{formatUSD(vacationResult.bonusOnlyMode.afp)}</span>
-                        </li>
-                        <li className="d-flex justify-content-between text-info">
-                          <span>- ISSS s/bono:</span>
-                          <span>-{formatUSD(vacationResult.bonusOnlyMode.isss)}</span>
-                        </li>
-                        <li className="d-flex justify-content-between text-danger">
-                          <span>- ISR estimado:</span>
-                          <span>-{formatUSD(vacationResult.bonusOnlyMode.isrEstimated)}</span>
-                        </li>
-                      </ul>
-                      <div className="d-flex justify-content-between align-items-baseline pt-2 border-top mt-auto">
-                        <span className="small fw-bold text-dark">Bono Neto Real:</span>
-                        <span className="fs-5 fw-bold font-monospace text-primary">
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-baseline">
+                        <span className="small text-muted" style={{ fontSize: '12px' }}>Bono Neto:</span>
+                        <span className="fs-5 fw-bold font-monospace text-emerald">
                           {formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Práctica B: Pago completo adelantado 15d + 30% */}
+                  {/* Modalidad B: Anticipo Completo */}
                   <div className="col-12 col-md-6">
                     <div
                       onClick={() => setVacationMode('full_advance')}
-                      className={`card h-100 p-3 border cursor-pointer ${
-                        vacationMode === 'full_advance' ? 'border-primary bg-primary-subtle' : 'bg-light'
+                      className={`p-3 rounded border cursor-pointer h-100 d-flex flex-column justify-content-between ${
+                        vacationMode === 'full_advance' ? 'bg-slate-50 border-secondary' : 'bg-white'
                       }`}
+                      style={{ cursor: 'pointer' }}
                     >
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <span className="badge bg-warning text-dark">Práctica B · Completo</span>
-                        {vacationMode === 'full_advance' && <Check size={16} className="text-primary" />}
+                      <div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
+                            Práctica B
+                          </span>
+                          {vacationMode === 'full_advance' && <Check size={14} className="text-emerald" />}
+                        </div>
+                        <h6 className="fw-semibold text-slate-dark mb-1">Adelanto 15 días + Bono 30%</h6>
+                        <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
+                          Pago adelantado de la quincena completa ({formatUSD(vacationResult.base15DaysGross)}) más el 30%:
+                        </p>
+                        <ul className="list-unstyled small font-monospace text-muted mb-3" style={{ fontSize: '11px' }}>
+                          <li className="d-flex justify-content-between">
+                            <span>Total Bruto:</span>
+                            <span className="fw-semibold text-slate-dark">{formatUSD(vacationResult.completeVacationGross)}</span>
+                          </li>
+                          <li className="d-flex justify-content-between">
+                            <span>- Deducciones:</span>
+                            <span>-{formatUSD(round2(vacationResult.fullAdvanceMode.afp + vacationResult.fullAdvanceMode.isss + vacationResult.fullAdvanceMode.isr))}</span>
+                          </li>
+                        </ul>
                       </div>
-                      <h6 className="fw-bold text-dark">Adelanto 15 días + Bono 30%</h6>
-                      <p className="text-muted small mb-3">
-                        Liquidación completa de la quincena ({formatUSD(vacationResult.base15DaysGross)}) más el 30%:
-                      </p>
-                      <ul className="list-unstyled small font-monospace space-y-1 mb-3">
-                        <li className="d-flex justify-content-between">
-                          <span className="text-muted">Total Bruto (15d + 30%):</span>
-                          <strong>{formatUSD(vacationResult.completeVacationGross)}</strong>
-                        </li>
-                        <li className="d-flex justify-content-between text-warning-emphasis">
-                          <span>- AFP (7.25%):</span>
-                          <span>-{formatUSD(vacationResult.fullAdvanceMode.afp)}</span>
-                        </li>
-                        <li className="d-flex justify-content-between text-info">
-                          <span>- ISSS (tope $15):</span>
-                          <span>-{formatUSD(vacationResult.fullAdvanceMode.isss)}</span>
-                        </li>
-                        <li className="d-flex justify-content-between text-danger">
-                          <span>- ISR total:</span>
-                          <span>-{formatUSD(vacationResult.fullAdvanceMode.isr)}</span>
-                        </li>
-                      </ul>
-                      <div className="d-flex justify-content-between align-items-baseline pt-2 border-top mt-auto">
-                        <span className="small fw-bold text-dark">Líquido Adelantado:</span>
-                        <span className="fs-5 fw-bold font-monospace text-success">
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-baseline">
+                        <span className="small text-muted" style={{ fontSize: '12px' }}>Total Adelantado:</span>
+                        <span className="fs-5 fw-bold font-monospace text-slate-dark">
                           {formatUSD(vacationResult.fullAdvanceMode.netTotal)}
                         </span>
                       </div>
@@ -592,55 +591,72 @@ export function BonusesView({
                 </div>
               </div>
 
-              {/* División en Tramos (Semana Santa, Agosto, Diciembre) */}
+              {/* División por Tramos */}
               <div className="col-12 col-lg-5">
-                <div className="card h-100 bg-light border p-3">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="fw-bold text-dark mb-0">División por Períodos (15 días)</h6>
-                    <span className="badge bg-secondary font-monospace">
+                <div className="p-3 rounded bg-light border h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h6 className="fw-semibold text-slate-dark mb-0">División por Períodos (15 días)</h6>
+                      <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                        Pacto de fraccionamiento
+                      </span>
+                    </div>
+                    <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                      Distribuye los 15 días en hasta tres descansos acordados con tu empleador:
+                    </p>
+
+                    <div className="row g-2 font-monospace small">
+                      <div className="col-4">
+                        <label className="text-muted d-block mb-1" style={{ fontSize: '11px' }}>Período 1:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="15"
+                          value={splitDays[0]}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setSplitDays([val, splitDays[1], splitDays[2]]);
+                          }}
+                          className="form-control form-control-sm font-monospace text-center"
+                        />
+                      </div>
+                      <div className="col-4">
+                        <label className="text-muted d-block mb-1" style={{ fontSize: '11px' }}>Período 2:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="15"
+                          value={splitDays[1]}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setSplitDays([splitDays[0], val, splitDays[2]]);
+                          }}
+                          className="form-control form-control-sm font-monospace text-center"
+                        />
+                      </div>
+                      <div className="col-4">
+                        <label className="text-muted d-block mb-1" style={{ fontSize: '11px' }}>Período 3:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="15"
+                          value={splitDays[2]}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setSplitDays([splitDays[0], splitDays[1], val]);
+                          }}
+                          className="form-control form-control-sm font-monospace text-center"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-top mt-3 d-flex justify-content-between align-items-center small font-monospace">
+                    <span className="text-muted">Total Días:</span>
+                    <span className={`fw-bold ${splitDays[0] + splitDays[1] + splitDays[2] === 15 ? 'text-emerald' : 'text-danger'}`}>
                       {splitDays[0] + splitDays[1] + splitDays[2]} / 15 días
                     </span>
                   </div>
-                  <p className="text-muted small mb-3">
-                    Configura los días asignados a cada período si tu empresa fracciona la vacación:
-                  </p>
-
-                  <div className="space-y-2 mb-3">
-                    {vacationResult.splits.map((tramo, idx) => (
-                      <div key={tramo.name} className="p-2 bg-white rounded border d-flex justify-content-between align-items-center">
-                        <div>
-                          <strong className="d-block small text-dark">{tramo.name}</strong>
-                          <span className="font-monospace text-muted" style={{ fontSize: '11px' }}>
-                            Neto: {formatUSD(tramo.netBonusPart)}
-                          </span>
-                        </div>
-                        <div className="input-group input-group-sm" style={{ width: '100px' }}>
-                          <input
-                            type="number"
-                            min="0"
-                            max="15"
-                            value={splitDays[idx]}
-                            onChange={(e) => {
-                              const val = Math.max(0, Math.min(15, Number(e.target.value) || 0));
-                              const next: [number, number, number] = [...splitDays] as [number, number, number];
-                              next[idx] = val;
-                              setSplitDays(next);
-                            }}
-                            className="form-control text-center font-monospace"
-                          />
-                          <span className="input-group-text">d</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setSplitDays([5, 5, 5])}
-                    className="btn btn-outline-secondary btn-sm w-100"
-                  >
-                    Restablecer distribución (5 / 5 / 5)
-                  </button>
                 </div>
               </div>
             </div>

@@ -13,117 +13,121 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="container py-4" style={{ maxWidth: '1000px' }}>
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono-tabular uppercase px-2.5 py-0.5 rounded-full bg-[#0F4C3A] text-white font-semibold">
+          <div className="d-flex align-items-center gap-2 mb-1">
+            <span className="badge bg-slate-900 text-white font-monospace text-uppercase" style={{ fontSize: '11px' }}>
               Ruta Protegida RBAC · Rol Admin
             </span>
-            <span className="text-xs font-mono-tabular text-[#65635E]">Sesión: {user?.email}</span>
+            <span className="small text-muted font-monospace" style={{ fontSize: '11px' }}>
+              Sesión: {user?.email}
+            </span>
           </div>
-          <h1 className="font-serif-editorial text-2xl font-semibold mt-1 text-[#141413]">
+          <h4 className="fw-semibold text-slate-dark mb-1">
             Panel Interno de Administración y Parámetros Legales
-          </h1>
-          <p className="text-xs text-[#65635E]">
-            Métricas globales anonimizadas del sistema (cumpliendo privacidad financiera sin exponer salarios
-            ni gastos individuales).
+          </h4>
+          <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
+            Métricas globales anonimizadas (privacidad financiera garantizada sin exposición de salarios individuales).
           </p>
         </div>
 
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-xl bg-white border border-[#DFDCD2] text-[#141413] hover:border-[#0F4C3A]"
+          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5 self-start py-1.5 px-3"
+          style={{ fontSize: '12px' }}
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Volver al Panel Principal</span>
+          <ArrowLeft size={13} />
+          <span>Volver al Panel</span>
         </Link>
       </div>
 
-      {/* Global Anonymized Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-[#DFDCD2] shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-[#65635E]">
-            <span>Estado de Tablas Tributarias</span>
-            <CheckCircle2 className="w-4 h-4 text-[#0F4C3A]" />
+      {/* Métricas Globales */}
+      <div className="row g-3 mb-4">
+        <div className="col-12 col-md-4">
+          <div className="card-soft p-4 h-100">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="text-slate-muted small fw-semibold text-uppercase" style={{ fontSize: '10px' }}>
+                Tablas Tributarias
+              </span>
+              <CheckCircle2 size={16} className="text-emerald" />
+            </div>
+            <div className="fs-5 fw-bold font-monospace text-slate-dark mb-1">
+              Decreto 254 / Ley 499
+            </div>
+            <span className="small text-muted" style={{ fontSize: '11px' }}>
+              Vigentes 2026 · Quincena 25 obligatoria 2027
+            </span>
           </div>
-          <div className="text-xl font-mono-tabular font-bold mt-2 text-[#141413]">
-            Decreto 254 / Ley Q25 499
-          </div>
-          <span className="text-xs text-[#0F4C3A] block mt-1">
-            Vigentes 2026 · Quincena 25 obligatoria 2027
-          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#DFDCD2] shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-[#65635E]">
-            <span>Aislamiento de Datos (ID Matching)</span>
-            <Lock className="w-4 h-4 text-[#0F4C3A]" />
+        <div className="col-12 col-md-4">
+          <div className="card-soft p-4 h-100">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="text-slate-muted small fw-semibold text-uppercase" style={{ fontSize: '10px' }}>
+                Aislamiento (ID Matching)
+              </span>
+              <Lock size={16} className="text-emerald" />
+            </div>
+            <div className="fs-5 fw-bold font-monospace text-emerald mb-1">
+              Activo (100%)
+            </div>
+            <span className="small text-muted" style={{ fontSize: '11px' }}>
+              Los administradores no visualizan registros de usuarios
+            </span>
           </div>
-          <div className="text-xl font-mono-tabular font-bold mt-2 text-[#0F4C3A]">Activo (100%)</div>
-          <span className="text-xs text-[#65635E] block mt-1">
-            Los administradores no visualizan montos privados de usuarios
-          </span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#DFDCD2] shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-[#65635E]">
-            <span>Topes Legales Activos</span>
-            <Shield className="w-4 h-4 text-[#0F4C3A]" />
+        <div className="col-12 col-md-4">
+          <div className="card-soft p-4 h-100">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <span className="text-slate-muted small fw-semibold text-uppercase" style={{ fontSize: '10px' }}>
+                Topes Legales Activos
+              </span>
+              <Shield size={16} className="text-secondary" />
+            </div>
+            <div className="fs-5 fw-bold font-monospace text-slate-dark mb-1">
+              ISSS ${RATES.ISSS_CAP_MONTHLY} · Q25 ${RATES.QUINCENA_25_CAP}
+            </div>
+            <span className="small text-muted" style={{ fontSize: '11px' }}>
+              Salario mín. comercio: ${MINIMUM_WAGES_2026.comercio.monthly.toFixed(2)}
+            </span>
           </div>
-          <div className="text-xl font-mono-tabular font-bold mt-2 text-[#141413]">
-            ISSS ${RATES.ISSS_CAP_MONTHLY} · Q25 ${RATES.QUINCENA_25_CAP}
-          </div>
-          <span className="text-xs text-[#65635E] block mt-1">
-            Salario mín. comercio: ${MINIMUM_WAGES_2026.comercio.monthly.toFixed(2)}
-          </span>
         </div>
       </div>
 
-      {/* Security & Error Catalog Verification Console */}
-      <div className="bg-white rounded-2xl border border-[#DFDCD2] p-6 shadow-2xs space-y-4">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-[#B45309]" />
-          <h2 className="font-serif-editorial text-lg font-semibold">
-            Verificador de Estados HTTP y Límite de Errores (Error Boundary)
-          </h2>
+      {/* Verificación de Contingencias y ErrorBoundary */}
+      <div className="card-soft p-4">
+        <div className="d-flex align-items-center gap-2 mb-2">
+          <AlertTriangle size={16} className="text-secondary" />
+          <h6 className="fw-semibold text-slate-dark mb-0">
+            Verificador de Respuestas HTTP y ErrorBoundary
+          </h6>
         </div>
-        <p className="text-xs text-[#65635E]">
-          Prueba desde aquí las vistas de contingencia configuradas para garantizar que ningún error exponga
-          código fuente ni consultas internas:
+        <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+          Herramienta interna para comprobar las páginas de contingencia ante accesos no autorizados o fallos de ejecución:
         </p>
 
-        <div className="flex flex-wrap gap-2.5 pt-1 text-xs">
-          <Link
-            to="/401"
-            className="px-3.5 py-2 rounded-xl bg-[#FAF9F5] border border-[#DFDCD2] font-mono-tabular hover:border-[#0F4C3A]"
-          >
-            Ver Vista 401 (Unauthorized)
+        <div className="d-flex flex-wrap gap-2 small">
+          <Link to="/401" className="btn btn-sm btn-outline-secondary font-monospace" style={{ fontSize: '11px' }}>
+            Vista 401 (Unauthorized)
           </Link>
-          <Link
-            to="/403"
-            className="px-3.5 py-2 rounded-xl bg-[#FAF9F5] border border-[#DFDCD2] font-mono-tabular hover:border-[#0F4C3A]"
-          >
-            Ver Vista 403 (Forbidden)
+          <Link to="/403" className="btn btn-sm btn-outline-secondary font-monospace" style={{ fontSize: '11px' }}>
+            Vista 403 (Forbidden)
           </Link>
-          <Link
-            to="/ruta-inexistente-404"
-            className="px-3.5 py-2 rounded-xl bg-[#FAF9F5] border border-[#DFDCD2] font-mono-tabular hover:border-[#0F4C3A]"
-          >
-            Ver Vista 404 (Not Found)
+          <Link to="/ruta-inexistente-404" className="btn btn-sm btn-outline-secondary font-monospace" style={{ fontSize: '11px' }}>
+            Vista 404 (Not Found)
           </Link>
-          <Link
-            to="/503"
-            className="px-3.5 py-2 rounded-xl bg-[#FAF9F5] border border-[#DFDCD2] font-mono-tabular hover:border-[#0F4C3A]"
-          >
-            Ver Vista 502/503 (Mantenimiento)
+          <Link to="/503" className="btn btn-sm btn-outline-secondary font-monospace" style={{ fontSize: '11px' }}>
+            Vista 503 (Mantenimiento)
           </Link>
           <button
             type="button"
             onClick={() => setSimulateCrash(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#B91C1C]/10 text-[#B91C1C] border border-[#B91C1C]/30 font-medium inline-flex items-center gap-1.5 cursor-pointer"
+            className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 font-monospace"
+            style={{ fontSize: '11px' }}
           >
-            <Bug className="w-3.5 h-3.5" />
+            <Bug size={12} />
             <span>Disparar ErrorBoundary (500)</span>
           </button>
         </div>

@@ -48,15 +48,15 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
 ];
 
 export const CATEGORY_BADGES: Record<ExpenseCategory, string> = {
-  Vivienda: 'bg-primary',
-  Alimentación: 'bg-info text-dark',
-  Transporte: 'bg-warning text-dark',
-  Servicios: 'bg-secondary',
-  Deudas: 'bg-danger',
-  Salud: 'bg-success',
-  Educación: 'bg-dark',
-  Ahorro: 'bg-success-subtle text-success border border-success-subtle',
-  Ocio: 'bg-light text-dark border',
+  Vivienda: 'bg-light text-slate-dark border',
+  Alimentación: 'bg-light text-slate-dark border',
+  Transporte: 'bg-light text-slate-dark border',
+  Servicios: 'bg-light text-slate-dark border',
+  Deudas: 'bg-light text-slate-dark border',
+  Salud: 'bg-light text-slate-dark border',
+  Educación: 'bg-light text-slate-dark border',
+  Ahorro: 'bg-emerald-subtle text-emerald border',
+  Ocio: 'bg-light text-slate-dark border',
 };
 
 interface ExpensesViewProps {
@@ -97,7 +97,7 @@ interface ExpensesViewProps {
   newExpCycle: ExpenseCycle;
   setNewExpCycle: (v: ExpenseCycle) => void;
   newExpFixed: boolean;
-  setNewExpFixed: React.Dispatch<React.SetStateAction<boolean>>;
+  setNewExpFixed: (v: boolean) => void;
   onAddExpense: (e: React.FormEvent) => void;
   onToggleExpensePaid: (id: string) => void;
   onDeleteExpense: (id: string) => void;
@@ -112,7 +112,7 @@ interface ExpensesViewProps {
   onAddBonusGoal: (e: React.FormEvent) => void;
   onDeleteBonusGoal: (id: string) => void;
   formatUSD: (val: number) => string;
-  formatHours: (hours: number) => string;
+  formatHours: (val: number) => string;
 }
 
 export function ExpensesView({
@@ -153,70 +153,78 @@ export function ExpensesView({
   return (
     <motion.div
       key="tab-expenses"
-      initial={{ opacity: 0, y: 15 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.25 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
       className="container-fluid px-0"
     >
       {/* 4 Tarjetas de Balance Superior */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card shadow-sm border-0 p-3 h-100 card-hover-shadow">
-            <span className="text-muted small fw-bold">Disponible Mensual</span>
-            <div
-              className={`fs-3 fw-bold font-monospace mt-1 ${
-                expenseSummary.remainingMonthly >= 0 ? 'text-success' : 'text-danger'
-              }`}
-            >
-              {formatUSD(expenseSummary.remainingMonthly)}
+          <div className="card-soft p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span className="text-slate-muted small fw-semibold text-uppercase d-block" style={{ fontSize: '10px' }}>
+                Disponible Mensual
+              </span>
+              <div
+                className={`fs-3 fw-bold font-monospace my-1 ${
+                  expenseSummary.remainingMonthly >= 0 ? 'text-emerald' : 'text-danger'
+                }`}
+              >
+                {formatUSD(expenseSummary.remainingMonthly)}
+              </div>
             </div>
-            <span className="text-muted small font-monospace">
+            <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
               Gastos: {formatUSD(expenseSummary.totalMonthlyExpenses)} de {formatUSD(monthlyNetPay)}
             </span>
           </div>
         </div>
 
         <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card shadow-sm border-0 p-3 h-100 card-hover-shadow">
-            <span className="text-muted small fw-bold">Balance 1.ª Quincena (Día 15)</span>
-            <div
-              className={`fs-3 fw-bold font-monospace mt-1 ${
-                expenseSummary.remainingQ1 >= 0 ? 'text-dark' : 'text-danger'
-              }`}
-            >
-              {formatUSD(expenseSummary.remainingQ1)}
+          <div className="card-soft p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span className="text-slate-muted small fw-semibold text-uppercase d-block" style={{ fontSize: '10px' }}>
+                Balance 1.ª Quincena (Día 15)
+              </span>
+              <div className="fs-3 fw-bold font-monospace text-slate-dark my-1">
+                {formatUSD(expenseSummary.remainingQ1)}
+              </div>
             </div>
-            <span className="text-muted small font-monospace">
+            <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
               Compromisos Q1: {formatUSD(expenseSummary.q1Total)}
             </span>
           </div>
         </div>
 
         <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card shadow-sm border-0 p-3 h-100 card-hover-shadow">
-            <span className="text-muted small fw-bold">Balance 2.ª Quincena (Fin de Mes)</span>
-            <div
-              className={`fs-3 fw-bold font-monospace mt-1 ${
-                expenseSummary.remainingQ2 >= 0 ? 'text-dark' : 'text-danger'
-              }`}
-            >
-              {formatUSD(expenseSummary.remainingQ2)}
+          <div className="card-soft p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span className="text-slate-muted small fw-semibold text-uppercase d-block" style={{ fontSize: '10px' }}>
+                Balance 2.ª Quincena (Fin de Mes)
+              </span>
+              <div className="fs-3 fw-bold font-monospace text-slate-dark my-1">
+                {formatUSD(expenseSummary.remainingQ2)}
+              </div>
             </div>
-            <span className="text-muted small font-monospace">
+            <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
               Compromisos Q2: {formatUSD(expenseSummary.q2Total)}
             </span>
           </div>
         </div>
 
         <div className="col-12 col-sm-6 col-lg-3">
-          <div className="card shadow-sm border-0 p-3 h-100 card-hover-shadow">
-            <span className="text-muted small fw-bold">Costo en Horas de Trabajo</span>
-            <div className="fs-3 fw-bold font-monospace mt-1 text-warning-emphasis">
-              {formatHours(expenseSummary.totalHoursRequired)}
+          <div className="card-soft p-3 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <span className="text-slate-muted small fw-semibold text-uppercase d-block" style={{ fontSize: '10px' }}>
+                Costo en Horas de Trabajo
+              </span>
+              <div className="fs-3 fw-bold font-monospace text-slate-dark my-1">
+                {formatHours(expenseSummary.totalHoursRequired)}
+              </div>
             </div>
-            <span className="text-muted small font-monospace">
-              De {totalHoursPerMonth}h mensuales ({formatUSD(netHourly)}/h líquido)
+            <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
+              De {totalHoursPerMonth}h mensuales ({formatUSD(netHourly)}/h neto)
             </span>
           </div>
         </div>
@@ -226,45 +234,50 @@ export function ExpensesView({
       <div className="row g-4 mb-4">
         {/* Columna Izquierda: Registro de Gastos Personales */}
         <div className="col-12 col-lg-7">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <div className="card-soft h-100">
+            <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
               <div>
-                <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                  <Wallet className="text-primary" size={20} />
+                <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+                  <Wallet size={16} className="text-secondary" />
                   <span>Control de Gastos Personales y Costo en Horas</span>
-                </h5>
-                <p className="card-subtitle text-muted small mb-0">
-                  Calcula cuántas horas de trabajo neto requiere pagar cada compromiso
-                </p>
+                </h6>
+                <span className="small text-muted" style={{ fontSize: '12px' }}>
+                  Calcula cuántas horas de trabajo neto requiere cubrir cada gasto
+                </span>
               </div>
               <button
                 type="button"
                 onClick={onResetDefaultExpenses}
-                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 py-1 px-2"
+                style={{ fontSize: '11px' }}
                 title="Restaurar gastos de ejemplo"
               >
-                <RotateCcw size={13} />
+                <RotateCcw size={12} />
                 <span>Restaurar</span>
               </button>
             </div>
 
-            <div className="card-body">
+            <div className="p-3">
               {/* Formulario Agregar Gasto */}
               <form onSubmit={onAddExpense} className="p-3 bg-light rounded border mb-3">
                 <div className="row g-2">
                   <div className="col-12 col-sm-4">
-                    <label className="form-label small fw-bold text-muted mb-1">Concepto:</label>
+                    <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                      Concepto:
+                    </label>
                     <input
                       type="text"
                       value={newExpName}
                       onChange={(e) => setNewExpName(e.target.value)}
-                      placeholder="Ej. Supermercado, Alquiler..."
+                      placeholder="Ej. Vivienda, Alimentos..."
                       className="form-control form-control-sm"
                     />
                   </div>
 
                   <div className="col-6 col-sm-2">
-                    <label className="form-label small fw-bold text-muted mb-1">Monto ($):</label>
+                    <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                      Monto ($):
+                    </label>
                     <input
                       type="number"
                       min="0.01"
@@ -277,7 +290,9 @@ export function ExpensesView({
                   </div>
 
                   <div className="col-6 col-sm-2">
-                    <label className="form-label small fw-bold text-muted mb-1">Categoría:</label>
+                    <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                      Categoría:
+                    </label>
                     <select
                       value={newExpCategory}
                       onChange={(e) => setNewExpCategory(e.target.value as ExpenseCategory)}
@@ -292,15 +307,17 @@ export function ExpensesView({
                   </div>
 
                   <div className="col-6 col-sm-2">
-                    <label className="form-label small fw-bold text-muted mb-1">Período:</label>
+                    <label className="form-label text-slate-muted small fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                      Período:
+                    </label>
                     <select
                       value={newExpCycle}
                       onChange={(e) => setNewExpCycle(e.target.value as ExpenseCycle)}
                       className="form-select form-select-sm"
                     >
-                      <option value="mensual">Mensual (50/50)</option>
-                      <option value="quincena_1">1.ª Quincena</option>
-                      <option value="quincena_2">2.ª Quincena</option>
+                      <option value="mensual">Mes (50/50)</option>
+                      <option value="quincena_1">1.ª Qna</option>
+                      <option value="quincena_2">2.ª Qna</option>
                     </select>
                   </div>
 
@@ -313,12 +330,12 @@ export function ExpensesView({
                         checked={newExpFixed}
                         onChange={(e) => setNewExpFixed(e.target.checked)}
                       />
-                      <label className="form-check-label small" htmlFor="newExpFixedCheck">
+                      <label className="form-check-label small text-muted" htmlFor="newExpFixedCheck" style={{ fontSize: '11px' }}>
                         Fijo
                       </label>
                     </div>
-                    <button type="submit" className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-1">
-                      <Plus size={14} />
+                    <button type="submit" className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1 py-1" style={{ fontSize: '12px' }}>
+                      <Plus size={13} />
                       <span>Agregar</span>
                     </button>
                   </div>
@@ -327,90 +344,87 @@ export function ExpensesView({
 
               {/* Filtros de Ciclo */}
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="btn-group btn-group-sm">
+                <div className="segmented-control">
                   {(
                     [
                       { id: 'all', label: 'Todos' },
-                      { id: 'quincena_1', label: '1.ª Quincena' },
-                      { id: 'quincena_2', label: '2.ª Quincena' },
-                      { id: 'mensual', label: 'Mensuales' },
+                      { id: 'quincena_1', label: '1.ª Qna' },
+                      { id: 'quincena_2', label: '2.ª Qna' },
+                      { id: 'mensual', label: 'Mes' },
                     ] as const
                   ).map((f) => (
                     <button
                       key={f.id}
                       type="button"
                       onClick={() => setExpenseFilterCycle(f.id)}
-                      className={`btn ${expenseFilterCycle === f.id ? 'btn-dark' : 'btn-outline-secondary'}`}
+                      className={expenseFilterCycle === f.id ? 'active' : ''}
                     >
                       {f.label}
                     </button>
                   ))}
                 </div>
 
-                <span className="small text-muted font-monospace">
+                <span className="small text-muted font-monospace" style={{ fontSize: '11px' }}>
                   Fijos: {formatUSD(expenseSummary.fixedTotal)} · Var: {formatUSD(expenseSummary.variableTotal)}
                 </span>
               </div>
 
-              {/* Lista Animada de Gastos */}
+              {/* Lista de Gastos */}
               <div className="list-group list-group-flush border rounded">
-                <AnimatePresence initial={false}>
+                <AnimatePresence>
                   {filteredExpenses.map((item) => {
-                    const hoursCost = netHourly > 0 ? item.amount / netHourly : 0;
-                    const pctOfNet =
-                      monthlyNetPay > 0 ? round2((item.amount / monthlyNetPay) * 100) : 0;
+                    const hoursCost = netHourly > 0 ? round2(item.amount / netHourly) : 0;
+                    const pctOfNet = monthlyNetPay > 0 ? Math.round((item.amount / monthlyNetPay) * 100) : 0;
 
                     return (
                       <motion.div
                         key={item.id}
                         layout
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.96 }}
-                        transition={{ duration: 0.18 }}
-                        className={`list-group-item d-flex justify-content-between align-items-center p-3 ${
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className={`list-group-item d-flex justify-content-between align-items-center p-2.5 ${
                           item.paid ? 'bg-light text-muted' : ''
                         }`}
                       >
-                        <div className="d-flex align-items-center gap-3">
+                        <div className="d-flex align-items-center gap-2.5">
                           <button
                             type="button"
                             onClick={() => onToggleExpensePaid(item.id)}
-                            className={`btn btn-sm p-1 rounded-circle border d-flex align-items-center justify-center ${
-                              item.paid ? 'btn-success' : 'btn-outline-secondary'
+                            className={`btn btn-sm p-0 rounded-circle border d-flex align-items-center justify-content-center ${
+                              item.paid ? 'btn-dark' : 'btn-outline-secondary'
                             }`}
-                            style={{ width: '24px', height: '24px' }}
+                            style={{ width: '22px', height: '22px' }}
                             title={item.paid ? 'Marcar pendiente' : 'Marcar pagado'}
                           >
-                            {item.paid && <Check size={14} />}
+                            {item.paid && <Check size={12} />}
                           </button>
 
                           <div>
-                            <div className="d-flex align-items-center gap-2 mb-1">
-                              <span className={`fw-semibold text-dark ${item.paid ? 'text-decoration-line-through text-muted' : ''}`}>
+                            <div className="d-flex align-items-center gap-1.5 mb-0.5">
+                              <span className={`fw-semibold text-slate-dark small ${item.paid ? 'text-decoration-line-through text-muted' : ''}`}>
                                 {item.name}
                               </span>
-                              <span className={`badge ${CATEGORY_BADGES[item.category] || 'bg-secondary'}`} style={{ fontSize: '10px' }}>
+                              <span className={`badge ${CATEGORY_BADGES[item.category] || 'bg-light text-secondary border'}`} style={{ fontSize: '10px' }}>
                                 {item.category}
                               </span>
-                              <span className="badge bg-light text-dark border font-monospace" style={{ fontSize: '10px' }}>
+                              <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
                                 {item.cycle === 'quincena_1' ? '1.ª Q' : item.cycle === 'quincena_2' ? '2.ª Q' : 'Mes'}
                               </span>
                             </div>
 
                             <div className="small font-monospace text-muted d-flex align-items-center gap-1.5" style={{ fontSize: '11px' }}>
-                              <Clock size={12} className="text-warning" />
-                              <span className="text-warning-emphasis fw-bold">
-                                Equivale a {formatHours(hoursCost)} de trabajo neto
-                              </span>
+                              <Clock size={11} className="text-secondary" />
+                              <span>Equivale a {formatHours(hoursCost)} de trabajo</span>
                               <span>·</span>
-                              <span>{pctOfNet}% de tu sueldo neto</span>
+                              <span>{pctOfNet}% del neto</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="d-flex align-items-center gap-3">
-                          <span className="fs-6 fw-bold font-monospace text-dark">
+                        <div className="d-flex align-items-center gap-2.5">
+                          <span className="fw-semibold font-monospace text-slate-dark small">
                             {formatUSD(item.amount)}
                           </span>
                           <button
@@ -419,7 +433,7 @@ export function ExpensesView({
                             className="btn btn-outline-danger btn-sm p-1 border-0"
                             title="Eliminar gasto"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </motion.div>
@@ -440,34 +454,34 @@ export function ExpensesView({
         {/* Columna Derecha: Planificador de Bonos y Distribución de Gastos */}
         <div className="col-12 col-lg-5 d-flex flex-column gap-4">
           {/* Planificador de Destino de Bonos de Ley */}
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-white border-bottom py-3">
-              <h5 className="card-title mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                <Target className="text-success" size={20} />
+          <div className="card-soft">
+            <div className="p-3 border-bottom">
+              <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
+                <Target size={16} className="text-secondary" />
                 <span>Destino de Bonos de Ley (Vacación, Aguinaldo, Q25)</span>
-              </h5>
-              <p className="card-subtitle text-muted small mb-0">
-                Planifica cómo distribuir tus ingresos extraordinarios del año
-              </p>
+              </h6>
+              <span className="small text-muted" style={{ fontSize: '12px' }}>
+                Planifica cómo distribuir tus ingresos extraordinarios
+              </span>
             </div>
 
-            <div className="card-body">
-              <div className="p-3 bg-light rounded border mb-3 small font-monospace">
+            <div className="p-3">
+              <div className="p-2.5 bg-slate-50 rounded border mb-3 small font-monospace">
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted">Quincena 25 (Enero):</span>
-                  <strong>{formatUSD(annualBonusesSummary.q25Net)}</strong>
+                  <span className="text-slate-dark">{formatUSD(annualBonusesSummary.q25Net)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-1">
                   <span className="text-muted">Bono Vacacional 30%:</span>
-                  <strong>{formatUSD(annualBonusesSummary.vacNet)}</strong>
+                  <span className="text-slate-dark">{formatUSD(annualBonusesSummary.vacNet)}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
                   <span className="text-muted">Aguinaldo (Diciembre):</span>
-                  <strong>{formatUSD(annualBonusesSummary.agNet)}</strong>
+                  <span className="text-slate-dark">{formatUSD(annualBonusesSummary.agNet)}</span>
                 </div>
-                <div className="d-flex justify-content-between pt-2 border-top text-success fw-bold fs-6">
+                <div className="d-flex justify-content-between pt-1.5 border-top fw-bold">
                   <span>Bolsa Anual Neta:</span>
-                  <span>{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}</span>
+                  <span className="text-emerald">+{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}</span>
                 </div>
               </div>
 
@@ -506,7 +520,7 @@ export function ExpensesView({
                     />
                   </div>
                 </div>
-                <button type="submit" className="btn btn-dark btn-sm w-100">
+                <button type="submit" className="btn btn-dark btn-sm w-100 py-1" style={{ fontSize: '12px' }}>
                   + Asignar meta de bono
                 </button>
               </form>
@@ -516,67 +530,65 @@ export function ExpensesView({
                 {bonusGoals.map((goal) => (
                   <div key={goal.id} className="list-group-item d-flex justify-content-between align-items-center p-2 small">
                     <div>
-                      <strong className="d-block text-dark">{goal.title}</strong>
+                      <strong className="d-block text-slate-dark" style={{ fontSize: '12px' }}>{goal.title}</strong>
                       <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
                         {goal.source === 'quincena25' ? 'Quincena 25' : goal.source === 'vacacion' ? 'Vacación' : 'Aguinaldo'}
                       </span>
                     </div>
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="fw-bold font-monospace text-dark">{formatUSD(goal.amount)}</span>
+                    <div className="d-flex align-items-center gap-2 font-monospace">
+                      <span className="fw-semibold text-slate-dark">{formatUSD(goal.amount)}</span>
                       <button
                         type="button"
                         onClick={() => onDeleteBonusGoal(goal.id)}
                         className="btn btn-outline-danger btn-sm p-1 border-0"
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded border small">
-                <span className="text-muted">Bonos sin asignar aún:</span>
-                <span className={`fw-bold font-monospace ${annualBonusesSummary.unallocated >= 0 ? 'text-success' : 'text-danger'}`}>
+              <div className="d-flex justify-content-between align-items-center p-2 bg-slate-50 rounded border small font-monospace">
+                <span className="text-muted">Bonos sin asignar:</span>
+                <span className={`fw-semibold ${annualBonusesSummary.unallocated >= 0 ? 'text-emerald' : 'text-danger'}`}>
                   {formatUSD(annualBonusesSummary.unallocated)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Tarjeta de Distribución de Gastos por Categoría */}
-          <div className="card shadow-sm border-0">
-            <div className="card-header bg-white border-bottom py-3">
-              <h6 className="card-title mb-0 fw-bold text-dark">Distribución por Categoría</h6>
-            </div>
-            <div className="card-body">
-              <div className="space-y-3">
-                {EXPENSE_CATEGORIES.filter((cat) => expenseSummary.byCategory[cat] > 0).map((cat) => {
-                  const amt = expenseSummary.byCategory[cat];
-                  const pct =
-                    expenseSummary.totalMonthlyExpenses > 0
-                      ? Math.round((amt / expenseSummary.totalMonthlyExpenses) * 100)
-                      : 0;
+          {/* Distribución de Gastos por Categoría */}
+          <div className="card-soft p-3">
+            <h6 className="fw-semibold text-slate-dark mb-3" style={{ fontSize: '13px' }}>
+              Distribución por Categoría
+            </h6>
+            <div className="space-y-3">
+              {EXPENSE_CATEGORIES.filter((cat) => expenseSummary.byCategory[cat] > 0).map((cat) => {
+                const amt = expenseSummary.byCategory[cat];
+                const pct =
+                  expenseSummary.totalMonthlyExpenses > 0
+                    ? Math.round((amt / expenseSummary.totalMonthlyExpenses) * 100)
+                    : 0;
 
-                  return (
-                    <div key={cat} className="small">
-                      <div className="d-flex justify-content-between mb-1">
-                        <span className="fw-semibold text-dark">{cat}</span>
-                        <span className="font-monospace text-muted">
-                          {formatUSD(amt)} ({pct}%)
-                        </span>
-                      </div>
-                      <div className="progress" style={{ height: '6px' }}>
-                        <div
-                          className="progress-bar bg-primary"
-                          role="progressbar"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                return (
+                  <div key={cat} className="small mb-2">
+                    <div className="d-flex justify-content-between mb-1">
+                      <span className="text-slate-dark">{cat}</span>
+                      <span className="font-monospace text-muted">
+                        {formatUSD(amt)} ({pct}%)
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="progress" style={{ height: '5px', backgroundColor: '#e2e8f0' }}>
+                      <div
+                        className="progress-bar"
+                        role="progressbar"
+                        style={{ width: `${pct}%`, backgroundColor: '#334155' }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

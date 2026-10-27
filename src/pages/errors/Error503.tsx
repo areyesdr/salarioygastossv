@@ -5,33 +5,35 @@ export default function Error503() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-2xl border border-[#DFDCD2] p-8 text-center shadow-2xs space-y-5">
-        <div className="w-12 h-12 rounded-2xl bg-[#B45309]/10 text-[#B45309] flex items-center justify-center mx-auto">
-          <ServerCrash className="w-6 h-6" />
+    <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
+      <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
+        <div
+          className="rounded-circle d-flex align-items-center justify-content-center text-slate-dark mx-auto mb-3"
+          style={{ width: '48px', height: '48px', backgroundColor: '#f1f5f9' }}
+        >
+          <ServerCrash size={22} className="text-secondary" />
         </div>
-        <div className="space-y-2">
-          <span className="text-xs font-mono-tabular uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#B45309]/10 text-[#B45309] font-semibold">
-            Estado HTTP 502 / 503 · Servicio No Disponible
-          </span>
-          <h1 className="font-serif-editorial text-2xl font-semibold text-[#141413]">
-            Plataforma en mantenimiento temporal
-          </h1>
-          <p className="text-sm text-[#65635E]">
-            El servicio de sincronización se encuentra en mantenimiento programado o experimenta alta demanda.
-            Por favor intenta nuevamente en unos minutos.
-          </p>
-        </div>
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="px-5 py-2.5 rounded-xl bg-[#0F4C3A] text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 hover:bg-[#0F4C3A]/90 cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Volver a la Calculadora</span>
-          </button>
-        </div>
+
+        <span className="badge bg-light text-secondary border font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
+          Estado HTTP 502 / 503 · Mantenimiento
+        </span>
+
+        <h5 className="fw-semibold text-slate-dark mb-2">
+          Mantenimiento de Plataforma
+        </h5>
+
+        <p className="text-muted small mb-4" style={{ fontSize: '13px' }}>
+          El servicio se encuentra en mantenimiento programado o bajo una ventana de actualización. Por favor reintenta en breve.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-1.5 py-2 px-4 fw-semibold"
+        >
+          <RefreshCw size={14} />
+          <span>Volver a la Calculadora</span>
+        </button>
       </div>
     </div>
   );

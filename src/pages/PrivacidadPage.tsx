@@ -41,207 +41,213 @@ export default function PrivacidadPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container py-4" style={{ maxWidth: '840px' }}>
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0F4C3A] hover:underline"
+          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5"
+          style={{ fontSize: '12px' }}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft size={13} />
           <span>Volver a la Calculadora</span>
         </Link>
-        <span className="text-xs font-mono-tabular text-[#65635E]">
+        <span className="small text-muted font-monospace" style={{ fontSize: '11px' }}>
           Protección de Datos y Derechos ARCO
         </span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#DFDCD2] p-6 sm:p-8 shadow-2xs space-y-6">
-        <div className="border-b border-[#EFECE6] pb-4">
-          <span className="text-xs font-mono-tabular uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#0F4C3A]/10 text-[#0F4C3A] font-semibold">
+      <div className="card-soft p-4 p-sm-5 space-y-4">
+        <div className="border-bottom pb-3 mb-4">
+          <span className="badge bg-slate-100 text-slate-700 border border-slate-200 font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
             Privacidad y Seguridad de Datos · El Salvador
           </span>
-          <h1 className="font-serif-editorial text-2xl sm:text-3xl font-semibold mt-2 text-[#141413]">
+          <h4 className="fw-semibold text-slate-dark mb-1">
             Política de Privacidad y Ejercicio de Derechos ARCO
-          </h1>
-          <p className="text-sm text-[#65635E] mt-1">
-            Transparencia sobre el tratamiento de datos personales y financieros en Salario y Gastos SV.
+          </h4>
+          <p className="text-muted small mb-0" style={{ fontSize: '12px' }}>
+            Transparencia sobre el tratamiento de datos personales y financieros en Salario SV.
           </p>
         </div>
 
         {/* 1. Qué datos recolectamos y finalidad */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-[#FAF9F5] border border-[#E2DFD7] space-y-2">
-            <div className="flex items-center gap-2 font-semibold text-sm text-[#141413]">
-              <ShieldCheck className="w-4 h-4 text-[#0F4C3A]" />
-              <span>¿Qué datos recolectamos?</span>
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-6">
+            <div className="p-3.5 rounded bg-slate-50 border border-slate-200 h-100">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <ShieldCheck size={16} className="text-secondary" />
+                <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+                  ¿Qué datos recolectamos?
+                </h6>
+              </div>
+              <ul className="text-muted small space-y-1 ps-3 mb-0" style={{ fontSize: '12px' }}>
+                <li>
+                  <strong>Identificación básica:</strong> Nombre o alias y correo al iniciar sesión opcionalmente.
+                </li>
+                <li>
+                  <strong>Parámetros de simulación:</strong> Salario ingresado, antigüedad y partidas presupuestarias asociadas a tu sesión local.
+                </li>
+              </ul>
             </div>
-            <ul className="text-xs text-[#4A4945] space-y-1.5 list-disc pl-4">
-              <li>
-                <strong>Datos de identificación:</strong> Nombre o alias y dirección de correo electrónico al
-                iniciar sesión.
-              </li>
-              <li>
-                <strong>Datos financieros de simulación:</strong> Monto de salario nominal, antigüedad laboral,
-                partidas de gastos personales y metas de ahorro vinculadas a tu identificador de usuario (
-                <code>ownerId</code>).
-              </li>
-            </ul>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#FAF9F5] border border-[#E2DFD7] space-y-2">
-            <div className="flex items-center gap-2 font-semibold text-sm text-[#141413]">
-              <Lock className="w-4 h-4 text-[#0F4C3A]" />
-              <span>¿Para qué se utilizan y cómo se protegen?</span>
+          <div className="col-12 col-md-6">
+            <div className="p-3.5 rounded bg-slate-50 border border-slate-200 h-100">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Lock size={16} className="text-secondary" />
+                <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+                  ¿Cómo se protegen?
+                </h6>
+              </div>
+              <ul className="text-muted small space-y-1 ps-3 mb-0" style={{ fontSize: '12px' }}>
+                <li>
+                  <strong>Sin venta a terceros:</strong> No comercializamos ni transferimos tus datos a agencias de crédito ni aseguradoras.
+                </li>
+                <li>
+                  <strong>Aislamiento (ID Matching):</strong> Cada usuario accede exclusivamente a sus propios registros.
+                </li>
+              </ul>
             </div>
-            <ul className="text-xs text-[#4A4945] space-y-1.5 list-disc pl-4">
-              <li>
-                <strong>Uso exclusivo:</strong> Los datos se emplean únicamente para conservar tu historial de
-                presupuesto dentro de la aplicación.
-              </li>
-              <li>
-                <strong>Cero venta a terceros:</strong> Nunca comercializamos, cedemos ni compartimos tus
-                ingresos o gastos con terceros ni entidades crediticias.
-              </li>
-              <li>
-                <strong>Seguridad:</strong> Aislamiento por sesión (RBAC + ID Matching), transmisión segura
-                HTTPS/SSL y sanitización de errores.
-              </li>
-            </ul>
           </div>
         </div>
 
-        {/* 2. Panel Interactivo de Derechos ARCO */}
-        <div className="pt-4 border-t border-[#EFECE6] space-y-4">
-          <div>
-            <h2 className="font-serif-editorial text-xl font-semibold text-[#141413]">
-              Centro de Control de Derechos ARCO (Acceso, Rectificación, Cancelación y Oposición)
-            </h2>
-            <p className="text-xs text-[#65635E] mt-0.5">
-              Como titular de tus datos personales en El Salvador, puedes ejercer directamente tus derechos
-              desde este panel o escribiendo a{' '}
-              <span className="font-mono-tabular text-[#141413]">axel.f.reyes.a@gmail.com</span>.
-            </p>
-          </div>
+        {/* 2. Centro de Control ARCO */}
+        <div className="pt-3 border-top">
+          <h6 className="fw-semibold text-slate-dark mb-1">
+            Centro de Control de Derechos ARCO (Acceso, Rectificación, Cancelación y Oposición)
+          </h6>
+          <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+            Como titular de tus datos en El Salvador, puedes ejercer tus derechos directamente desde aquí o escribiendo a axel.f.reyes.a@gmail.com:
+          </p>
 
           {user ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* ACCESO */}
-              <div className="p-4 rounded-xl border border-[#DFDCD2] bg-white flex flex-col justify-between space-y-3">
-                <div>
-                  <span className="text-[10px] font-mono-tabular uppercase font-semibold text-[#0F4C3A]">
-                    1. Derecho de Acceso
-                  </span>
-                  <h3 className="font-semibold text-sm mt-1">Descargar copia de mis datos</h3>
-                  <p className="text-xs text-[#65635E] mt-1">
-                    Obtén un archivo JSON con tu perfil y todos los gastos y metas asociados a tu cuenta (
-                    <code>{user.id}</code>).
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleExportARCO}
-                  className="w-full py-2 px-3 rounded-lg bg-[#0F4C3A] text-white text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#0F4C3A]/90 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Exportar mis datos (.JSON)</span>
-                </button>
-              </div>
-
-              {/* RECTIFICACIÓN */}
-              <form
-                onSubmit={handleRectifyARCO}
-                className="p-4 rounded-xl border border-[#DFDCD2] bg-white flex flex-col justify-between space-y-3"
-              >
-                <div className="space-y-2">
-                  <span className="text-[10px] font-mono-tabular uppercase font-semibold text-[#1D4ED8]">
-                    2. Derecho de Rectificación
-                  </span>
-                  <h3 className="font-semibold text-sm">Actualizar mis datos</h3>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Nombre"
-                    className="w-full text-xs border border-[#DFDCD2] rounded-lg px-2.5 py-1.5"
-                  />
-                  <input
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="Correo electrónico"
-                    className="w-full text-xs border border-[#DFDCD2] rounded-lg px-2.5 py-1.5"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2 px-3 rounded-lg bg-[#141413] text-white text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#141413]/90 cursor-pointer"
-                >
-                  {savedNotice ? (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Datos rectificados</span>
-                    </>
-                  ) : (
-                    <>
-                      <UserCheck className="w-3.5 h-3.5" />
-                      <span>Guardar rectificación</span>
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* CANCELACIÓN Y OPOSICIÓN */}
-              <div className="p-4 rounded-xl border border-[#B91C1C]/30 bg-[#B91C1C]/4 flex flex-col justify-between space-y-3">
-                <div>
-                  <span className="text-[10px] font-mono-tabular uppercase font-semibold text-[#B91C1C]">
-                    3. Cancelación y Oposición
-                  </span>
-                  <h3 className="font-semibold text-sm mt-1 text-[#141413]">
-                    Eliminar cuenta y borrar historial
-                  </h3>
-                  <p className="text-xs text-[#65635E] mt-1">
-                    Purga de inmediato tu sesión, salario configurado, gastos registrados y metas de bonos.
-                  </p>
-                </div>
-                {!confirmDelete ? (
+            <div className="row g-3">
+              {/* Acceso */}
+              <div className="col-12 col-md-4">
+                <div className="p-3 rounded border border-slate-200 h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <span className="badge bg-light text-secondary border font-monospace mb-1" style={{ fontSize: '10px' }}>
+                      1. Acceso
+                    </span>
+                    <h6 className="fw-semibold text-slate-dark mb-1" style={{ fontSize: '13px' }}>
+                      Descargar copia de datos
+                    </h6>
+                    <p className="text-muted small mb-3" style={{ fontSize: '11px' }}>
+                      Obtén un archivo JSON con tu perfil y registros financieros vinculados.
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setConfirmDelete(true)}
-                    className="w-full py-2 px-3 rounded-lg bg-[#B91C1C] text-white text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#B91C1C]/90 cursor-pointer"
+                    onClick={handleExportARCO}
+                    className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                    style={{ fontSize: '11px' }}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Solicitar borrado total</span>
+                    <Download size={13} />
+                    <span>Exportar (.JSON)</span>
                   </button>
-                ) : (
-                  <div className="flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleCancelARCO}
-                      className="flex-1 py-2 px-2 rounded-lg bg-[#B91C1C] text-white text-xs font-semibold cursor-pointer"
-                    >
-                      Confirmar purga
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(false)}
-                      className="py-2 px-2.5 rounded-lg bg-white border border-[#DFDCD2] text-xs cursor-pointer"
-                    >
-                      Cancelar
-                    </button>
+                </div>
+              </div>
+
+              {/* Rectificación */}
+              <div className="col-12 col-md-4">
+                <form
+                  onSubmit={handleRectifyARCO}
+                  className="p-3 rounded border border-slate-200 h-100 d-flex flex-column justify-content-between"
+                >
+                  <div>
+                    <span className="badge bg-light text-secondary border font-monospace mb-1" style={{ fontSize: '10px' }}>
+                      2. Rectificación
+                    </span>
+                    <h6 className="fw-semibold text-slate-dark mb-2" style={{ fontSize: '13px' }}>
+                      Actualizar datos personales
+                    </h6>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Nombre"
+                      className="form-control form-control-sm mb-1.5 text-xs"
+                    />
+                    <input
+                      type="email"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="Correo"
+                      className="form-control form-control-sm mb-2 text-xs font-monospace"
+                    />
                   </div>
-                )}
+                  <button
+                    type="submit"
+                    className="btn btn-dark btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                    style={{ fontSize: '11px' }}
+                  >
+                    {savedNotice ? (
+                      <>
+                        <CheckCircle2 size={13} className="text-emerald" />
+                        <span>Actualizado</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck size={13} />
+                        <span>Guardar cambios</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* Cancelación */}
+              <div className="col-12 col-md-4">
+                <div className="p-3 rounded border border-slate-200 h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <span className="badge bg-light text-danger border font-monospace mb-1" style={{ fontSize: '10px' }}>
+                      3. Cancelación
+                    </span>
+                    <h6 className="fw-semibold text-slate-dark mb-1" style={{ fontSize: '13px' }}>
+                      Purga total de cuenta
+                    </h6>
+                    <p className="text-muted small mb-3" style={{ fontSize: '11px' }}>
+                      Elimina de forma irreversible tu sesión, partidas de gastos y metas registradas.
+                    </p>
+                  </div>
+                  {!confirmDelete ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(true)}
+                      className="btn btn-outline-danger btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                      style={{ fontSize: '11px' }}
+                    >
+                      <Trash2 size={13} />
+                      <span>Solicitar purga</span>
+                    </button>
+                  ) : (
+                    <div className="d-flex gap-1">
+                      <button
+                        type="button"
+                        onClick={handleCancelARCO}
+                        className="btn btn-danger btn-sm flex-grow-1 py-1"
+                        style={{ fontSize: '11px' }}
+                      >
+                        Confirmar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(false)}
+                        className="btn btn-secondary btn-sm py-1"
+                        style={{ fontSize: '11px' }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-[#F6F5F0] border border-[#E2DFD7] text-xs text-[#4A4945] flex items-center justify-between">
+            <div className="p-3 rounded bg-slate-50 border border-slate-200 small text-muted d-flex justify-content-between align-items-center">
               <span>
-                Actualmente navegas como <strong>Invitado (Anónimo)</strong>. Inicia sesión para gestionar o
-                exportar tus datos ARCO.
+                Actualmente navegas como <strong>Invitado (Anónimo)</strong>. Inicia sesión para guardar o exportar tus registros financieros.
               </span>
-              <Link
-                to="/login"
-                className="px-3 py-1.5 rounded-lg bg-[#0F4C3A] text-white font-medium shrink-0"
-              >
+              <Link to="/login" className="btn btn-sm btn-dark ms-3 shrink-0 py-1 px-3" style={{ fontSize: '12px' }}>
                 Iniciar Sesión
               </Link>
             </div>
