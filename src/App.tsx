@@ -25,6 +25,7 @@ import {
   Moon,
   Monitor,
   Gift,
+  TrendingUp,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -63,7 +64,10 @@ import { type MonthLedger } from './lib/monthlyLedger.ts';
 import {
   fetchMonthLedgersFromSupabase,
   upsertMonthLedgerToSupabase,
+  fetchSalaryHistoryFromSupabase,
+  addSalaryRecordToSupabase,
   isSupabaseConfigured,
+  type DbSalaryHistory,
 } from './lib/supabase.ts';
 import { formatUSD, parseUSDCurrency, formatHours } from './lib/formatters.ts';
 import LoginPage from './pages/LoginPage.tsx';
@@ -206,6 +210,15 @@ function AppShell() {
   // UI state for dropdown and modal
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const [showLawParamsModal, setShowLawParamsModal] = useState<boolean>(false);
+  const [showSalaryHistoryModal, setShowSalaryHistoryModal] = useState<boolean>(false);
+  const [salaryHistoryList, setSalaryHistoryList] = useState<DbSalaryHistory[]>([]);
+  const [newSalaryAmount, setNewSalaryAmount] = useState<string>('');
+  const [newSalaryEffectiveDate, setNewSalaryEffectiveDate] = useState<string>(
+    () => new Date().toISOString().slice(0, 10)
+  );
+  const [newSalaryReason, setNewSalaryReason] = useState<string>('Aumento salarial');
+  const [salarySaveFeedback, setSalarySaveFeedback] = useState<string>('');
+  const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile menu on outside click
@@ -353,6 +366,56 @@ function AppShell() {
 
     if (isSupabaseConfigured && user?.id) {
       upsertMonthLedgerToSupabase(user.id, updated, monthlySalary);
+    }
+  };
+
+  // Carga de historial de salarios desde Supabase para usuario autenticado
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) {
+      setSalaryHistoryList([]);
+      return;
+    }
+
+    fetchSalaryHistoryFromSupabase(user.id).then((history) => {
+      setSalaryHistoryList(history);
+      if (history.length > 0) {
+        const latest = history[0];
+        if (latest && typeof latest.gross_salary === 'number' && latest.gross_salary > 0) {
+          setMonthlySalary(latest.gross_salary);
+          setSalaryInput(latest.gross_salary.toFixed(2));
+        }
+      }
+    });
+  }, [user?.id]);
+
+  const handleSaveSalaryRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+
+    const amt = parseFloat(newSalaryAmount) || monthlySalary;
+    if (amt <= 0) return;
+
+    setIsSavingSalary(true);
+    setSalarySaveFeedback('');
+    try {
+      const success = await addSalaryRecordToSupabase(user.id, {
+        gross_salary: amt,
+        effective_date: newSalaryEffectiveDate,
+        reason: newSalaryReason.trim() || 'Aumento salarial',
+      });
+
+      if (success) {
+        setMonthlySalary(amt);
+        setSalaryInput(amt.toFixed(2));
+        setSalarySaveFeedback('Aumento guardado correctamente en Supabase.');
+        setTimeout(() => setSalarySaveFeedback(''), 3500);
+        const updated = await fetchSalaryHistoryFromSupabase(user.id);
+        setSalaryHistoryList(updated);
+      } else {
+        setSalarySaveFeedback('Error al guardar el aumento.');
+      }
+    } finally {
+      setIsSavingSalary(false);
     }
   };
 
@@ -972,6 +1035,35 @@ function AppShell() {
                             placeholder="408.80"
                           />
                         </div>
+
+                        {user?.loggedIn ? (
+                          <div className="mt-1.5 d-flex align-items-center justify-content-between">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewSalaryAmount(String(monthlySalary));
+                                setShowSalaryHistoryModal(true);
+                              }}
+                              className="btn btn-xs btn-outline-secondary py-0.5 px-2 d-inline-flex align-items-center gap-1.5"
+                              style={{ fontSize: '11px' }}
+                              title="Historial de aumentos y salario guardado"
+                            >
+                              <TrendingUp size={12} className="text-emerald" />
+                              <span>Historial / Aumentos</span>
+                            </button>
+                            <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
+                              {salaryHistoryList.length > 0
+                                ? `${salaryHistoryList.length} registro(s)`
+                                : 'Sin guardar'}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-muted" style={{ fontSize: '11px' }}>
+                            <Link to="/login" className="text-decoration-none text-muted">
+                              Inicia sesión para guardar tu historial salarial
+                            </Link>
+                          </div>
+                        )}
                       </div>
 
                       {/* Bono / Comisión Opcional */}
@@ -1387,6 +1479,189 @@ function AppShell() {
                   type="button"
                   className="btn btn-sm btn-secondary"
                   onClick={() => setShowLawParamsModal(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Historial de Salarios y Registro de Aumentos */}
+      {showSalaryHistoryModal && (
+        <div
+          className="modal fade show d-block"
+          style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(2px)', zIndex: 1055 }}
+          tabIndex={-1}
+          role="dialog"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowSalaryHistoryModal(false);
+            }
+          }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowSalaryHistoryModal(false);
+              }
+            }}
+          >
+            <div className="modal-content shadow border-0 rounded-3">
+              <div className="modal-header border-bottom py-3 px-4">
+                <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
+                  <TrendingUp size={16} className="text-emerald" />
+                  <span>Historial Salarial y Registro de Aumentos</span>
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowSalaryHistoryModal(false)}
+                />
+              </div>
+
+              <div className="modal-body p-4">
+                <p className="small text-muted mb-4">
+                  Registra cada aumento o ajuste salarial con su fecha de vigencia y motivo. La aplicación asociará cada mes a su salario correspondiente para que conserves el historial fiel de tus gastos.
+                </p>
+
+                {/* Formulario para registrar aumento */}
+                <div className="p-3.5 rounded bg-slate-50 border border-slate-200 mb-4">
+                  <h6 className="fw-semibold text-slate-dark mb-2" style={{ fontSize: '13px' }}>
+                    Registrar Nuevo Aumento o Ajuste
+                  </h6>
+                  <form onSubmit={handleSaveSalaryRecord} className="row g-2 align-items-end small">
+                    <div className="col-12 col-sm-4">
+                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                        Nuevo Salario Bruto ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="1"
+                        required
+                        value={newSalaryAmount}
+                        onChange={(e) => setNewSalaryAmount(e.target.value)}
+                        placeholder="Ej. 850.00"
+                        className="form-control form-control-sm font-monospace fw-semibold"
+                      />
+                    </div>
+
+                    <div className="col-12 col-sm-4">
+                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                        Fecha de Vigencia
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={newSalaryEffectiveDate}
+                        onChange={(e) => setNewSalaryEffectiveDate(e.target.value)}
+                        className="form-control form-control-sm"
+                      />
+                    </div>
+
+                    <div className="col-12 col-sm-4">
+                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+                        Motivo / Concepto
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={newSalaryReason}
+                        onChange={(e) => setNewSalaryReason(e.target.value)}
+                        placeholder="Ej. Promoción, Ajuste anual"
+                        className="form-control form-control-sm"
+                      />
+                    </div>
+
+                    <div className="col-12 mt-3 d-flex justify-content-between align-items-center">
+                      <div>
+                        {salarySaveFeedback && (
+                          <span className="small text-emerald fw-semibold">
+                            {salarySaveFeedback}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isSavingSalary}
+                        className="btn btn-sm btn-dark px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5"
+                      >
+                        <TrendingUp size={13} />
+                        <span>{isSavingSalary ? 'Guardando...' : 'Guardar Aumento en Supabase'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Lista de Aumentos Históricos */}
+                <h6 className="fw-semibold text-slate-dark mb-2" style={{ fontSize: '13px' }}>
+                  Línea de Tiempo Salarial ({salaryHistoryList.length})
+                </h6>
+
+                {salaryHistoryList.length === 0 ? (
+                  <div className="p-3 text-center text-muted border rounded small bg-white">
+                    Aún no tienes registros de aumentos guardados en tu cuenta. Usa el formulario superior para registrar tu primer sueldo.
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-minimal table-sm border rounded align-middle small">
+                      <thead>
+                        <tr>
+                          <th>Fecha de Vigencia</th>
+                          <th>Salario Bruto</th>
+                          <th>Líquido Estimado</th>
+                          <th>Motivo</th>
+                          <th className="text-center">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salaryHistoryList.map((rec) => {
+                          const estPayroll = calcPayroll(rec.gross_salary, 'monthly', 0);
+                          return (
+                            <tr key={rec.id || `${rec.effective_date}-${rec.gross_salary}`}>
+                              <td className="font-monospace text-slate-dark fw-semibold">
+                                {rec.effective_date}
+                              </td>
+                              <td className="font-monospace text-slate-dark fw-bold">
+                                {formatUSD(rec.gross_salary)}
+                              </td>
+                              <td className="font-monospace text-emerald">
+                                {formatUSD(estPayroll.netPay)}
+                              </td>
+                              <td className="text-muted">
+                                {rec.reason || 'Aumento salarial'}
+                              </td>
+                              <td className="text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMonthlySalary(rec.gross_salary);
+                                    setSalaryInput(rec.gross_salary.toFixed(2));
+                                    setShowSalaryHistoryModal(false);
+                                  }}
+                                  className="btn btn-xs btn-outline-secondary py-0.5 px-2"
+                                  style={{ fontSize: '11px' }}
+                                >
+                                  Cargar
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer border-top py-2.5 px-4">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => setShowSalaryHistoryModal(false)}
                 >
                   Cerrar
                 </button>
