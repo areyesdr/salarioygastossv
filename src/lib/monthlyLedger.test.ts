@@ -82,14 +82,14 @@ describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
   it('groups expenses with the same description and sums amounts across quincenas', () => {
     const month = createEmptyMonthLedger('usr-test-01', 2026, 1);
     month.q1.items = [
-      { id: '1', desc: 'Tarjeta', amount: 25.0, type: 'expense', day: 15, isRecurring: true },
-      { id: '2', desc: 'Super', amount: 60.0, type: 'expense', day: 15 },
-      { id: '3', desc: 'Sueldo', amount: 500.0, type: 'income', day: 15 }, // no debe contarse en gastos
+      { id: '1', desc: 'Tarjeta', amount: 25.0, type: 'expense', day: 15, isRecurring: true, checked: true },
+      { id: '2', desc: 'Super', amount: 60.0, type: 'expense', day: 15, checked: true },
+      { id: '3', desc: 'Sueldo', amount: 500.0, type: 'income', day: 15, checked: true }, // no debe contarse en gastos
     ];
     month.q2.items = [
-      { id: '4', desc: 'tarjeta', amount: 50.0, type: 'expense', day: 30, isRecurring: true }, // mismo texto con diferente caja
-      { id: '5', desc: 'Super', amount: 60.0, type: 'expense', day: 30 },
-      { id: '6', desc: 'Internet', amount: 35.0, type: 'expense', day: 30, checked: false }, // desmarcado
+      { id: '4', desc: 'tarjeta', amount: 50.0, type: 'expense', day: 30, isRecurring: true, checked: true }, // mismo texto con diferente caja
+      { id: '5', desc: 'Super', amount: 60.0, type: 'expense', day: 30, checked: true },
+      { id: '6', desc: 'Internet', amount: 35.0, type: 'expense', day: 30 }, // default sin checkear, no se incluye
     ];
 
     const res = groupLedgerExpenses(month);

@@ -138,7 +138,7 @@ export function MonthlyLedgerView({
       if (i.id !== itemId) return i;
       return {
         ...i,
-        checked: i.checked === false ? true : false,
+        checked: !i.checked,
       };
     });
 
@@ -186,7 +186,7 @@ export function MonthlyLedgerView({
       type: q1Type,
       day: parseInt(q1Day, 10) || 15,
       isRecurring: q1Recurring,
-      checked: true,
+      checked: false,
     };
 
     const updated: MonthLedger = {
@@ -214,7 +214,7 @@ export function MonthlyLedgerView({
       type: q2Type,
       day: parseInt(q2Day, 10) || 30,
       isRecurring: q2Recurring,
-      checked: true,
+      checked: false,
     };
 
     const updated: MonthLedger = {
@@ -261,7 +261,7 @@ export function MonthlyLedgerView({
       day: item.day,
       type: item.type,
       isRecurring: Boolean(item.isRecurring),
-      checked: item.checked !== false,
+      checked: Boolean(item.checked),
     });
   };
 
@@ -669,7 +669,7 @@ export function MonthlyLedgerView({
                           q1Balance.computedItems.some((i) => i.type === 'expense') &&
                           q1Balance.computedItems
                             .filter((i) => i.type === 'expense')
-                            .every((i) => i.checked !== false)
+                            .every((i) => Boolean(i.checked))
                         }
                         onChange={(e) => handleToggleAllChecks('q1', e.target.checked)}
                         className="form-check-input mt-0"
@@ -816,13 +816,13 @@ export function MonthlyLedgerView({
                           {!isIncome ? (
                             <input
                               type="checkbox"
-                              checked={item.checked !== false}
+                              checked={Boolean(item.checked)}
                               onChange={() => handleToggleItemCheck(item.id, 'q1')}
                               className="form-check-input mt-0"
                               title={
-                                item.checked !== false
-                                  ? 'Incluido en la suma agrupada (clic para excluir)'
-                                  : 'Excluido de la suma agrupada (clic para incluir)'
+                                item.checked
+                                  ? 'Marcado para agrupar (clic para desmarcar)'
+                                  : 'Desmarcado (clic para incluir en suma agrupada)'
                               }
                             />
                           ) : (
@@ -1042,7 +1042,7 @@ export function MonthlyLedgerView({
                           q2Balance.computedItems.some((i) => i.type === 'expense') &&
                           q2Balance.computedItems
                             .filter((i) => i.type === 'expense')
-                            .every((i) => i.checked !== false)
+                            .every((i) => Boolean(i.checked))
                         }
                         onChange={(e) => handleToggleAllChecks('q2', e.target.checked)}
                         className="form-check-input mt-0"
@@ -1189,13 +1189,13 @@ export function MonthlyLedgerView({
                           {!isIncome ? (
                             <input
                               type="checkbox"
-                              checked={item.checked !== false}
+                              checked={Boolean(item.checked)}
                               onChange={() => handleToggleItemCheck(item.id, 'q2')}
                               className="form-check-input mt-0"
                               title={
-                                item.checked !== false
-                                  ? 'Incluido en la suma agrupada (clic para excluir)'
-                                  : 'Excluido de la suma agrupada (clic para incluir)'
+                                item.checked
+                                  ? 'Marcado para agrupar (clic para desmarcar)'
+                                  : 'Desmarcado (clic para incluir en suma agrupada)'
                               }
                             />
                           ) : (

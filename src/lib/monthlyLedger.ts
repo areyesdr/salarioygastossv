@@ -189,7 +189,7 @@ export function groupLedgerExpenses(monthLedger: MonthLedger): GroupedExpensesSu
   const processItems = (items: LedgerItem[], quincena: 'q1' | 'q2') => {
     for (const item of items) {
       if (item.type !== 'expense') continue;
-      if (item.checked === false) continue; // Si está desmarcado, se excluye
+      if (!item.checked) continue; // Solo se incluyen los que el usuario marque con el check
 
       const normalized = item.desc.trim().toLowerCase();
       if (!normalized) continue;
