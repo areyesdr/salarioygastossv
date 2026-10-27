@@ -60,6 +60,11 @@ import {
   type BonusGoalItem,
 } from './components/ExpensesView.tsx';
 import { type MonthLedger } from './lib/monthlyLedger.ts';
+import {
+  fetchMonthLedgersFromSupabase,
+  upsertMonthLedgerToSupabase,
+  isSupabaseConfigured,
+} from './lib/supabase.ts';
 import { formatUSD, parseUSDCurrency, formatHours } from './lib/formatters.ts';
 import LoginPage from './pages/LoginPage.tsx';
 import AdminPanel from './pages/AdminPanel.tsx';
@@ -310,6 +315,26 @@ function AppShell() {
     }
   }, [monthLedgers]);
 
+  // Sincronización con Supabase para usuario autenticado
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) return;
+
+    fetchMonthLedgersFromSupabase(user.id).then((remoteMap) => {
+      if (remoteMap && Object.keys(remoteMap).length > 0) {
+        setMonthLedgers((prev) => {
+          const map = new Map<string, MonthLedger>();
+          for (const item of prev) {
+            map.set(`${item.year}-${item.month}`, item);
+          }
+          for (const key of Object.keys(remoteMap)) {
+            map.set(key, remoteMap[key]);
+          }
+          return Array.from(map.values());
+        });
+      }
+    });
+  }, [user?.id]);
+
   const handleSaveMonthLedger = (updated: MonthLedger) => {
     setMonthLedgers((prev) => {
       const existingIndex = prev.findIndex(
@@ -325,6 +350,10 @@ function AppShell() {
       }
       return [...prev, updated];
     });
+
+    if (isSupabaseConfigured && user?.id) {
+      upsertMonthLedgerToSupabase(user.id, updated, monthlySalary);
+    }
   };
 
   useEffect(() => {

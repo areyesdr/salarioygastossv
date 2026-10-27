@@ -10,6 +10,8 @@
     "test": "node --experimental-strip-types --test src/lib/svLaborLaw.test.ts src/lib/formatters.test.ts src/lib/monthlyLedger.test.ts"
   },
   "dependencies": {
+    "@supabase/server": "^1.9.2",
+    "@supabase/supabase-js": "^2.118.0",
     "bootstrap": "^5.3.8",
     "bootswatch": "^5.3.8",
     "lucide-react": "^1.16.0",

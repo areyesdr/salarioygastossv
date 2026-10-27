@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { type SessionUser, type UserRole } from '../lib/security.ts';
+import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 
 interface AuthContextValue {
   user: SessionUser | null;
+  isSupabaseConnected: boolean;
   loginAs: (role: UserRole, customEmail?: string, customName?: string, cleanSlate?: boolean) => void;
+  loginWithCredentials: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  registerWithCredentials: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   createCleanUser: (customName?: string, customEmail?: string) => void;
-  logout: () => void;
-  updateProfile: (name: string, email: string) => void;
-  purgeUserDataAndAccount: () => void;
+  logout: () => Promise<void>;
+  updateProfile: (name: string, email: string) => Promise<void>;
+  purgeUserDataAndAccount: () => Promise<void>;
 }
 
 const AUTH_STORAGE_KEY = 'salarioygastossv_auth_v1';
@@ -36,6 +40,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
+  const syncSupabaseUser = useCallback((authUser: any) => {
+    const metaName =
+      authUser.user_metadata?.name ||
+      authUser.user_metadata?.full_name ||
+      (authUser.email ? authUser.email.split('@')[0] : 'Usuario');
+
+    const role: UserRole = authUser.user_metadata?.role === 'admin' ? 'admin' : 'user';
+
+    setUser({
+      id: authUser.id,
+      name: metaName,
+      email: authUser.email || '',
+      loggedIn: true,
+      role,
+      acceptedTermsAt: authUser.created_at || new Date().toISOString(),
+    });
+  }, []);
+
+  // Sincronización con sesión activa de Supabase Auth
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        syncSupabaseUser(session.user);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        syncSupabaseUser(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncSupabaseUser]);
+
   useEffect(() => {
     try {
       if (user) {
@@ -47,6 +94,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore storage errors
     }
   }, [user]);
+
+  const loginWithCredentials = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!isSupabaseConfigured) {
+      loginAs('user', email, email.split('@')[0]);
+      return { success: true };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (data.user) {
+        syncSupabaseUser(data.user);
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Error de conexión con Supabase' };
+    }
+  };
+
+  const registerWithCredentials = async (
+    email: string,
+    password: string,
+    name: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!isSupabaseConfigured) {
+      loginAs('user', email, name, true);
+      return { success: true };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name.trim(),
+            role: 'user',
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      if (data.user) {
+        syncSupabaseUser(data.user);
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Error al registrar en Supabase' };
+    }
+  };
 
   const loginAs = (
     role: UserRole,
@@ -99,22 +203,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // ignore
+      }
+    }
     setUser(null);
   };
 
-  const updateProfile = (name: string, email: string) => {
+  const updateProfile = async (name: string, email: string) => {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (isSupabaseConfigured && user) {
+      try {
+        await supabase.auth.updateUser({
+          email: trimmedEmail || undefined,
+          data: { name: trimmedName },
+        });
+
+        await supabase
+          .from('profiles')
+          .update({ name: trimmedName, email: trimmedEmail, updated_at: new Date().toISOString() })
+          .eq('id', user.id);
+      } catch {
+        // ignore
+      }
+    }
+
     setUser((prev) => {
       if (!prev) return null;
       return {
         ...prev,
-        name: name.trim() || prev.name,
-        email: email.trim() || prev.email,
+        name: trimmedName || prev.name,
+        email: trimmedEmail || prev.email,
       };
     });
   };
 
-  const purgeUserDataAndAccount = () => {
+  const purgeUserDataAndAccount = async () => {
     try {
       localStorage.removeItem(DATA_STORAGE_KEY);
       localStorage.removeItem(LEDGERS_STORAGE_KEY);
@@ -122,6 +252,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore storage errors
     }
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // ignore
+      }
+    }
+
     setUser(null);
   };
 
@@ -129,7 +268,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        isSupabaseConnected: isSupabaseConfigured,
         loginAs,
+        loginWithCredentials,
+        registerWithCredentials,
         createCleanUser,
         logout,
         updateProfile,
