@@ -17,14 +17,17 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Habilitar RLS en profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
 CREATE POLICY "profiles_select_own"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_update_own"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
 CREATE POLICY "profiles_insert_own"
   ON public.profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
@@ -45,18 +48,22 @@ CREATE TABLE IF NOT EXISTS public.salary_history (
 -- Habilitar RLS en salary_history
 ALTER TABLE public.salary_history ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "salary_history_select_own" ON public.salary_history;
 CREATE POLICY "salary_history_select_own"
   ON public.salary_history FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "salary_history_insert_own" ON public.salary_history;
 CREATE POLICY "salary_history_insert_own"
   ON public.salary_history FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "salary_history_update_own" ON public.salary_history;
 CREATE POLICY "salary_history_update_own"
   ON public.salary_history FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "salary_history_delete_own" ON public.salary_history;
 CREATE POLICY "salary_history_delete_own"
   ON public.salary_history FOR DELETE
   USING (auth.uid() = user_id);
@@ -80,18 +87,22 @@ CREATE TABLE IF NOT EXISTS public.month_ledgers (
 -- Habilitar RLS en month_ledgers
 ALTER TABLE public.month_ledgers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "month_ledgers_select_own" ON public.month_ledgers;
 CREATE POLICY "month_ledgers_select_own"
   ON public.month_ledgers FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "month_ledgers_insert_own" ON public.month_ledgers;
 CREATE POLICY "month_ledgers_insert_own"
   ON public.month_ledgers FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "month_ledgers_update_own" ON public.month_ledgers;
 CREATE POLICY "month_ledgers_update_own"
   ON public.month_ledgers FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "month_ledgers_delete_own" ON public.month_ledgers;
 CREATE POLICY "month_ledgers_delete_own"
   ON public.month_ledgers FOR DELETE
   USING (auth.uid() = user_id);
