@@ -839,6 +839,16 @@ function AppShell() {
     );
   };
 
+  const handleUpdateExpense = (updated: ExpenseItem) => {
+    setExpenses((prev) =>
+      prev.map((item) => {
+        if (item.id !== updated.id) return item;
+        if (!verifyResourceOwnership(item, effectiveOwnerUser)) return item;
+        return updated;
+      })
+    );
+  };
+
   const handleAddBonusGoal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!effectiveOwnerUser) return;
@@ -2049,6 +2059,7 @@ function AppShell() {
                   onAddExpense={handleAddExpense}
                   onToggleExpensePaid={handleToggleExpensePaid}
                   onDeleteExpense={handleDeleteExpense}
+                  onUpdateExpense={handleUpdateExpense}
                   onResetDefaultExpenses={() => {
                     if (!effectiveOwnerUser) return;
                     const samples = DEFAULT_EXPENSES.map((e) => ({

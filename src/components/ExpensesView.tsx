@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, RotateCcw, Wallet, Target, Check, Clock, BookOpen, ListFilter } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Wallet, Target, Check, Clock, BookOpen, ListFilter, Pencil, X } from 'lucide-react';
 import { round2 } from '../lib/svLaborLaw.ts';
 import { MonthlyLedgerView, type LegalBonusesPayload } from './MonthlyLedgerView.tsx';
 import type { MonthLedger } from '../lib/monthlyLedger.ts';
@@ -103,6 +103,7 @@ interface ExpensesViewProps {
   onAddExpense: (e: React.FormEvent) => void;
   onToggleExpensePaid: (id: string) => void;
   onDeleteExpense: (id: string) => void;
+  onUpdateExpense?: (updated: ExpenseItem) => void;
   onResetDefaultExpenses: () => void;
   bonusGoals: BonusGoalItem[];
   newGoalTitle: string;
@@ -145,6 +146,7 @@ export function ExpensesView({
   onAddExpense,
   onToggleExpensePaid,
   onDeleteExpense,
+  onUpdateExpense,
   onResetDefaultExpenses,
   bonusGoals,
   newGoalTitle,
@@ -165,6 +167,43 @@ export function ExpensesView({
   legalBonuses,
 }: ExpensesViewProps) {
   const [activeSubView, setActiveSubView] = useState<'ledger' | 'catalog'>('ledger');
+
+  // Estado de edición para catálogo de gastos
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+  const [editName, setEditName] = useState<string>('');
+  const [editAmount, setEditAmount] = useState<string>('');
+  const [editCategory, setEditCategory] = useState<ExpenseCategory>('Vivienda');
+  const [editCycle, setEditCycle] = useState<ExpenseCycle>('mensual');
+  const [editFixed, setEditFixed] = useState<boolean>(true);
+
+  const handleStartEditExpense = (item: ExpenseItem) => {
+    setEditingExpId(item.id);
+    setEditName(item.name);
+    setEditAmount(String(item.amount));
+    setEditCategory(item.category);
+    setEditCycle(item.cycle);
+    setEditFixed(item.isFixed);
+  };
+
+  const handleCancelEditExpense = () => {
+    setEditingExpId(null);
+  };
+
+  const handleSaveEditExpense = (item: ExpenseItem) => {
+    const amt = parseFloat(editAmount);
+    if (!editName.trim() || Number.isNaN(amt) || amt <= 0) return;
+    if (onUpdateExpense) {
+      onUpdateExpense({
+        ...item,
+        name: editName.trim(),
+        amount: round2(amt),
+        category: editCategory,
+        cycle: editCycle,
+        isFixed: editFixed,
+      });
+    }
+    setEditingExpId(null);
+  };
 
   const resolvedQ1Pay = defaultQ1NetPay ?? round2(monthlyNetPay / 2);
   const resolvedQ2Pay = defaultQ2NetPay ?? round2(monthlyNetPay - resolvedQ1Pay);
@@ -439,6 +478,89 @@ export function ExpensesView({
                   {filteredExpenses.map((item) => {
                     const hoursCost = netHourly > 0 ? round2(item.amount / netHourly) : 0;
                     const pctOfNet = monthlyNetPay > 0 ? Math.round((item.amount / monthlyNetPay) * 100) : 0;
+                    const isEditing = editingExpId === item.id;
+
+                    if (isEditing) {
+                      return (
+                        <motion.div
+                          key={item.id}
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="list-group-item bg-amber-50 p-2.5"
+                        >
+                          <div className="row g-2 align-items-center">
+                            <div className="col-12 col-sm-4">
+                              <input
+                                type="text"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                className="form-control form-control-sm"
+                                placeholder="Nombre del gasto"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="col-6 col-sm-3">
+                              <div className="input-group input-group-sm">
+                                <span className="input-group-text">$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0.01"
+                                  value={editAmount}
+                                  onChange={(e) => setEditAmount(e.target.value)}
+                                  className="form-control form-control-sm font-monospace"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+                            <div className="col-6 col-sm-2">
+                              <select
+                                value={editCycle}
+                                onChange={(e) => setEditCycle(e.target.value as ExpenseCycle)}
+                                className="form-select form-select-sm"
+                              >
+                                <option value="quincena_1">1.ª Q</option>
+                                <option value="quincena_2">2.ª Q</option>
+                                <option value="mensual">Mensual</option>
+                              </select>
+                            </div>
+                            <div className="col-7 col-sm-2">
+                              <select
+                                value={editCategory}
+                                onChange={(e) => setEditCategory(e.target.value as ExpenseCategory)}
+                                className="form-select form-select-sm"
+                              >
+                                {EXPENSE_CATEGORIES.map((cat) => (
+                                  <option key={cat} value={cat}>
+                                    {cat}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="col-5 col-sm-1 d-flex justify-content-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEditExpense(item)}
+                                className="btn btn-sm btn-outline-success p-1"
+                                title="Guardar cambios"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEditExpense}
+                                className="btn btn-sm btn-outline-secondary p-1"
+                                title="Cancelar edición"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    }
 
                     return (
                       <motion.div
@@ -491,6 +613,14 @@ export function ExpensesView({
                           <span className="fw-semibold font-monospace text-slate-dark small">
                             {formatUSD(item.amount)}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditExpense(item)}
+                            className="btn btn-outline-secondary btn-sm p-1 border-0"
+                            title="Editar gasto"
+                          >
+                            <Pencil size={13} />
+                          </button>
                           <button
                             type="button"
                             onClick={() => onDeleteExpense(item.id)}

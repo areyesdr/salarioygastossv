@@ -8,6 +8,9 @@ import {
   ChevronRight,
   CheckCircle2,
   Gift,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import {
   type MonthLedger,
@@ -19,6 +22,7 @@ import {
   MONTH_NAMES_ES,
 } from '../lib/monthlyLedger.ts';
 import { formatUSD } from '../lib/formatters.ts';
+import { round2 } from '../lib/svLaborLaw.ts';
 
 export interface LegalBonusesPayload {
   vacationBonusNet: number;
@@ -75,6 +79,17 @@ export function MonthlyLedgerView({
   const [customQ1Input, setCustomQ1Input] = useState<string>('');
   const [editingQ2Balance, setEditingQ2Balance] = useState<boolean>(false);
   const [customQ2Input, setCustomQ2Input] = useState<string>('');
+
+  // Edición inline de partidas
+  const [editingEntry, setEditingEntry] = useState<{
+    id: string;
+    quincena: 'q1' | 'q2';
+    desc: string;
+    amount: string;
+    day: number;
+    type: LedgerEntryType;
+    isRecurring: boolean;
+  } | null>(null);
 
   // Localizar o inicializar el ledger del mes seleccionado
   const activeMonthLedger =
@@ -186,6 +201,52 @@ export function MonthlyLedgerView({
       },
     };
     onSaveMonthLedger(updated);
+  };
+
+  const handleStartEditItem = (item: LedgerItem, quincena: 'q1' | 'q2') => {
+    setEditingEntry({
+      id: item.id,
+      quincena,
+      desc: item.desc,
+      amount: String(item.amount),
+      day: item.day,
+      type: item.type,
+      isRecurring: Boolean(item.isRecurring),
+    });
+  };
+
+  const handleSaveEditItem = () => {
+    if (!editingEntry) return;
+    const amt = parseFloat(editingEntry.amount);
+    if (!editingEntry.desc.trim() || Number.isNaN(amt) || amt <= 0) return;
+
+    const targetQuincena = editingEntry.quincena;
+    const updatedItems = activeMonthLedger[targetQuincena].items.map((i) => {
+      if (i.id !== editingEntry.id) return i;
+      return {
+        ...i,
+        desc: editingEntry.desc.trim(),
+        amount: round2(amt),
+        day: editingEntry.day,
+        type: editingEntry.type,
+        isRecurring: editingEntry.isRecurring,
+      };
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      [targetQuincena]: {
+        ...activeMonthLedger[targetQuincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+    setEditingEntry(null);
+  };
+
+  const handleCancelEditItem = () => {
+    setEditingEntry(null);
   };
 
   const handleSaveCustomQ1 = () => {
@@ -570,6 +631,104 @@ export function MonthlyLedgerView({
                   {/* Filas de Partidas Q1 */}
                   {q1Balance.computedItems.map((item) => {
                     const isIncome = item.type === 'income';
+                    const isEditing = editingEntry?.id === item.id;
+
+                    if (isEditing) {
+                      return (
+                        <tr key={item.id} className="table-warning">
+                          <td className="align-middle text-muted small font-sans">—</td>
+                          <td className="align-middle">
+                            <div className="input-group input-group-sm">
+                              <span className="input-group-text px-1 py-0 text-muted">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                value={editingEntry.amount}
+                                onChange={(e) =>
+                                  setEditingEntry({ ...editingEntry, amount: e.target.value })
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSaveEditItem();
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    handleCancelEditItem();
+                                  }
+                                }}
+                                className="form-control form-control-sm font-monospace p-1"
+                                style={{ minWidth: '70px', maxWidth: '100px' }}
+                                autoFocus
+                              />
+                            </div>
+                          </td>
+                          <td className="align-middle">
+                            <input
+                              type="text"
+                              value={editingEntry.desc}
+                              onChange={(e) =>
+                                setEditingEntry({ ...editingEntry, desc: e.target.value })
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveEditItem();
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  handleCancelEditItem();
+                                }
+                              }}
+                              className="form-control form-control-sm font-sans p-1"
+                            />
+                          </td>
+                          <td className="align-middle text-center">
+                            <input
+                              type="number"
+                              min="1"
+                              max="31"
+                              value={editingEntry.day}
+                              onChange={(e) =>
+                                setEditingEntry({
+                                  ...editingEntry,
+                                  day: parseInt(e.target.value, 10) || 1,
+                                })
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveEditItem();
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  handleCancelEditItem();
+                                }
+                              }}
+                              className="form-control form-control-sm font-monospace text-center p-1"
+                              style={{ width: '45px', margin: '0 auto' }}
+                            />
+                          </td>
+                          <td className="align-middle text-end text-nowrap">
+                            <button
+                              type="button"
+                              onClick={handleSaveEditItem}
+                              className="btn btn-sm btn-link text-emerald p-0 border-0 me-2"
+                              title="Guardar cambios"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditItem}
+                              className="btn btn-sm btn-link text-secondary p-0 border-0"
+                              title="Cancelar edición"
+                            >
+                              <X size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     return (
                       <tr key={item.id}>
                         <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
@@ -585,7 +744,15 @@ export function MonthlyLedgerView({
                           )}
                         </td>
                         <td className="text-center text-muted">{item.day}</td>
-                        <td className="text-end">
+                        <td className="text-end text-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditItem(item, 'q1')}
+                            className="btn btn-sm btn-link text-muted p-0 border-0 me-2"
+                            title="Editar partida"
+                          >
+                            <Pencil size={13} />
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteQ1Item(item.id)}
@@ -790,6 +957,104 @@ export function MonthlyLedgerView({
                   {/* Filas de Partidas Q2 */}
                   {q2Balance.computedItems.map((item) => {
                     const isIncome = item.type === 'income';
+                    const isEditing = editingEntry?.id === item.id;
+
+                    if (isEditing) {
+                      return (
+                        <tr key={item.id} className="table-warning">
+                          <td className="align-middle text-muted small font-sans">—</td>
+                          <td className="align-middle">
+                            <div className="input-group input-group-sm">
+                              <span className="input-group-text px-1 py-0 text-muted">$</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                value={editingEntry.amount}
+                                onChange={(e) =>
+                                  setEditingEntry({ ...editingEntry, amount: e.target.value })
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSaveEditItem();
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    handleCancelEditItem();
+                                  }
+                                }}
+                                className="form-control form-control-sm font-monospace p-1"
+                                style={{ minWidth: '70px', maxWidth: '100px' }}
+                                autoFocus
+                              />
+                            </div>
+                          </td>
+                          <td className="align-middle">
+                            <input
+                              type="text"
+                              value={editingEntry.desc}
+                              onChange={(e) =>
+                                setEditingEntry({ ...editingEntry, desc: e.target.value })
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveEditItem();
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  handleCancelEditItem();
+                                }
+                              }}
+                              className="form-control form-control-sm font-sans p-1"
+                            />
+                          </td>
+                          <td className="align-middle text-center">
+                            <input
+                              type="number"
+                              min="1"
+                              max="31"
+                              value={editingEntry.day}
+                              onChange={(e) =>
+                                setEditingEntry({
+                                  ...editingEntry,
+                                  day: parseInt(e.target.value, 10) || 1,
+                                })
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveEditItem();
+                                } else if (e.key === 'Escape') {
+                                  e.preventDefault();
+                                  handleCancelEditItem();
+                                }
+                              }}
+                              className="form-control form-control-sm font-monospace text-center p-1"
+                              style={{ width: '45px', margin: '0 auto' }}
+                            />
+                          </td>
+                          <td className="align-middle text-end text-nowrap">
+                            <button
+                              type="button"
+                              onClick={handleSaveEditItem}
+                              className="btn btn-sm btn-link text-emerald p-0 border-0 me-2"
+                              title="Guardar cambios"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditItem}
+                              className="btn btn-sm btn-link text-secondary p-0 border-0"
+                              title="Cancelar edición"
+                            >
+                              <X size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     return (
                       <tr key={item.id}>
                         <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
@@ -805,7 +1070,15 @@ export function MonthlyLedgerView({
                           )}
                         </td>
                         <td className="text-center text-muted">{item.day}</td>
-                        <td className="text-end">
+                        <td className="text-end text-nowrap">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditItem(item, 'q2')}
+                            className="btn btn-sm btn-link text-muted p-0 border-0 me-2"
+                            title="Editar partida"
+                          >
+                            <Pencil size={13} />
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteQ2Item(item.id)}
