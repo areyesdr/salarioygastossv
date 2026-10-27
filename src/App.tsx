@@ -231,6 +231,7 @@ function AppShell() {
   const [salarySaveFeedback, setSalarySaveFeedback] = useState<string>('');
   const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile menu on outside click
@@ -344,24 +345,67 @@ function AppShell() {
     }
   }, [monthLedgers]);
 
-  // Sincronización con Supabase para usuario autenticado
+  // Sincronización atómica de perfil, salario y libreta desde Supabase para usuario autenticado
   useEffect(() => {
-    if (!isSupabaseConfigured || !isAuthReady || !user?.id) return;
+    if (!isAuthReady) return;
 
-    fetchMonthLedgersFromSupabase(user.id).then((remoteMap) => {
-      if (remoteMap && Object.keys(remoteMap).length > 0) {
-        setMonthLedgers((prev) => {
-          const map = new Map<string, MonthLedger>();
-          for (const item of prev) {
-            map.set(`${item.year}-${item.month}`, item);
+    if (!isSupabaseConfigured || !user?.id) {
+      setSalaryHistoryList([]);
+      setIsInitialLoading(false);
+      return;
+    }
+
+    setIsInitialLoading(true);
+    let isMounted = true;
+
+    Promise.all([
+      fetchUserProfileFromSupabase(user.id),
+      fetchSalaryHistoryFromSupabase(user.id),
+      fetchMonthLedgersFromSupabase(user.id),
+    ])
+      .then(([profile, history, remoteMap]) => {
+        if (!isMounted) return;
+
+        if (profile?.current_hire_date) {
+          handleHireDateChange(profile.current_hire_date);
+        }
+
+        if (history) {
+          setSalaryHistoryList(history);
+          if (history.length > 0) {
+            const latest = history[0];
+            if (latest && typeof latest.gross_salary === 'number' && latest.gross_salary > 0) {
+              setMonthlySalary(latest.gross_salary);
+              setSalaryInput(latest.gross_salary.toFixed(2));
+            }
           }
-          for (const key of Object.keys(remoteMap)) {
-            map.set(key, remoteMap[key]);
-          }
-          return Array.from(map.values());
-        });
-      }
-    });
+        }
+
+        if (remoteMap && Object.keys(remoteMap).length > 0) {
+          setMonthLedgers((prev) => {
+            const map = new Map<string, MonthLedger>();
+            for (const item of prev) {
+              map.set(`${item.year}-${item.month}`, item);
+            }
+            for (const key of Object.keys(remoteMap)) {
+              map.set(key, remoteMap[key]);
+            }
+            return Array.from(map.values());
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Error sincronizando datos con Supabase:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsInitialLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [user?.id, isAuthReady]);
 
   const handleSaveMonthLedger = (updated: MonthLedger) => {
@@ -385,34 +429,6 @@ function AppShell() {
       upsertMonthLedgerToSupabase(user.id, updated, monthlySalary);
     }
   };
-
-  // Carga de historial de salarios y fecha de inicio desde Supabase para usuario autenticado
-  useEffect(() => {
-    if (!isSupabaseConfigured || !isAuthReady || !user?.id) {
-      if (isAuthReady && !user?.id) {
-        setSalaryHistoryList([]);
-      }
-      return;
-    }
-
-    // Cargar perfil para obtener fecha de contratación activa
-    fetchUserProfileFromSupabase(user.id).then((profile) => {
-      if (profile?.current_hire_date) {
-        handleHireDateChange(profile.current_hire_date);
-      }
-    });
-
-    fetchSalaryHistoryFromSupabase(user.id).then((history) => {
-      setSalaryHistoryList(history);
-      if (history.length > 0) {
-        const latest = history[0];
-        if (latest && typeof latest.gross_salary === 'number' && latest.gross_salary > 0) {
-          setMonthlySalary(latest.gross_salary);
-          setSalaryInput(latest.gross_salary.toFixed(2));
-        }
-      }
-    });
-  }, [user?.id, isAuthReady]);
 
   const handleStartEditSalaryRecord = (rec: DbSalaryHistory) => {
     setEditingRecordId(rec.id || null);
@@ -1077,9 +1093,33 @@ function AppShell() {
         </div>
       </nav>
 
-      {/* Sección Hero / Calculadora Principal con Jerarquía Limpia */}
-      {(isCalculatorRoute || isExpensesRoute) && (
-        <section className="py-4">
+      {/* Estado de Carga Inicial para evitar mostrar datos provisionales */}
+      {(isCalculatorRoute || isExpensesRoute) && isInitialLoading ? (
+        <section className="py-5 flex-grow-1 d-flex align-items-center">
+          <div className="container-constrained w-100">
+            <div
+              className="card-soft p-5 text-center my-4 d-flex flex-column align-items-center justify-content-center"
+              style={{ minHeight: '340px' }}
+            >
+              <div
+                className="spinner-border text-primary mb-3"
+                role="status"
+                style={{ width: '2.5rem', height: '2.5rem' }}
+              >
+                <span className="visually-hidden">Cargando...</span>
+              </div>
+              <h5 className="fw-semibold text-slate-dark mb-1">Cargando tu información...</h5>
+              <p className="text-muted small mb-0 font-sans" style={{ maxWidth: '420px' }}>
+                Sincronizando salario, aumentos y libreta de gastos con Supabase.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
+          {/* Sección Hero / Calculadora Principal con Jerarquía Limpia */}
+          {(isCalculatorRoute || isExpensesRoute) && (
+            <section className="py-4">
           <div className="container-constrained">
             {/* Tarjeta Flotante Principal de Entrada y Resultado Líquido */}
             <div className="card-soft p-4 mb-4">
@@ -2032,6 +2072,8 @@ function AppShell() {
           <Route path="*" element={<Error404 />} />
         </Routes>
       </main>
+    </>
+  )}
 
       {/* Footer Minimalista y Confiable */}
       <footer className="bg-white border-top py-4 mt-auto">
