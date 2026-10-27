@@ -10,6 +10,8 @@
     "test": "node --experimental-strip-types --test src/lib/svLaborLaw.test.ts"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootswatch": "^5.3.8",
     "lucide-react": "^1.16.0",
     "motion": "^12.38.0",
     "react": "^19.1.0",

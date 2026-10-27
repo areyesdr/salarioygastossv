@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      bootstrap:
+        specifier: ^5.3.8
+        version: 5.3.8(@popperjs/core@2.11.8)
+      bootswatch:
+        specifier: ^5.3.8
+        version: 5.3.8
       lucide-react:
         specifier: ^1.16.0
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)
@@ -316,6 +322,9 @@ packages:
     os: [linux]
     libc: [glibc]
 
+  '@popperjs/core@2.11.8':
+    resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
+
   '@rolldown/pluginutils@1.0.0-beta.27':
     resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
 
@@ -587,6 +596,14 @@ packages:
     resolution: {integrity: sha512-yiVKDX+qCMRKBE084lXvq9EcwFUhKZ2nU8TK1EQQuOgPNR/lmbGxXOeDdlGUqC2Zz11Cs9rk1d/8NfgBmlkt0w==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  bootstrap@5.3.8:
+    resolution: {integrity: sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg==}
+    peerDependencies:
+      '@popperjs/core': ^2.11.8
+
+  bootswatch@5.3.8:
+    resolution: {integrity: sha512-88mnH9tv+x6DV+scBxYFOpM4YSDVhyfEgbhqaEfvkHNctKI9qRcACxIP9nmBZ5mSeLXtsgax1VsRkUs1eWjlAQ==}
 
   browserslist@4.29.4:
     resolution: {integrity: sha512-2TcbbiwXEq+N0kD36tykpCfyyQigUXmuwNQbnPp4Xk4PX9JOqVIKjJlIDjpH7uY6tmRGoAd+apeT1p60T8wsdA==}
@@ -1162,6 +1179,8 @@ snapshots:
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
+  '@popperjs/core@2.11.8': {}
+
   '@rolldown/pluginutils@1.0.0-beta.27': {}
 
   '@rollup/rollup-android-arm-eabi@4.65.0':
@@ -1355,6 +1374,12 @@ snapshots:
       - supports-color
 
   baseline-browser-mapping@2.11.33: {}
+
+  bootstrap@5.3.8(@popperjs/core@2.11.8):
+    dependencies:
+      '@popperjs/core': 2.11.8
+
+  bootswatch@5.3.8: {}
 
   browserslist@4.29.4:
     dependencies:
