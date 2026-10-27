@@ -1,11 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { MonthLedger } from './monthlyLedger.ts';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey =
+const sanitizeEnv = (val?: string): string => {
+  let v = (val || '').trim().replace(/^["']|["']$/g, '');
+  if (v.includes('=') && !v.startsWith('http')) {
+    v = v.split('=').pop()?.trim().replace(/^["']|["']$/g, '') || v;
+  }
+  return v;
+};
+
+const supabaseUrl = sanitizeEnv(import.meta.env.VITE_SUPABASE_URL);
+const supabaseAnonKey = sanitizeEnv(
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  '';
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+);
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
