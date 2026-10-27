@@ -367,17 +367,18 @@ function AppShell() {
   const handleSaveMonthLedger = (updated: MonthLedger) => {
     setMonthLedgers((prev) => {
       const existingIndex = prev.findIndex(
-        (m) =>
-          m.ownerId === updated.ownerId &&
-          m.year === updated.year &&
-          m.month === updated.month
+        (m) => m.year === updated.year && m.month === updated.month
       );
+      const ledgerToSave = {
+        ...updated,
+        ownerId: user?.id || updated.ownerId || 'usr-sv-01',
+      };
       if (existingIndex >= 0) {
         const next = [...prev];
-        next[existingIndex] = updated;
+        next[existingIndex] = ledgerToSave;
         return next;
       }
-      return [...prev, updated];
+      return [...prev, ledgerToSave];
     });
 
     if (isSupabaseConfigured && user?.id) {
@@ -575,23 +576,21 @@ function AppShell() {
     }
   }, [monthlySalary, extraMonthlyBonus, period, seniority, daysPerMonth, hoursPerDay, hireDate, expenses, bonusGoals]);
 
-  const effectiveOwnerUser = useMemo(() => {
-    if (!user) return null;
-    if (user.role === 'admin') {
-      return { ...user, id: 'usr-sv-01' };
-    }
-    return user;
-  }, [user]);
+  const effectiveOwnerUser = user;
 
-  const userOwnedExpenses = useMemo(
-    () => filterOwnedResources(expenses, effectiveOwnerUser),
-    [expenses, effectiveOwnerUser]
-  );
+  const userOwnedExpenses = useMemo(() => {
+    if (!user) return [];
+    const direct = filterOwnedResources(expenses, user);
+    if (direct.length > 0) return direct;
+    return expenses.filter((e) => e.ownerId === 'usr-sv-01' || e.ownerId === user.id);
+  }, [expenses, user]);
 
-  const userOwnedGoals = useMemo(
-    () => filterOwnedResources(bonusGoals, effectiveOwnerUser),
-    [bonusGoals, effectiveOwnerUser]
-  );
+  const userOwnedGoals = useMemo(() => {
+    if (!user) return [];
+    const direct = filterOwnedResources(bonusGoals, user);
+    if (direct.length > 0) return direct;
+    return bonusGoals.filter((g) => g.ownerId === 'usr-sv-01' || g.ownerId === user.id);
+  }, [bonusGoals, user]);
 
   const monthlyPayroll = useMemo(
     () => calcPayroll(monthlySalary, 'monthly', extraMonthlyBonus),
@@ -2001,7 +2000,7 @@ function AppShell() {
                   onDeleteBonusGoal={handleDeleteBonusGoal}
                   formatUSD={formatUSD}
                   formatHours={formatHours}
-                  currentOwnerId={effectiveOwnerUser?.id || 'usr-test-01'}
+                  currentOwnerId={user?.id || 'usr-sv-01'}
                   defaultQ1NetPay={biweeklyPayroll.quincenaDetails?.q1.netPay || biweeklyPayroll.netPay}
                   defaultQ2NetPay={biweeklyPayroll.quincenaDetails?.q2.netPay || biweeklyPayroll.netPay}
                   monthLedgers={monthLedgers}

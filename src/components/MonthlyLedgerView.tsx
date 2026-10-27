@@ -65,10 +65,14 @@ export function MonthlyLedgerView({
   const activeMonthLedger =
     monthLedgers.find(
       (m) =>
-        m.ownerId === currentOwnerId &&
         m.year === selectedYear &&
-        m.month === selectedMonth
-    ) || createEmptyMonthLedger(currentOwnerId, selectedYear, selectedMonth);
+        m.month === selectedMonth &&
+        (m.ownerId === currentOwnerId || !currentOwnerId || !m.ownerId)
+    ) ||
+    monthLedgers.find(
+      (m) => m.year === selectedYear && m.month === selectedMonth
+    ) ||
+    createEmptyMonthLedger(currentOwnerId, selectedYear, selectedMonth);
 
   // Computar balances de Q1 y Q2
   const q1Balance = computeQuincenaBalance(defaultQ1NetPay, activeMonthLedger.q1);
@@ -199,12 +203,14 @@ export function MonthlyLedgerView({
     const prevMonthNum = selectedMonth === 1 ? 12 : selectedMonth - 1;
     const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear;
 
-    const prevMonthLedger = monthLedgers.find(
-      (m) =>
-        m.ownerId === currentOwnerId &&
-        m.year === prevYear &&
-        m.month === prevMonthNum
-    );
+    const prevMonthLedger =
+      monthLedgers.find(
+        (m) =>
+          m.year === prevYear &&
+          m.month === prevMonthNum &&
+          (m.ownerId === currentOwnerId || !currentOwnerId || !m.ownerId)
+      ) ||
+      monthLedgers.find((m) => m.year === prevYear && m.month === prevMonthNum);
 
     if (!prevMonthLedger) {
       alert(`No se encontraron registros previos para ${MONTH_NAMES_ES[prevMonthNum - 1]} ${prevYear}.`);
