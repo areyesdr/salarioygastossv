@@ -1,0 +1,688 @@
+/**
+ * Motor de cálculos laborales y tributarios de El Salvador (2026 - 2027)
+ *
+ * Referencias normativas y técnicas verificadas:
+ * - Código de Trabajo de El Salvador:
+ *   - Art. 161-169: Jornada laboral y recargos por horas extraordinarias y nocturnidad.
+ *   - Art. 177: Vacación anual remunerada (15 días + 30% de recargo).
+ *   - Art. 190-192: Remuneración en días de asueto y descanso semanal.
+ *   - Art. 196-202: Aguinaldo por tramos de antigüedad al 12 de diciembre (15, 19 y 21 días).
+ * - Ley del ISSS y Reglamento: Cotización laboral 3% (tope $1,000 = $30.00/mes) y patronal 7.5% (tope $75.00/mes).
+ * - Ley SAP (AFP): Cotización laboral 7.25% y patronal 8.75%.
+ * - Tablas de Retención del Impuesto sobre la Renta (ISR): Decreto Legislativo N.º 254 (Ministerio de Hacienda).
+ * - Decretos Legislativos N.º 669 y 670: Ventana de pago de aguinaldo del 1 de octubre al 20 de diciembre.
+ * - Decreto Legislativo N.º 673: Exención de ISR en aguinaldo hasta $1,500.00.
+ * - Decreto Legislativo N.º 499 (Ley Quincena 25): Pago del 50% del salario mensual en enero (entre el 15 y 25 de enero)
+ *   para salarios <= $1,500.00, 100% exento de ISSS, AFP e ISR, obligatorio en enero de 2027 para todo empleador.
+ */
+
+export const RATES = {
+  AFP_EE: 0.0725,
+  AFP_ER: 0.0875,
+  ISSS_EE: 0.03,
+  ISSS_ER: 0.075,
+  INSAFORP_ER: 0.01,
+  ISSS_CAP_MONTHLY: 1000.0,
+  ISSS_CAP_BIWEEKLY: 500.0,
+  ISSS_MAX_EE_MONTHLY: 30.0,
+  ISSS_MAX_EE_BIWEEKLY: 15.0,
+  ISSS_MAX_ER_MONTHLY: 75.0,
+  ISSS_MAX_ER_BIWEEKLY: 37.5,
+  QUINCENA_25_CAP: 1500.0,
+  AGUINALDO_DECREE_EXEMPTION: 1500.0,
+} as const;
+
+export interface MinimumWageSector {
+  id: 'comercio' | 'maquila' | 'beneficios_cafe' | 'agropecuario';
+  name: string;
+  monthly: number;
+  daily: number;
+}
+
+export const MINIMUM_WAGES_2026: Record<MinimumWageSector['id'], MinimumWageSector> = {
+  comercio: {
+    id: 'comercio',
+    name: 'Comercio, Servicios, Industria e Ingenios',
+    monthly: 408.8,
+    daily: 13.63,
+  },
+  maquila: {
+    id: 'maquila',
+    name: 'Maquila Textil y Confección',
+    monthly: 402.32,
+    daily: 13.41,
+  },
+  beneficios_cafe: {
+    id: 'beneficios_cafe',
+    name: 'Beneficios de Café y Recolección de Caña',
+    monthly: 305.23,
+    daily: 10.17,
+  },
+  agropecuario: {
+    id: 'agropecuario',
+    name: 'Agropecuario, Pesca y Recolección de Café',
+    monthly: 272.53,
+    daily: 9.08,
+  },
+};
+
+export type PayPeriod = 'monthly' | 'biweekly';
+export type ISRBracketId = 'I' | 'II' | 'III' | 'IV';
+
+export interface ISRBracketRule {
+  id: ISRBracketId;
+  label: string;
+  from: number;
+  to: number | null;
+  rate: number;
+  fixedFee: number;
+  excessOver: number;
+}
+
+export const ISR_TABLES: Record<PayPeriod, ISRBracketRule[]> = {
+  monthly: [
+    { id: 'I', label: 'Tramo I (Exento)', from: 0, to: 550.0, rate: 0, fixedFee: 0, excessOver: 0 },
+    { id: 'II', label: 'Tramo II (10%)', from: 550.01, to: 895.24, rate: 0.1, fixedFee: 17.67, excessOver: 550.0 },
+    { id: 'III', label: 'Tramo III (20%)', from: 895.25, to: 2038.1, rate: 0.2, fixedFee: 60.0, excessOver: 895.24 },
+    { id: 'IV', label: 'Tramo IV (30%)', from: 2038.11, to: null, rate: 0.3, fixedFee: 288.57, excessOver: 2038.1 },
+  ],
+  biweekly: [
+    { id: 'I', label: 'Tramo I (Exento)', from: 0, to: 275.0, rate: 0, fixedFee: 0, excessOver: 0 },
+    { id: 'II', label: 'Tramo II (10%)', from: 275.01, to: 447.62, rate: 0.1, fixedFee: 8.83, excessOver: 275.0 },
+    { id: 'III', label: 'Tramo III (20%)', from: 447.63, to: 1019.05, rate: 0.2, fixedFee: 30.0, excessOver: 447.62 },
+    { id: 'IV', label: 'Tramo IV (30%)', from: 1019.06, to: null, rate: 0.3, fixedFee: 144.28, excessOver: 1019.05 },
+  ],
+};
+
+export interface ISRCalculationResult {
+  bracketId: ISRBracketId;
+  bracketLabel: string;
+  taxableIncome: number;
+  fixedFee: number;
+  rate: number;
+  excessOver: number;
+  excessAmount: number;
+  variableTax: number;
+  isr: number;
+  effectiveTaxRateOnTaxable: number;
+}
+
+export function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+/**
+ * Calcula la retención de Impuesto sobre la Renta (ISR) según la tabla mensual o quincenal.
+ */
+export function calcISR(taxableIncome: number, period: PayPeriod = 'monthly'): ISRCalculationResult {
+  const taxable = Math.max(0, taxableIncome);
+  const rules = ISR_TABLES[period];
+
+  let matched = rules[0];
+  for (const rule of rules) {
+    if (rule.to === null) {
+      if (taxable > rules[rules.length - 2].to!) {
+        matched = rule;
+      }
+    } else if (taxable <= rule.to) {
+      matched = rule;
+      break;
+    }
+  }
+
+  if (matched.id === 'I' || taxable <= rules[0].to!) {
+    return {
+      bracketId: 'I',
+      bracketLabel: rules[0].label,
+      taxableIncome: round2(taxable),
+      fixedFee: 0,
+      rate: 0,
+      excessOver: 0,
+      excessAmount: 0,
+      variableTax: 0,
+      isr: 0,
+      effectiveTaxRateOnTaxable: 0,
+    };
+  }
+
+  const excessAmount = Math.max(0, taxable - matched.excessOver);
+  const variableTax = excessAmount * matched.rate;
+  const isr = round2(matched.fixedFee + variableTax);
+
+  return {
+    bracketId: matched.id,
+    bracketLabel: matched.label,
+    taxableIncome: round2(taxable),
+    fixedFee: matched.fixedFee,
+    rate: matched.rate,
+    excessOver: matched.excessOver,
+    excessAmount: round2(excessAmount),
+    variableTax: round2(variableTax),
+    isr,
+    effectiveTaxRateOnTaxable: taxable > 0 ? round2((isr / taxable) * 100) : 0,
+  };
+}
+
+/**
+ * Estima el ISR adicional de un ingreso extraordinario gravado (como el 30% vacacional o exceso de aguinaldo)
+ * distribuyendo su impacto anualizado (1/12 mensual), mismo método que utiliza salariosv.com (`extraISRApprox`).
+ */
+export function calcExtraISRAnnualized(baseMonthlyTaxable: number, extraTaxableAmount: number): number {
+  const extra = Math.max(0, extraTaxableAmount);
+  if (extra <= 0) return 0;
+  const monthlyEquivalent = extra / 12;
+  const baseTax = calcISR(baseMonthlyTaxable, 'monthly').isr;
+  const newTax = calcISR(baseMonthlyTaxable + monthlyEquivalent, 'monthly').isr;
+  return Math.max(0, round2((newTax - baseTax) * 12));
+}
+
+export interface PayrollBreakdown {
+  period: PayPeriod;
+  grossBase: number;
+  bonuses: number;
+  grossTotal: number;
+  afpEmployee: number;
+  isssEmployee: number;
+  isssCapped: boolean;
+  taxableIncome: number;
+  isrDetail: ISRCalculationResult;
+  isr: number;
+  totalEmployeeDeductions: number;
+  netPay: number;
+  effectiveDeductionPct: number;
+  afpEmployer: number;
+  isssEmployer: number;
+  insaforpEmployer: number;
+  totalEmployerContributions: number;
+  totalEmployerCost: number;
+}
+
+/**
+ * Calcula el desglose exacto de planilla mensual o quincenal.
+ */
+export function calcPayroll(
+  monthlyBaseSalary: number,
+  period: PayPeriod = 'monthly',
+  monthlyExtraBonuses: number = 0
+): PayrollBreakdown {
+  const safeBaseMonthly = Math.max(0, monthlyBaseSalary);
+  const safeBonusesMonthly = Math.max(0, monthlyExtraBonuses);
+
+  const factor = period === 'biweekly' ? 0.5 : 1;
+  const grossBase = round2(safeBaseMonthly * factor);
+  const bonuses = round2(safeBonusesMonthly * factor);
+  const grossTotal = round2(grossBase + bonuses);
+
+  const isssCap = period === 'biweekly' ? RATES.ISSS_CAP_BIWEEKLY : RATES.ISSS_CAP_MONTHLY;
+  const isssMaxEE = period === 'biweekly' ? RATES.ISSS_MAX_EE_BIWEEKLY : RATES.ISSS_MAX_EE_MONTHLY;
+  const isssMaxER = period === 'biweekly' ? RATES.ISSS_MAX_ER_BIWEEKLY : RATES.ISSS_MAX_ER_MONTHLY;
+
+  const afpEmployee = round2(grossTotal * RATES.AFP_EE);
+  const isssEmployee = round2(Math.min(grossTotal * RATES.ISSS_EE, isssMaxEE));
+  const isssCapped = grossTotal >= isssCap;
+
+  const taxableIncome = Math.max(0, round2(grossTotal - afpEmployee - isssEmployee));
+  const isrDetail = calcISR(taxableIncome, period);
+  const isr = isrDetail.isr;
+
+  const totalEmployeeDeductions = round2(afpEmployee + isssEmployee + isr);
+  const netPay = Math.max(0, round2(grossTotal - totalEmployeeDeductions));
+  const effectiveDeductionPct = grossTotal > 0 ? round2((totalEmployeeDeductions / grossTotal) * 100) : 0;
+
+  const afpEmployer = round2(grossTotal * RATES.AFP_ER);
+  const isssEmployer = round2(Math.min(grossTotal * RATES.ISSS_ER, isssMaxER));
+  const insaforpEmployer = round2(grossTotal * RATES.INSAFORP_ER);
+  const totalEmployerContributions = round2(afpEmployer + isssEmployer + insaforpEmployer);
+  const totalEmployerCost = round2(grossTotal + totalEmployerContributions);
+
+  return {
+    period,
+    grossBase,
+    bonuses,
+    grossTotal,
+    afpEmployee,
+    isssEmployee,
+    isssCapped,
+    taxableIncome,
+    isrDetail,
+    isr,
+    totalEmployeeDeductions,
+    netPay,
+    effectiveDeductionPct,
+    afpEmployer,
+    isssEmployer,
+    insaforpEmployer,
+    totalEmployerContributions,
+    totalEmployerCost,
+  };
+}
+
+export interface VacationTramo {
+  name: string;
+  days: number;
+  gross15Part: number;
+  bonus30Part: number;
+  totalGrossPart: number;
+  netBonusPart: number;
+}
+
+export interface VacationCalculationResult {
+  monthlySalary: number;
+  dailySalary: number;
+  vacationDays: number;
+  bonusPercentage: number;
+  base15DaysGross: number;
+  bonus30Gross: number;
+  completeVacationGross: number;
+  /**
+   * Modalidad 1: Pago únicamente del recargo del 30% (el salario quincenal ordinario se cobra normal en planilla).
+   * Incluye tanto el valor bruto directo (como muestra misalariosv.com) como el neto con deducciones de ley (como muestra salariosv.com).
+   */
+  bonusOnlyMode: {
+    grossBonus: number;
+    afp: number;
+    isss: number;
+    taxableBonus: number;
+    isrEstimated: number;
+    netBonusAfterDeductions: number;
+  };
+  /**
+   * Modalidad 2: Pago adelantado completo (15 días de salario + 30% de recargo vacacional en un solo pago).
+   */
+  fullAdvanceMode: {
+    grossTotal: number;
+    afp: number;
+    isss: number;
+    taxable: number;
+    isr: number;
+    totalDeductions: number;
+    netTotal: number;
+  };
+  splits: VacationTramo[];
+}
+
+export function calcVacation(
+  monthlySalary: number,
+  bonusPercentage: number = 30,
+  splitDays: [number, number, number] = [5, 5, 5]
+): VacationCalculationResult {
+  const salary = Math.max(0, monthlySalary);
+  const pct = Math.max(0, bonusPercentage);
+  const vacationDays = 15;
+  const dailySalary = round2(salary / 30);
+
+  // 15 días equivalen a una quincena (salario / 2)
+  const base15DaysGross = round2((salary / 30) * vacationDays);
+  const bonus30Gross = round2(base15DaysGross * (pct / 100));
+  const completeVacationGross = round2(base15DaysGross + bonus30Gross);
+
+  // Renta gravada mensual ordinaria para estimar impacto marginal de ISR
+  const baseMonthlyPayroll = calcPayroll(salary, 'monthly');
+
+  // Modalidad 1: Solo el bono 30%
+  const afpBonusOnly = round2(bonus30Gross * RATES.AFP_EE);
+  // Si el salario mensual ya alcanza el tope de $1,000, el ISSS mensual de $30 ya está cubierto por el salario ordinario;
+  // sin embargo, mostramos la cotización directa sobre el bono si aún hay margen bajo $1,000 o según criterio de planilla.
+  const remainingIsssRoom = Math.max(0, RATES.ISSS_CAP_MONTHLY - salary);
+  const isssBonusOnly = round2(Math.min(bonus30Gross, remainingIsssRoom) * RATES.ISSS_EE);
+  const taxableBonusOnly = Math.max(0, round2(bonus30Gross - afpBonusOnly - isssBonusOnly));
+  const isrBonusOnly = calcExtraISRAnnualized(baseMonthlyPayroll.taxableIncome, taxableBonusOnly);
+  const netBonusAfterDeductions = Math.max(0, round2(bonus30Gross - afpBonusOnly - isssBonusOnly - isrBonusOnly));
+
+  // Modalidad 2: Pago completo adelantado (15 días + 30%)
+  const afpFull = round2(completeVacationGross * RATES.AFP_EE);
+  const isssFull = round2(Math.min(completeVacationGross, RATES.ISSS_CAP_BIWEEKLY) * RATES.ISSS_EE);
+  const taxableFull = Math.max(0, round2(completeVacationGross - afpFull - isssFull));
+  const baseQuincenaTaxable = Math.max(
+    0,
+    round2(base15DaysGross - base15DaysGross * RATES.AFP_EE - Math.min(base15DaysGross, RATES.ISSS_CAP_BIWEEKLY) * RATES.ISSS_EE)
+  );
+  const isrQuincenaNormal = calcISR(baseQuincenaTaxable, 'biweekly').isr;
+  const isrFull = round2(isrQuincenaNormal + isrBonusOnly);
+  const totalDeductionsFull = round2(afpFull + isssFull + isrFull);
+  const netFull = Math.max(0, round2(completeVacationGross - totalDeductionsFull));
+
+  const labels = ['Semana Santa', 'Fiestas Agostinas', 'Fin de Año'];
+  const splits: VacationTramo[] = splitDays.map((days, idx) => {
+    const safeDays = Math.max(0, days);
+    const ratio = safeDays / 15;
+    return {
+      name: labels[idx] || `Tramo ${idx + 1}`,
+      days: safeDays,
+      gross15Part: round2(base15DaysGross * ratio),
+      bonus30Part: round2(bonus30Gross * ratio),
+      totalGrossPart: round2(completeVacationGross * ratio),
+      netBonusPart: round2(netBonusAfterDeductions * ratio),
+    };
+  });
+
+  return {
+    monthlySalary: salary,
+    dailySalary,
+    vacationDays,
+    bonusPercentage: pct,
+    base15DaysGross,
+    bonus30Gross,
+    completeVacationGross,
+    bonusOnlyMode: {
+      grossBonus: bonus30Gross,
+      afp: afpBonusOnly,
+      isss: isssBonusOnly,
+      taxableBonus: taxableBonusOnly,
+      isrEstimated: isrBonusOnly,
+      netBonusAfterDeductions,
+    },
+    fullAdvanceMode: {
+      grossTotal: completeVacationGross,
+      afp: afpFull,
+      isss: isssFull,
+      taxable: taxableFull,
+      isr: isrFull,
+      totalDeductions: totalDeductionsFull,
+      netTotal: netFull,
+    },
+    splits,
+  };
+}
+
+export type SeniorityBracket = 'under-1' | '1-to-3' | '3-to-10' | '10-plus';
+export type AguinaldoExemptionRule = 'decreto_1500' | 'dos_minimos';
+
+export interface AguinaldoCalculationOptions {
+  monthlySalary: number;
+  seniorityBracket: SeniorityBracket;
+  /** Días trabajados hasta el 12 de diciembre cuando seniorityBracket === 'under-1' (1..365) */
+  daysWorkedUnderOneYear?: number;
+  exemptionRule?: AguinaldoExemptionRule;
+}
+
+export interface AguinaldoCalculationResult {
+  monthlySalary: number;
+  dailySalary: number;
+  seniorityBracket: SeniorityBracket;
+  seniorityLabel: string;
+  equivalentDays: number;
+  isProportional: boolean;
+  daysWorked: number;
+  proportionFactor: number;
+  grossAguinaldo: number;
+  exemptionLimit: number;
+  exemptAmount: number;
+  taxableExcess: number;
+  isrWithheld: number;
+  netAguinaldo: number;
+  paymentWindowLabel: string;
+}
+
+/**
+ * Calcula los días transcurridos entre una fecha de ingreso y una fecha de corte (ambos inclusive),
+ * limitado a [0, 365], mismo algoritmo que misalariosv.com y salariosv.com.
+ */
+export function calcDaysBetweenInclusive(startDateStr: string, cutoffDateStr: string): number {
+  const start = new Date(`${startDateStr}T00:00:00`);
+  const cutoff = new Date(`${cutoffDateStr}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(cutoff.getTime()) || start > cutoff) {
+    return 0;
+  }
+  const diffDays = Math.floor((cutoff.getTime() - start.getTime()) / 86_400_000) + 1;
+  return Math.min(365, Math.max(0, diffDays));
+}
+
+export function calcAguinaldo(options: AguinaldoCalculationOptions): AguinaldoCalculationResult {
+  const salary = Math.max(0, options.monthlySalary);
+  const dailySalary = salary / 30;
+  const exemptionRule = options.exemptionRule ?? 'decreto_1500';
+  const exemptionLimit =
+    exemptionRule === 'decreto_1500'
+      ? RATES.AGUINALDO_DECREE_EXEMPTION
+      : round2(MINIMUM_WAGES_2026.comercio.monthly * 2); // $817.60
+
+  let equivalentDays = 15;
+  let seniorityLabel = '1 a menos de 3 años (15 días)';
+  let isProportional = false;
+  let daysWorked = 365;
+  let proportionFactor = 1;
+
+  switch (options.seniorityBracket) {
+    case 'under-1': {
+      equivalentDays = 15;
+      isProportional = true;
+      daysWorked = Math.min(365, Math.max(0, Math.round(options.daysWorkedUnderOneYear ?? 180)));
+      proportionFactor = daysWorked / 365;
+      seniorityLabel = `Menos de 1 año (${daysWorked} días proporcionales al 12 dic.)`;
+      break;
+    }
+    case '1-to-3':
+      equivalentDays = 15;
+      seniorityLabel = '1 a menos de 3 años (15 días de salario)';
+      break;
+    case '3-to-10':
+      equivalentDays = 19;
+      seniorityLabel = '3 a menos de 10 años (19 días de salario)';
+      break;
+    case '10-plus':
+      equivalentDays = 21;
+      seniorityLabel = '10 años o más (21 días de salario)';
+      break;
+  }
+
+  const baseFullAguinaldo = dailySalary * equivalentDays;
+  const grossAguinaldo = round2(baseFullAguinaldo * proportionFactor);
+
+  const exemptAmount = round2(Math.min(grossAguinaldo, exemptionLimit));
+  const taxableExcess = round2(Math.max(0, grossAguinaldo - exemptionLimit));
+
+  const baseMonthlyTaxable = calcPayroll(salary, 'monthly').taxableIncome;
+  const isrWithheld = taxableExcess > 0 ? calcExtraISRAnnualized(baseMonthlyTaxable, taxableExcess) : 0;
+  const netAguinaldo = Math.max(0, round2(grossAguinaldo - isrWithheld));
+
+  return {
+    monthlySalary: salary,
+    dailySalary: round2(dailySalary),
+    seniorityBracket: options.seniorityBracket,
+    seniorityLabel,
+    equivalentDays,
+    isProportional,
+    daysWorked,
+    proportionFactor,
+    grossAguinaldo,
+    exemptionLimit,
+    exemptAmount,
+    taxableExcess,
+    isrWithheld,
+    netAguinaldo,
+    paymentWindowLabel: '1 de octubre al 20 de diciembre (Decretos 669 y 670)',
+  };
+}
+
+export interface Quincena25CalculationOptions {
+  monthlySalary: number;
+  isFullYear: boolean;
+  /** Días trabajados en el año hasta el 25 de enero cuando isFullYear === false (1..365) */
+  daysWorkedToJan25?: number;
+  /** Si el salario supera $1,500, permite simular qué pasaría si el patrono lo otorga voluntariamente */
+  simulateVoluntaryAboveCap?: boolean;
+}
+
+export interface Quincena25CalculationResult {
+  monthlySalary: number;
+  eligibleByLaw: boolean;
+  capLimit: number;
+  isFullYear: boolean;
+  daysWorked: number;
+  proportionFactor: number;
+  grossQuincena25: number;
+  afp: number;
+  isss: number;
+  isr: number;
+  netQuincena25: number;
+  paymentWindowLabel: string;
+  legalNote: string;
+}
+
+/**
+ * Calcula la Quincena 25 según el Decreto Legislativo N.º 499.
+ * - Obligatoria en enero de 2027 para todo empleador.
+ * - Aplica a trabajadores con salario mensual <= $1,500.00.
+ * - Equivale al 50% del salario mensual nominal (o proporcional a los días trabajados si tiene < 1 año).
+ * - 100% libre de ISSS, AFP y Renta (ISR).
+ */
+export function calcQuincena25(options: Quincena25CalculationOptions): Quincena25CalculationResult {
+  const salary = Math.max(0, options.monthlySalary);
+  const eligibleByLaw = salary > 0 && salary <= RATES.QUINCENA_25_CAP;
+  const daysWorked = options.isFullYear
+    ? 365
+    : Math.min(365, Math.max(0, Math.round(options.daysWorkedToJan25 ?? 180)));
+  const proportionFactor = options.isFullYear ? 1 : daysWorked / 365;
+
+  const baseHalfSalary = salary * 0.5;
+  const applies = eligibleByLaw || Boolean(options.simulateVoluntaryAboveCap);
+  const grossQuincena25 = applies ? round2(baseHalfSalary * proportionFactor) : 0;
+
+  let legalNote =
+    'Aplica el 50% de tu salario mensual nominal, 100% libre de descuentos de ISSS, AFP y Renta (Decreto 499).';
+  if (salary > RATES.QUINCENA_25_CAP && !options.simulateVoluntaryAboveCap) {
+    legalNote =
+      'El salario mensual supera el techo legal de $1,500.00 establecido en el Decreto 499, por lo que no es obligatoria por ley.';
+  } else if (salary > RATES.QUINCENA_25_CAP && options.simulateVoluntaryAboveCap) {
+    legalNote =
+      'Simulación voluntaria activa: aunque supera el techo legal de $1,500.00, se muestra el 50% referencial.';
+  } else if (!options.isFullYear) {
+    legalNote = `Cálculo proporcional por ${daysWorked} días laborados al 25 de enero (${round2(proportionFactor * 100)}% de una quincena), libre de ISSS, AFP e ISR.`;
+  }
+
+  return {
+    monthlySalary: salary,
+    eligibleByLaw,
+    capLimit: RATES.QUINCENA_25_CAP,
+    isFullYear: options.isFullYear,
+    daysWorked,
+    proportionFactor,
+    grossQuincena25,
+    afp: 0,
+    isss: 0,
+    isr: 0,
+    netQuincena25: grossQuincena25,
+    paymentWindowLabel: '15 al 25 de enero (Obligatoria en 2027 · Decreto 499)',
+    legalNote,
+  };
+}
+
+export type OvertimeTypeId =
+  | 'ordinary'
+  | 'extra_day'
+  | 'extra_night'
+  | 'rest_day'
+  | 'rest_night'
+  | 'holiday_day'
+  | 'holiday_night';
+
+export interface OvertimeRateRule {
+  id: OvertimeTypeId;
+  label: string;
+  legalBasis: string;
+  multiplier: number;
+}
+
+export const OVERTIME_RULES: OvertimeRateRule[] = [
+  {
+    id: 'ordinary',
+    label: 'Hora ordinaria diurna',
+    legalBasis: 'Salario base por hora (100%)',
+    multiplier: 1.0,
+  },
+  {
+    id: 'extra_day',
+    label: 'Hora extra diurna (6:00 a.m. - 7:00 p.m.)',
+    legalBasis: 'Art. 169 C.T. · 100% de recargo (2.00x)',
+    multiplier: 2.0,
+  },
+  {
+    id: 'extra_night',
+    label: 'Hora extra nocturna (7:00 p.m. - 6:00 a.m.)',
+    legalBasis: 'Art. 168-169 C.T. · 100% recargo + 25% nocturnidad (2.25x)',
+    multiplier: 2.25,
+  },
+  {
+    id: 'rest_day',
+    label: 'Trabajo en día de descanso (diurno)',
+    legalBasis: 'Art. 175 C.T. · Recargo del 50% adicional (1.50x)',
+    multiplier: 1.5,
+  },
+  {
+    id: 'rest_night',
+    label: 'Trabajo en día de descanso (nocturno)',
+    legalBasis: 'Art. 168 y 175 C.T. · 50% descanso + 25% nocturnidad (1.75x)',
+    multiplier: 1.75,
+  },
+  {
+    id: 'holiday_day',
+    label: 'Trabajo en día de asueto (diurno)',
+    legalBasis: 'Art. 192 C.T. · Recargo del 100% adicional (2.00x)',
+    multiplier: 2.0,
+  },
+  {
+    id: 'holiday_night',
+    label: 'Trabajo en día de asueto (nocturno)',
+    legalBasis: 'Art. 168 y 192 C.T. · 100% asueto + 25% nocturnidad (2.25x)',
+    multiplier: 2.25,
+  },
+];
+
+export interface HourlyAndOvertimeResult {
+  monthlyGross: number;
+  monthlyNet: number;
+  daysPerMonth: number;
+  hoursPerDay: number;
+  totalHoursPerMonth: number;
+  grossDaily: number;
+  netDaily: number;
+  grossHourly: number;
+  netHourly: number;
+  legalBaseHourly: number; // Siempre sobre 30 días y 8 horas para cálculo legal de horas extra
+  overtimeRates: Array<
+    OvertimeRateRule & {
+      hourlyRateUsd: number;
+    }
+  >;
+}
+
+export function calcHourlyAndOvertime(
+  monthlyGross: number,
+  monthlyNet: number,
+  daysPerMonth: number = 30,
+  hoursPerDay: number = 8
+): HourlyAndOvertimeResult {
+  const safeGross = Math.max(0, monthlyGross);
+  const safeNet = Math.max(0, monthlyNet);
+  const safeDays = Math.max(1, daysPerMonth);
+  const safeHours = Math.max(1, hoursPerDay);
+  const totalHoursPerMonth = safeDays * safeHours;
+
+  const grossDaily = round2(safeGross / safeDays);
+  const netDaily = round2(safeNet / safeDays);
+  const grossHourly = round2(safeGross / totalHoursPerMonth);
+  const netHourly = round2(safeNet / totalHoursPerMonth);
+
+  // Para recargos de ley, el Código de Trabajo toma salario / 30 / horasJornada
+  const legalBaseHourly = safeGross / 30 / safeHours;
+
+  const overtimeRates = OVERTIME_RULES.map((rule) => ({
+    ...rule,
+    hourlyRateUsd: round2(legalBaseHourly * rule.multiplier),
+  }));
+
+  return {
+    monthlyGross: safeGross,
+    monthlyNet: safeNet,
+    daysPerMonth: safeDays,
+    hoursPerDay: safeHours,
+    totalHoursPerMonth,
+    grossDaily,
+    netDaily,
+    grossHourly,
+    netHourly,
+    legalBaseHourly: round2(legalBaseHourly),
+    overtimeRates,
+  };
+}
