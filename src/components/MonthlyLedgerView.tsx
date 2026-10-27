@@ -21,6 +21,7 @@ import {
   copyRecurringToMonth,
   createEmptyMonthLedger,
   groupLedgerExpenses,
+  groupAllMonthsExpenses,
   MONTH_NAMES_ES,
 } from '../lib/monthlyLedger.ts';
 import { formatUSD } from '../lib/formatters.ts';
@@ -129,8 +130,11 @@ export function MonthlyLedgerView({
   const totalSobranteMonthPct =
     totalAvailableMonth > 0 ? Math.round((netRemaining / totalAvailableMonth) * 100) : 0;
 
-  // Resumen de gastos agrupados por descripción unificada
+  // Resumen de gastos agrupados por descripción unificada (mes seleccionado)
   const groupedSummary = groupLedgerExpenses(activeMonthLedger);
+
+  // Resumen de gastos agrupados a lo largo de todos los meses del año
+  const allMonthsSummary = groupAllMonthsExpenses(monthLedgers, selectedYear);
 
   // Handlers para activar o desactivar el check de un gasto para la tabla de agrupación
   const handleToggleItemCheck = (itemId: string, quincena: 'q1' | 'q2') => {
@@ -1440,6 +1444,123 @@ export function MonthlyLedgerView({
                   </td>
                   <td className="text-end font-monospace text-danger fs-6">
                     -{formatUSD(groupedSummary.totalGroupedAmount)}
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </div>
+
+      {/* Tabla de Suma Acumulada de Todos los Meses */}
+      <div className="card-soft mt-4 overflow-hidden border">
+        <div className="p-3 border-bottom bg-slate-50 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <div className="d-flex align-items-center gap-2 mb-0.5">
+              <Layers size={17} className="text-success" />
+              <h6 className="fw-bold text-slate-dark mb-0">
+                Suma Acumulada de Todos los Meses — Año {selectedYear}
+              </h6>
+              <span className="badge bg-light text-slate-dark border font-monospace" style={{ fontSize: '11px' }}>
+                {allMonthsSummary.groups.length} {allMonthsSummary.groups.length === 1 ? 'concepto' : 'conceptos'} · {allMonthsSummary.totalGroupedCount} {allMonthsSummary.totalGroupedCount === 1 ? 'partida' : 'partidas'} · {allMonthsSummary.monthsRepresented.length} {allMonthsSummary.monthsRepresented.length === 1 ? 'mes' : 'meses'}
+              </span>
+            </div>
+            <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+              Consolidado de los gastos marcados con el check en todos los meses del año {selectedYear}. Muestra la suma total acumulada y el desglose de lo pagado en cada mes.
+            </span>
+          </div>
+
+          <div className="text-md-end">
+            <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
+              Total Acumulado Multimes:
+            </span>
+            <strong className="text-danger fs-5 font-monospace">
+              -{formatUSD(allMonthsSummary.totalGroupedAmount)}
+            </strong>
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="table table-minimal align-middle mb-0 font-monospace" style={{ fontSize: '12px' }}>
+            <thead className="bg-light small">
+              <tr>
+                <th style={{ width: '30%' }}>Concepto / Gasto</th>
+                <th style={{ width: '35%' }}>Meses con Pagos (Desglose)</th>
+                <th style={{ width: '15%' }} className="text-center">Frecuencia</th>
+                <th style={{ width: '20%' }} className="text-end">Suma Total Acumulada</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allMonthsSummary.groups.map((group) => {
+                const pctOfTotal =
+                  allMonthsSummary.totalGroupedAmount > 0
+                    ? Math.round((group.totalAmount / allMonthsSummary.totalGroupedAmount) * 100)
+                    : 0;
+                return (
+                  <tr key={group.key}>
+                    <td className="font-sans">
+                      <div className="d-flex align-items-center gap-1.5">
+                        <span className="fw-semibold text-slate-dark">{group.desc}</span>
+                        {group.isRecurring && (
+                          <span className="badge-subtle ms-1" style={{ fontSize: '9px' }}>
+                            Fijo
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="d-flex flex-wrap gap-1 align-items-center">
+                        {group.monthsList.map((m) => (
+                          <span
+                            key={m.month}
+                            className="badge bg-light text-slate-dark border font-monospace py-1 px-1.5"
+                            style={{ fontSize: '11px' }}
+                            title={`${m.name}: ${formatUSD(m.amount)}`}
+                          >
+                            <span className="text-muted me-1">{m.name.slice(0, 3)}:</span>
+                            <span className="fw-bold">{formatUSD(m.amount)}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="text-center small text-muted font-sans">
+                      <div>
+                        {group.monthsCount} {group.monthsCount === 1 ? 'mes' : 'meses'}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: '10px' }}>
+                        ({group.count} {group.count === 1 ? 'pago' : 'pagos'})
+                      </div>
+                    </td>
+                    <td className="text-end">
+                      <span className="fw-bold text-slate-dark">{formatUSD(group.totalAmount)}</span>
+                      <span className="text-muted small font-sans d-block" style={{ fontSize: '10px' }}>
+                        {pctOfTotal}% del acumulado
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {allMonthsSummary.groups.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center text-muted py-3 font-sans small">
+                    No hay gastos marcados en ninguno de los meses del año {selectedYear}. Al activar el check en los gastos de cualquier mes, se sumarán automáticamente aquí.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {allMonthsSummary.groups.length > 0 && (
+              <tfoot className="border-top bg-slate-50 font-sans">
+                <tr className="fw-bold">
+                  <td>Total Acumulado de Todos los Meses</td>
+                  <td className="text-muted small font-sans">
+                    {allMonthsSummary.monthsRepresented.length} {allMonthsSummary.monthsRepresented.length === 1 ? 'mes con gastos' : 'meses con gastos'}
+                  </td>
+                  <td className="text-center text-muted small font-sans">
+                    {allMonthsSummary.totalGroupedCount} partidas
+                  </td>
+                  <td className="text-end font-monospace text-danger fs-6">
+                    -{formatUSD(allMonthsSummary.totalGroupedAmount)}
                   </td>
                 </tr>
               </tfoot>

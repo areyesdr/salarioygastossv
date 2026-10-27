@@ -5,6 +5,7 @@ import {
   copyRecurringToMonth,
   createEmptyMonthLedger,
   groupLedgerExpenses,
+  groupAllMonthsExpenses,
   type QuincenaLedger,
 } from './monthlyLedger.ts';
 
@@ -114,5 +115,56 @@ describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
 
     assert.equal(res.totalGroupedAmount, 195.0);
     assert.equal(res.totalGroupedCount, 4);
+  });
+
+  it('groups expenses across multiple months for all-months summary', () => {
+    const m1 = createEmptyMonthLedger('usr-test-01', 2026, 10);
+    m1.q1.items = [
+      { id: '1', desc: 'Tarjeta Joven', amount: 42.05, type: 'expense', day: 15, isRecurring: true, checked: true },
+      { id: '2', desc: 'Supermercado', amount: 50.0, type: 'expense', day: 15, checked: true },
+    ];
+    m1.q2.items = [
+      { id: '3', desc: 'Gasolina', amount: 20.0, type: 'expense', day: 30, checked: false }, // unchecked
+    ];
+
+    const m2 = createEmptyMonthLedger('usr-test-01', 2026, 11);
+    m2.q1.items = [
+      { id: '4', desc: 'tarjeta joven', amount: 50.0, type: 'expense', day: 15, isRecurring: true, checked: true },
+    ];
+    m2.q2.items = [
+      { id: '5', desc: 'Supermercado', amount: 65.0, type: 'expense', day: 30, checked: true },
+    ];
+
+    const m3 = createEmptyMonthLedger('usr-test-01', 2026, 12);
+    m3.q1.items = [
+      { id: '6', desc: 'TARJETA JOVEN', amount: 100.0, type: 'expense', day: 15, isRecurring: true, checked: true },
+    ];
+
+    const res = groupAllMonthsExpenses([m1, m2, m3], 2026);
+
+    assert.equal(res.groups.length, 2);
+
+    const tarjeta = res.groups.find((g) => g.desc.toLowerCase() === 'tarjeta joven')!;
+    assert.ok(tarjeta);
+    assert.equal(tarjeta.totalAmount, 192.05);
+    assert.equal(tarjeta.count, 3);
+    assert.equal(tarjeta.monthsCount, 3);
+    assert.equal(tarjeta.monthsList.length, 3);
+    assert.equal(tarjeta.monthsList[0].month, 10);
+    assert.equal(tarjeta.monthsList[0].amount, 42.05);
+    assert.equal(tarjeta.monthsList[1].month, 11);
+    assert.equal(tarjeta.monthsList[1].amount, 50.0);
+    assert.equal(tarjeta.monthsList[2].month, 12);
+    assert.equal(tarjeta.monthsList[2].amount, 100.0);
+
+    const superm = res.groups.find((g) => g.desc.toLowerCase() === 'supermercado')!;
+    assert.ok(superm);
+    assert.equal(superm.totalAmount, 115.0);
+    assert.equal(superm.count, 2);
+    assert.equal(superm.monthsCount, 2);
+
+    assert.equal(res.totalGroupedAmount, 307.05);
+    assert.equal(res.totalGroupedCount, 5);
+    assert.deepEqual(res.monthsRepresented, [10, 11, 12]);
   });
 });

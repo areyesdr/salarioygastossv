@@ -232,3 +232,96 @@ export function groupLedgerExpenses(monthLedger: MonthLedger): GroupedExpensesSu
     totalGroupedCount,
   };
 }
+
+export interface AllMonthsGroupedExpenseItem {
+  key: string;
+  desc: string;
+  totalAmount: number;
+  count: number;
+  monthsCount: number;
+  monthsList: { month: number; name: string; amount: number }[];
+  isRecurring: boolean;
+}
+
+export interface AllMonthsGroupedSummary {
+  groups: AllMonthsGroupedExpenseItem[];
+  totalGroupedAmount: number;
+  totalGroupedCount: number;
+  monthsRepresented: number[];
+}
+
+/**
+ * Agrupa los gastos marcados con el check a lo largo de TODOS los meses registrados.
+ */
+export function groupAllMonthsExpenses(
+  monthLedgers: MonthLedger[],
+  targetYear?: number
+): AllMonthsGroupedSummary {
+  const map = new Map<string, AllMonthsGroupedExpenseItem>();
+  const monthsRepresentedSet = new Set<number>();
+
+  const filteredLedgers = targetYear
+    ? monthLedgers.filter((m) => m.year === targetYear)
+    : monthLedgers;
+
+  for (const ledger of filteredLedgers) {
+    const monthNum = ledger.month;
+    const monthName = MONTH_NAMES_ES[monthNum - 1] || `Mes ${monthNum}`;
+
+    const processItems = (items: LedgerItem[]) => {
+      for (const item of items) {
+        if (item.type !== 'expense') continue;
+        if (!item.checked) continue; // Solo los marcados con el check
+
+        const normalized = item.desc.trim().toLowerCase();
+        if (!normalized) continue;
+
+        monthsRepresentedSet.add(monthNum);
+        const amt = round2(item.amount);
+        const existing = map.get(normalized);
+
+        if (existing) {
+          existing.totalAmount = round2(existing.totalAmount + amt);
+          existing.count += 1;
+          if (item.isRecurring) existing.isRecurring = true;
+
+          const existingMonth = existing.monthsList.find((m) => m.month === monthNum);
+          if (existingMonth) {
+            existingMonth.amount = round2(existingMonth.amount + amt);
+          } else {
+            existing.monthsList.push({ month: monthNum, name: monthName, amount: amt });
+            existing.monthsCount += 1;
+          }
+        } else {
+          map.set(normalized, {
+            key: normalized,
+            desc: item.desc.trim(),
+            totalAmount: amt,
+            count: 1,
+            monthsCount: 1,
+            monthsList: [{ month: monthNum, name: monthName, amount: amt }],
+            isRecurring: Boolean(item.isRecurring),
+          });
+        }
+      }
+    };
+
+    processItems(ledger.q1.items);
+    processItems(ledger.q2.items);
+  }
+
+  for (const group of map.values()) {
+    group.monthsList.sort((a, b) => a.month - b.month);
+  }
+
+  const groups = Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+  const totalGroupedAmount = round2(groups.reduce((acc, g) => acc + g.totalAmount, 0));
+  const totalGroupedCount = groups.reduce((acc, g) => acc + g.count, 0);
+
+  return {
+    groups,
+    totalGroupedAmount,
+    totalGroupedCount,
+    monthsRepresented: Array.from(monthsRepresentedSet).sort((a, b) => a - b),
+  };
+}
