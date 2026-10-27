@@ -198,7 +198,7 @@ const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
 
 function AppShell() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthReady } = useAuth();
   const { themeMode, setThemeMode } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -346,7 +346,7 @@ function AppShell() {
 
   // Sincronización con Supabase para usuario autenticado
   useEffect(() => {
-    if (!isSupabaseConfigured || !user?.id) return;
+    if (!isSupabaseConfigured || !isAuthReady || !user?.id) return;
 
     fetchMonthLedgersFromSupabase(user.id).then((remoteMap) => {
       if (remoteMap && Object.keys(remoteMap).length > 0) {
@@ -362,7 +362,7 @@ function AppShell() {
         });
       }
     });
-  }, [user?.id]);
+  }, [user?.id, isAuthReady]);
 
   const handleSaveMonthLedger = (updated: MonthLedger) => {
     setMonthLedgers((prev) => {
@@ -388,8 +388,10 @@ function AppShell() {
 
   // Carga de historial de salarios y fecha de inicio desde Supabase para usuario autenticado
   useEffect(() => {
-    if (!isSupabaseConfigured || !user?.id) {
-      setSalaryHistoryList([]);
+    if (!isSupabaseConfigured || !isAuthReady || !user?.id) {
+      if (isAuthReady && !user?.id) {
+        setSalaryHistoryList([]);
+      }
       return;
     }
 
@@ -410,7 +412,7 @@ function AppShell() {
         }
       }
     });
-  }, [user?.id]);
+  }, [user?.id, isAuthReady]);
 
   const handleStartEditSalaryRecord = (rec: DbSalaryHistory) => {
     setEditingRecordId(rec.id || null);
@@ -505,7 +507,7 @@ function AppShell() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      if (typeof parsed.monthlySalary === 'number' && parsed.monthlySalary >= 0 && parsed.monthlySalary !== 1000) {
+      if (typeof parsed.monthlySalary === 'number' && parsed.monthlySalary >= 0) {
         setMonthlySalary(parsed.monthlySalary);
         setSalaryInput(String(parsed.monthlySalary));
       } else {
@@ -741,6 +743,14 @@ function AppShell() {
     quincena25Result,
     userOwnedGoals,
   ]);
+
+  const legalBonuses = useMemo(() => ({
+    vacationBonusNet: vacationResult.bonusOnlyMode.netBonusAfterDeductions,
+    vacationFullNet: vacationResult.fullAdvanceMode.netTotal,
+    vacationBonusGross: vacationResult.bonus30Gross,
+    aguinaldoNet: aguinaldoResult.netAguinaldo,
+    q25Net: quincena25Result.netQuincena25,
+  }), [vacationResult, aguinaldoResult, quincena25Result]);
 
   const handleSalaryTextChange = (val: string) => {
     setSalaryInput(val);
@@ -2005,6 +2015,7 @@ function AppShell() {
                   defaultQ2NetPay={biweeklyPayroll.quincenaDetails?.q2.netPay || biweeklyPayroll.netPay}
                   monthLedgers={monthLedgers}
                   onSaveMonthLedger={handleSaveMonthLedger}
+                  legalBonuses={legalBonuses}
                 />
               }
             />

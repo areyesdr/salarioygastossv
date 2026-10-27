@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase.ts';
 
 interface AuthContextValue {
   user: SessionUser | null;
+  isAuthReady: boolean;
   isSupabaseConnected: boolean;
   loginAs: (role: UserRole, customEmail?: string, customName?: string, cleanSlate?: boolean) => void;
   loginWithCredentials: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -24,6 +25,7 @@ const SESSION_INACTIVITY_LIMIT_MS = 60 * 60 * 1000;
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(!isSupabaseConfigured);
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       const raw = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -67,16 +69,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sincronización con sesión activa de Supabase Auth
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!isSupabaseConfigured) {
+      setIsAuthReady(true);
+      return;
+    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        syncSupabaseUser(session.user);
-      } else {
-        // Si Supabase no tiene sesión activa, asegurarse de que no quede sesión residual
-        setUser((prev) => (prev?.id.startsWith('usr-') ? prev : null));
-      }
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (session?.user) {
+          syncSupabaseUser(session.user);
+        } else {
+          // Si Supabase no tiene sesión activa, asegurarse de que no quede sesión residual
+          setUser((prev) => (prev?.id.startsWith('usr-') ? prev : null));
+        }
+        setIsAuthReady(true);
+      })
+      .catch(() => {
+        setIsAuthReady(true);
+      });
 
     const {
       data: { subscription },
@@ -91,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setUser(null);
       }
+      setIsAuthReady(true);
     });
 
     return () => {
@@ -337,6 +349,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        isAuthReady,
         isSupabaseConnected: isSupabaseConfigured,
         loginAs,
         loginWithCredentials,

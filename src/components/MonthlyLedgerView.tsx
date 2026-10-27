@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
+  Gift,
 } from 'lucide-react';
 import {
   type MonthLedger,
@@ -19,12 +20,21 @@ import {
 } from '../lib/monthlyLedger.ts';
 import { formatUSD } from '../lib/formatters.ts';
 
+export interface LegalBonusesPayload {
+  vacationBonusNet: number;
+  vacationFullNet: number;
+  vacationBonusGross: number;
+  aguinaldoNet: number;
+  q25Net: number;
+}
+
 interface MonthlyLedgerViewProps {
   currentOwnerId: string;
   defaultQ1NetPay: number;
   defaultQ2NetPay: number;
   monthLedgers: MonthLedger[];
   onSaveMonthLedger: (updated: MonthLedger) => void;
+  legalBonuses?: LegalBonusesPayload;
 }
 
 export function MonthlyLedgerView({
@@ -33,6 +43,7 @@ export function MonthlyLedgerView({
   defaultQ2NetPay,
   monthLedgers,
   onSaveMonthLedger,
+  legalBonuses,
 }: MonthlyLedgerViewProps) {
   const today = new Date();
   const currentYear = today.getFullYear() >= 2026 ? today.getFullYear() : 2026;
@@ -40,6 +51,10 @@ export function MonthlyLedgerView({
 
   const [selectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonthNum);
+
+  // Modal para agregar bonos de ley a los gastos
+  const [showBonusModal, setShowBonusModal] = useState<boolean>(false);
+  const [targetBonusQuincena, setTargetBonusQuincena] = useState<'q1' | 'q2'>('q1');
 
   // Formulario en línea para Q1
   const [q1Day, setQ1Day] = useState<string>('15');
@@ -221,6 +236,70 @@ export function MonthlyLedgerView({
     onSaveMonthLedger(updated);
   };
 
+  const hasAguinaldoInMonth =
+    activeMonthLedger.q1.items.some((i) => i.desc.toLowerCase().includes('aguinaldo')) ||
+    activeMonthLedger.q2.items.some((i) => i.desc.toLowerCase().includes('aguinaldo'));
+
+  const hasQ25InMonth =
+    activeMonthLedger.q1.items.some(
+      (i) => i.desc.toLowerCase().includes('quincena 25') || i.desc.toLowerCase().includes('q25')
+    ) ||
+    activeMonthLedger.q2.items.some(
+      (i) => i.desc.toLowerCase().includes('quincena 25') || i.desc.toLowerCase().includes('q25')
+    );
+
+  const handleAddLegalBonus = (
+    bonusKey: 'vacation_bonus' | 'vacation_full' | 'aguinaldo' | 'q25',
+    quincena: 'q1' | 'q2'
+  ) => {
+    if (!legalBonuses) return;
+    let desc = '';
+    let amount = 0;
+    const day = quincena === 'q1' ? 15 : 30;
+
+    switch (bonusKey) {
+      case 'vacation_bonus':
+        desc = 'Recargo Vacacional 30% (Ley)';
+        amount = legalBonuses.vacationBonusNet;
+        break;
+      case 'vacation_full':
+        desc = 'Vacación Completa 15 días + 30% (Ley)';
+        amount = legalBonuses.vacationFullNet;
+        break;
+      case 'aguinaldo':
+        desc = 'Aguinaldo Legal';
+        amount = legalBonuses.aguinaldoNet;
+        break;
+      case 'q25':
+        desc = 'Quincena 25 (Decreto 499)';
+        amount = legalBonuses.q25Net;
+        break;
+    }
+
+    if (amount <= 0) return;
+
+    const newItem: LedgerItem = {
+      id: `${quincena}-bonus-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      desc,
+      amount,
+      type: 'income',
+      day,
+      isRecurring: false,
+    };
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      ownerId: currentOwnerId,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: [...activeMonthLedger[quincena].items, newItem],
+      },
+    };
+
+    onSaveMonthLedger(updated);
+    setShowBonusModal(false);
+  };
+
   return (
     <div className="w-100">
       {/* Barra de Pestañas de Meses (Estilo Hojas de Excel) */}
@@ -272,6 +351,21 @@ export function MonthlyLedgerView({
 
         {/* Acciones del Mes */}
         <div className="d-flex align-items-center gap-2">
+          {legalBonuses && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargetBonusQuincena('q1');
+                setShowBonusModal(true);
+              }}
+              className="btn btn-sm btn-outline-dark d-inline-flex align-items-center gap-1.5 py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+              title="Agregar ingreso de Aguinaldo, Quincena 25 o Vacación legal"
+            >
+              <Gift size={13} className="text-emerald" />
+              <span>+ Bono de Ley</span>
+            </button>
+          )}
           <span className="badge-subtle font-monospace d-inline-flex align-items-center gap-1.5 py-1 px-2.5 text-slate-dark" style={{ fontSize: '11px' }}>
             <CheckCircle2 size={12} className="text-emerald" />
             <span>Sincronizado con Supabase</span>
@@ -288,6 +382,65 @@ export function MonthlyLedgerView({
           </button>
         </div>
       </div>
+
+      {/* Sugerencias contextuales de bonos de ley por mes */}
+      {selectedMonth === 12 && !hasAguinaldoInMonth && legalBonuses && (
+        <div className="alert bg-amber-subtle border-amber text-slate-dark py-2.5 px-3 rounded mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <Gift size={16} className="text-amber" />
+            <span className="small">
+              <strong>Diciembre:</strong> Mes de pago de Aguinaldo de Ley (<strong>+{formatUSD(legalBonuses.aguinaldoNet)}</strong> estimado neto).
+            </span>
+          </div>
+          <div className="d-flex align-items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleAddLegalBonus('aguinaldo', 'q1')}
+              className="btn btn-xs btn-dark py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+            >
+              + Agregar a Pago del 15
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddLegalBonus('aguinaldo', 'q2')}
+              className="btn btn-xs btn-outline-dark py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+            >
+              + A Pago del 30
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedMonth === 6 && !hasQ25InMonth && legalBonuses && (
+        <div className="alert bg-blue-subtle border-primary text-slate-dark py-2.5 px-3 rounded mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <Gift size={16} className="text-primary" />
+            <span className="small">
+              <strong>Junio:</strong> Mes de pago de Quincena 25 (<strong>+{formatUSD(legalBonuses.q25Net)}</strong> estimado neto).
+            </span>
+          </div>
+          <div className="d-flex align-items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleAddLegalBonus('q25', 'q1')}
+              className="btn btn-xs btn-dark py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+            >
+              + Agregar a Pago del 15
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddLegalBonus('q25', 'q2')}
+              className="btn btn-xs btn-outline-dark py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+            >
+              + A Pago del 30
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Resumen Mensual Consolidado */}
       <div className="card-soft p-3 mb-4">
@@ -769,6 +922,177 @@ export function MonthlyLedgerView({
           </div>
         </div>
       </div>
+
+      {/* Modal para Seleccionar e Insertar Bonos de Ley */}
+      {showBonusModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(3px)', zIndex: 1060 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBonusModal(false);
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content shadow border-0 rounded-3">
+              <div className="modal-header border-bottom py-3 px-4">
+                <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
+                  <Gift size={16} className="text-emerald" />
+                  <span>Agregar Ingreso por Bonos de Ley — {MONTH_NAMES_ES[selectedMonth - 1]} {selectedYear}</span>
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowBonusModal(false)}
+                />
+              </div>
+
+              <div className="modal-body p-4">
+                <p className="small text-muted mb-3">
+                  Selecciona la quincena de destino y el bono de ley a incorporar. Los montos calculados aplican las deducciones legales vigentes de El Salvador (AFP, ISSS e ISR) según tu salario actual.
+                </p>
+
+                {/* Selector de Quincena Destino */}
+                <div className="d-flex align-items-center gap-2 mb-4 p-2.5 bg-slate-50 border rounded">
+                  <span className="small fw-semibold text-slate-dark ms-1">Asignar a:</span>
+                  <div className="btn-group" role="group">
+                    <button
+                      type="button"
+                      onClick={() => setTargetBonusQuincena('q1')}
+                      className={`btn btn-sm ${
+                        targetBonusQuincena === 'q1' ? 'btn-dark fw-semibold' : 'btn-outline-secondary'
+                      }`}
+                    >
+                      Pago del 15 (1.ª Quincena)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetBonusQuincena('q2')}
+                      className={`btn btn-sm ${
+                        targetBonusQuincena === 'q2' ? 'btn-dark fw-semibold' : 'btn-outline-secondary'
+                      }`}
+                    >
+                      Pago del 30 (2.ª Quincena)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="row g-3">
+                  {/* Tarjeta 1: Recargo Vacacional 30% */}
+                  <div className="col-12 col-md-6">
+                    <div className="card h-100 p-3 border rounded shadow-2xs">
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <span className="badge bg-emerald-subtle text-emerald fw-semibold" style={{ fontSize: '11px' }}>
+                          Vacación (Solo Recargo 30%)
+                        </span>
+                        <span className="fs-5 fw-bold font-monospace text-emerald">
+                          +{formatUSD(legalBonuses?.vacationBonusNet ?? 0)}
+                        </span>
+                      </div>
+                      <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                        Calculado sumando el 30% vacacional al salario quincenal y deduciendo AFP, ISSS y retención de renta marginal. Se suma a tu quincena ordinaria.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddLegalBonus('vacation_bonus', targetBonusQuincena)}
+                        className="btn btn-sm btn-dark mt-auto w-100 fw-semibold d-flex justify-content-center align-items-center gap-1.5"
+                      >
+                        <Plus size={13} />
+                        <span>Insertar a {targetBonusQuincena === 'q1' ? 'Pago del 15' : 'Pago del 30'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta 2: Vacación Completa 15 días + 30% */}
+                  <div className="col-12 col-md-6">
+                    <div className="card h-100 p-3 border rounded shadow-2xs">
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <span className="badge bg-primary-subtle text-primary fw-semibold" style={{ fontSize: '11px' }}>
+                          Vacación Completa (Adelantada)
+                        </span>
+                        <span className="fs-5 fw-bold font-monospace text-primary">
+                          +{formatUSD(legalBonuses?.vacationFullNet ?? 0)}
+                        </span>
+                      </div>
+                      <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                        Pago completo adelantado de 15 días continuos de descanso remunerado más el 30% de ley con deducciones totales aplicadas.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddLegalBonus('vacation_full', targetBonusQuincena)}
+                        className="btn btn-sm btn-dark mt-auto w-100 fw-semibold d-flex justify-content-center align-items-center gap-1.5"
+                      >
+                        <Plus size={13} />
+                        <span>Insertar a {targetBonusQuincena === 'q1' ? 'Pago del 15' : 'Pago del 30'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta 3: Aguinaldo Legal */}
+                  <div className="col-12 col-md-6">
+                    <div className="card h-100 p-3 border rounded shadow-2xs">
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <span className="badge bg-amber-subtle text-amber fw-semibold" style={{ fontSize: '11px' }}>
+                          Aguinaldo de Ley (Diciembre)
+                        </span>
+                        <span className="fs-5 fw-bold font-monospace text-slate-dark">
+                          +{formatUSD(legalBonuses?.aguinaldoNet ?? 0)}
+                        </span>
+                      </div>
+                      <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                        Prestación anual obligatoria calculada según tus años de antigüedad laboral. Exenta de impuesto sobre la renta hasta $1,500.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddLegalBonus('aguinaldo', targetBonusQuincena)}
+                        className="btn btn-sm btn-dark mt-auto w-100 fw-semibold d-flex justify-content-center align-items-center gap-1.5"
+                      >
+                        <Plus size={13} />
+                        <span>Insertar a {targetBonusQuincena === 'q1' ? 'Pago del 15' : 'Pago del 30'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta 4: Quincena 25 */}
+                  <div className="col-12 col-md-6">
+                    <div className="card h-100 p-3 border rounded shadow-2xs">
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <span className="badge bg-secondary-subtle text-secondary fw-semibold" style={{ fontSize: '11px' }}>
+                          Quincena 25 (Decreto 499)
+                        </span>
+                        <span className="fs-5 fw-bold font-monospace text-slate-dark">
+                          +{formatUSD(legalBonuses?.q25Net ?? 0)}
+                        </span>
+                      </div>
+                      <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                        Compensación legal quincenal libre de descuentos (hasta el tope de 2 salarios mínimos del sector comercio).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddLegalBonus('q25', targetBonusQuincena)}
+                        className="btn btn-sm btn-dark mt-auto w-100 fw-semibold d-flex justify-content-center align-items-center gap-1.5"
+                      >
+                        <Plus size={13} />
+                        <span>Insertar a {targetBonusQuincena === 'q1' ? 'Pago del 15' : 'Pago del 30'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-footer border-top py-2.5 px-4">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => setShowBonusModal(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, RotateCcw, Wallet, Target, Check, Clock, BookOpen, ListFilter } from 'lucide-react';
 import { round2 } from '../lib/svLaborLaw.ts';
-import { MonthlyLedgerView } from './MonthlyLedgerView.tsx';
+import { MonthlyLedgerView, type LegalBonusesPayload } from './MonthlyLedgerView.tsx';
 import type { MonthLedger } from '../lib/monthlyLedger.ts';
 
 export type ExpenseCategory =
@@ -120,6 +120,7 @@ interface ExpensesViewProps {
   defaultQ2NetPay?: number;
   monthLedgers?: MonthLedger[];
   onSaveMonthLedger?: (updated: MonthLedger) => void;
+  legalBonuses?: LegalBonusesPayload;
 }
 
 export function ExpensesView({
@@ -161,6 +162,7 @@ export function ExpensesView({
   defaultQ2NetPay,
   monthLedgers = [],
   onSaveMonthLedger = () => {},
+  legalBonuses,
 }: ExpensesViewProps) {
   const [activeSubView, setActiveSubView] = useState<'ledger' | 'catalog'>('ledger');
 
@@ -217,6 +219,7 @@ export function ExpensesView({
           defaultQ2NetPay={resolvedQ2Pay}
           monthLedgers={monthLedgers}
           onSaveMonthLedger={onSaveMonthLedger}
+          legalBonuses={legalBonuses}
         />
       ) : (
         <>
