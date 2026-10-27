@@ -53,6 +53,7 @@ import {
   type ExpenseItem,
   type BonusGoalItem,
 } from './components/ExpensesView.tsx';
+import { type MonthLedger } from './lib/monthlyLedger.ts';
 import { formatUSD, parseUSDCurrency, formatHours } from './lib/formatters.ts';
 import LoginPage from './pages/LoginPage.tsx';
 import AdminPanel from './pages/AdminPanel.tsx';
@@ -143,7 +144,35 @@ const DEFAULT_BONUS_GOALS: BonusGoalItem[] = [
   },
 ];
 
+const DEFAULT_MONTH_LEDGERS: MonthLedger[] = [
+  {
+    id: 'ledger-sv-2026-1',
+    ownerId: 'usr-sv-01',
+    year: 2026,
+    month: 1,
+    q1: {
+      items: [
+        { id: 'item-q1-1', day: 15, desc: 'Ofrenda', amount: 25.0, type: 'expense', isRecurring: true },
+        { id: 'item-q1-2', day: 15, desc: 'Gasolina', amount: 30.0, type: 'expense', isRecurring: true },
+        { id: 'item-q1-3', day: 15, desc: 'Ahorro', amount: 40.0, type: 'expense', isRecurring: true },
+        { id: 'item-q1-4', day: 15, desc: 'Comida', amount: 35.0, type: 'expense', isRecurring: true },
+        { id: 'item-q1-5', day: 15, desc: 'Salida con amigos', amount: 13.88, type: 'expense', isRecurring: false },
+      ],
+    },
+    q2: {
+      items: [
+        { id: 'item-q2-1', day: 30, desc: 'Ofrenda', amount: 25.0, type: 'expense', isRecurring: true },
+        { id: 'item-q2-2', day: 30, desc: 'Gasolina', amount: 30.0, type: 'expense', isRecurring: true },
+        { id: 'item-q2-3', day: 30, desc: 'Ahorro', amount: 40.0, type: 'expense', isRecurring: true },
+        { id: 'item-q2-4', day: 30, desc: 'Internet', amount: 28.0, type: 'expense', isRecurring: true },
+        { id: 'item-q2-5', day: 30, desc: 'Salida familiar', amount: 20.0, type: 'expense', isRecurring: false },
+      ],
+    },
+  },
+];
+
 const STORAGE_KEY = 'salarioygastossv_state_v1';
+const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
 
 
@@ -220,6 +249,45 @@ function AppShell() {
   const [newGoalTitle, setNewGoalTitle] = useState<string>('');
   const [newGoalAmount, setNewGoalAmount] = useState<string>('');
   const [newGoalSource, setNewGoalSource] = useState<BonusGoalItem['source']>('quincena25');
+
+  // Monthly ledgers state (Libreta Quincenal por Meses)
+  const [monthLedgers, setMonthLedgers] = useState<MonthLedger[]>(() => {
+    try {
+      const raw = localStorage.getItem(LEDGERS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_MONTH_LEDGERS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LEDGERS_STORAGE_KEY, JSON.stringify(monthLedgers));
+    } catch {
+      // Ignore quota errors
+    }
+  }, [monthLedgers]);
+
+  const handleSaveMonthLedger = (updated: MonthLedger) => {
+    setMonthLedgers((prev) => {
+      const existingIndex = prev.findIndex(
+        (m) =>
+          m.ownerId === updated.ownerId &&
+          m.year === updated.year &&
+          m.month === updated.month
+      );
+      if (existingIndex >= 0) {
+        const next = [...prev];
+        next[existingIndex] = updated;
+        return next;
+      }
+      return [...prev, updated];
+    });
+  };
 
   useEffect(() => {
     try {
@@ -1237,6 +1305,11 @@ function AppShell() {
                   onDeleteBonusGoal={handleDeleteBonusGoal}
                   formatUSD={formatUSD}
                   formatHours={formatHours}
+                  currentOwnerId={effectiveOwnerUser?.id || 'usr-test-01'}
+                  defaultQ1NetPay={biweeklyPayroll.quincenaDetails?.q1.netPay || biweeklyPayroll.netPay}
+                  defaultQ2NetPay={biweeklyPayroll.quincenaDetails?.q2.netPay || biweeklyPayroll.netPay}
+                  monthLedgers={monthLedgers}
+                  onSaveMonthLedger={handleSaveMonthLedger}
                 />
               }
             />

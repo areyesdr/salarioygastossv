@@ -12,6 +12,7 @@ interface AuthContextValue {
 
 const AUTH_STORAGE_KEY = 'salarioygastossv_auth_v1';
 const DATA_STORAGE_KEY = 'salarioygastossv_state_v1';
+const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
 const DEFAULT_USER: SessionUser = {
   id: 'usr-test-01',
@@ -84,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const id = `usr-test-${Date.now().toString(36)}`;
     try {
       localStorage.removeItem(DATA_STORAGE_KEY);
+      localStorage.removeItem(LEDGERS_STORAGE_KEY);
     } catch {
       // ignore
     }
@@ -115,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const purgeUserDataAndAccount = () => {
     try {
       localStorage.removeItem(DATA_STORAGE_KEY);
+      localStorage.removeItem(LEDGERS_STORAGE_KEY);
       localStorage.removeItem(AUTH_STORAGE_KEY);
     } catch {
       // Ignore storage errors

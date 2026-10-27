@@ -1,0 +1,80 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  computeQuincenaBalance,
+  copyRecurringToMonth,
+  createEmptyMonthLedger,
+  type QuincenaLedger,
+} from './monthlyLedger.ts';
+
+describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
+  it('calculates running balance and ending balance matching user Excel sample exactly', () => {
+    // Caso de uso extraído del Excel del usuario (Pago del 15)
+    const q1Sample: QuincenaLedger = {
+      items: [
+        { id: '1', desc: 'Impresora', amount: 130.0, type: 'expense', day: 17 },
+        { id: '2', desc: 'Luz', amount: 71.11, type: 'expense', day: 15 },
+        { id: '3', desc: 'Internet', amount: 31.0, type: 'expense', day: 15 },
+        { id: '4', desc: 'Tienda', amount: 25.0, type: 'expense', day: 15 },
+        { id: '5', desc: 'Laptop', amount: 20.0, type: 'expense', day: 15 },
+        { id: '6', desc: 'AGY', amount: 20.0, type: 'expense', day: 15 },
+        { id: '7', desc: 'Q25', amount: 458.23, type: 'income', day: 17 },
+        { id: '8', desc: 'Tarjeta', amount: 200.0, type: 'expense', day: 20 },
+        { id: '9', desc: 'Tel Ari', amount: 105.0, type: 'expense', day: 22 },
+      ],
+    };
+
+    const res = computeQuincenaBalance(388.81, q1Sample);
+
+    assert.equal(res.startingBalance, 388.81);
+    assert.equal(res.computedItems[0].runningBalance, 258.81);
+    assert.equal(res.computedItems[1].runningBalance, 187.7);
+    assert.equal(res.computedItems[2].runningBalance, 156.7);
+    assert.equal(res.computedItems[3].runningBalance, 131.7);
+    assert.equal(res.computedItems[4].runningBalance, 111.7);
+    assert.equal(res.computedItems[5].runningBalance, 91.7);
+    assert.equal(res.computedItems[6].runningBalance, 549.93);
+    assert.equal(res.computedItems[7].runningBalance, 349.93);
+    assert.equal(res.computedItems[8].runningBalance, 244.93);
+
+    assert.equal(res.totalExpenses, 602.11);
+    assert.equal(res.totalIncome, 458.23);
+    assert.equal(res.endingBalance, 244.93);
+  });
+
+  it('allows custom starting balance overriding default net pay', () => {
+    const q1: QuincenaLedger = {
+      customStartingBalance: 500.0,
+      items: [{ id: '1', desc: 'Comida', amount: 100.0, type: 'expense', day: 15 }],
+    };
+
+    const res = computeQuincenaBalance(400.0, q1);
+    assert.equal(res.startingBalance, 500.0);
+    assert.equal(res.isCustomBalance, true);
+    assert.equal(res.endingBalance, 400.0);
+  });
+
+  it('copies recurring entries from one month to another without duplicates', () => {
+    const source = createEmptyMonthLedger('usr-test-01', 2026, 1);
+    source.q1.items = [
+      { id: 's1', desc: 'Internet', amount: 31.0, type: 'expense', day: 15, isRecurring: true },
+      { id: 's2', desc: 'Impresora (único)', amount: 130.0, type: 'expense', day: 17, isRecurring: false },
+    ];
+    source.q2.items = [
+      { id: 's3', desc: 'Spotify', amount: 12.0, type: 'expense', day: 30, isRecurring: true },
+    ];
+
+    const target = createEmptyMonthLedger('usr-test-01', 2026, 2);
+    const updated = copyRecurringToMonth(source, target);
+
+    assert.equal(updated.q1.items.length, 1);
+    assert.equal(updated.q1.items[0].desc, 'Internet');
+    assert.equal(updated.q2.items.length, 1);
+    assert.equal(updated.q2.items[0].desc, 'Spotify');
+
+    // Al copiar de nuevo, no debe duplicar
+    const copiedAgain = copyRecurringToMonth(source, updated);
+    assert.equal(copiedAgain.q1.items.length, 1);
+    assert.equal(copiedAgain.q2.items.length, 1);
+  });
+});

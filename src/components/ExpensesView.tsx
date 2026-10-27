@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, RotateCcw, Wallet, Target, Check, Clock } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Wallet, Target, Check, Clock, BookOpen, ListFilter } from 'lucide-react';
 import { round2 } from '../lib/svLaborLaw.ts';
+import { MonthlyLedgerView } from './MonthlyLedgerView.tsx';
+import type { MonthLedger } from '../lib/monthlyLedger.ts';
 
 export type ExpenseCategory =
   | 'Vivienda'
@@ -113,6 +115,11 @@ interface ExpensesViewProps {
   onDeleteBonusGoal: (id: string) => void;
   formatUSD: (val: number) => string;
   formatHours: (val: number) => string;
+  currentOwnerId?: string;
+  defaultQ1NetPay?: number;
+  defaultQ2NetPay?: number;
+  monthLedgers?: MonthLedger[];
+  onSaveMonthLedger?: (updated: MonthLedger) => void;
 }
 
 export function ExpensesView({
@@ -149,7 +156,17 @@ export function ExpensesView({
   onDeleteBonusGoal,
   formatUSD,
   formatHours,
+  currentOwnerId = 'usr-sv-01',
+  defaultQ1NetPay,
+  defaultQ2NetPay,
+  monthLedgers = [],
+  onSaveMonthLedger = () => {},
 }: ExpensesViewProps) {
+  const [activeSubView, setActiveSubView] = useState<'ledger' | 'catalog'>('ledger');
+
+  const resolvedQ1Pay = defaultQ1NetPay ?? round2(monthlyNetPay / 2);
+  const resolvedQ2Pay = defaultQ2NetPay ?? round2(monthlyNetPay - resolvedQ1Pay);
+
   return (
     <motion.div
       key="tab-expenses"
@@ -159,7 +176,51 @@ export function ExpensesView({
       transition={{ duration: 0.2 }}
       className="container-fluid px-0"
     >
-      {/* 4 Tarjetas de Balance Superior */}
+      {/* Switcher de Subvista: Libreta Quincenal (Excel) vs Gastos Fijos & Horas */}
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 bg-white p-3 rounded border">
+        <div>
+          <h5 className="fw-bold text-slate-dark mb-0">Control de Gastos y Presupuesto Quincenal</h5>
+          <p className="text-muted small mb-0" style={{ fontSize: '13px' }}>
+            {activeSubView === 'ledger'
+              ? 'Libreta mensual por quincenas (Pago del 15 y 30) con cálculo de saldo y sobrante en tiempo real.'
+              : 'Catálogo de compromisos fijos/recurrentes, costo en horas laborales y metas de bonos.'}
+          </p>
+        </div>
+        <div className="btn-group p-1 bg-light border rounded" role="group">
+          <button
+            type="button"
+            className={`btn btn-sm d-flex align-items-center gap-2 ${
+              activeSubView === 'ledger' ? 'btn-primary shadow-xs' : 'btn-light text-slate-dark border-0'
+            }`}
+            onClick={() => setActiveSubView('ledger')}
+          >
+            <BookOpen size={15} />
+            <span>Libreta Quincenal (Por Meses)</span>
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm d-flex align-items-center gap-2 ${
+              activeSubView === 'catalog' ? 'btn-primary shadow-xs' : 'btn-light text-slate-dark border-0'
+            }`}
+            onClick={() => setActiveSubView('catalog')}
+          >
+            <ListFilter size={15} />
+            <span>Gastos Fijos & Horas</span>
+          </button>
+        </div>
+      </div>
+
+      {activeSubView === 'ledger' ? (
+        <MonthlyLedgerView
+          currentOwnerId={currentOwnerId}
+          defaultQ1NetPay={resolvedQ1Pay}
+          defaultQ2NetPay={resolvedQ2Pay}
+          monthLedgers={monthLedgers}
+          onSaveMonthLedger={onSaveMonthLedger}
+        />
+      ) : (
+        <>
+          {/* 4 Tarjetas de Balance Superior */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-sm-6 col-lg-3">
           <div className="card-soft p-3 h-100 d-flex flex-column justify-content-between">
@@ -593,6 +654,9 @@ export function ExpensesView({
           </div>
         </div>
       </div>
+        </>
+      )}
     </motion.div>
   );
 }
+
