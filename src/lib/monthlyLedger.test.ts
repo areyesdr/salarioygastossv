@@ -4,6 +4,7 @@ import {
   computeQuincenaBalance,
   copyRecurringToMonth,
   createEmptyMonthLedger,
+  groupLedgerExpenses,
   type QuincenaLedger,
 } from './monthlyLedger.ts';
 
@@ -76,5 +77,42 @@ describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
     const copiedAgain = copyRecurringToMonth(source, updated);
     assert.equal(copiedAgain.q1.items.length, 1);
     assert.equal(copiedAgain.q2.items.length, 1);
+  });
+
+  it('groups expenses with the same description and sums amounts across quincenas', () => {
+    const month = createEmptyMonthLedger('usr-test-01', 2026, 1);
+    month.q1.items = [
+      { id: '1', desc: 'Tarjeta', amount: 25.0, type: 'expense', day: 15, isRecurring: true },
+      { id: '2', desc: 'Super', amount: 60.0, type: 'expense', day: 15 },
+      { id: '3', desc: 'Sueldo', amount: 500.0, type: 'income', day: 15 }, // no debe contarse en gastos
+    ];
+    month.q2.items = [
+      { id: '4', desc: 'tarjeta', amount: 50.0, type: 'expense', day: 30, isRecurring: true }, // mismo texto con diferente caja
+      { id: '5', desc: 'Super', amount: 60.0, type: 'expense', day: 30 },
+      { id: '6', desc: 'Internet', amount: 35.0, type: 'expense', day: 30, checked: false }, // desmarcado
+    ];
+
+    const res = groupLedgerExpenses(month);
+
+    // Debe tener 2 grupos: Super ($120) y Tarjeta ($75), Internet excluido por estar desmarcado
+    assert.equal(res.groups.length, 2);
+
+    const superGroup = res.groups.find((g) => g.desc.toLowerCase() === 'super')!;
+    assert.ok(superGroup);
+    assert.equal(superGroup.totalAmount, 120.0);
+    assert.equal(superGroup.count, 2);
+    assert.equal(superGroup.q1Amount, 60.0);
+    assert.equal(superGroup.q2Amount, 60.0);
+
+    const tarjetaGroup = res.groups.find((g) => g.desc.toLowerCase() === 'tarjeta')!;
+    assert.ok(tarjetaGroup);
+    assert.equal(tarjetaGroup.totalAmount, 75.0);
+    assert.equal(tarjetaGroup.count, 2);
+    assert.equal(tarjetaGroup.q1Amount, 25.0);
+    assert.equal(tarjetaGroup.q2Amount, 50.0);
+    assert.equal(tarjetaGroup.isRecurring, true);
+
+    assert.equal(res.totalGroupedAmount, 195.0);
+    assert.equal(res.totalGroupedCount, 4);
   });
 });

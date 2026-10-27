@@ -9,6 +9,7 @@ export interface LedgerItem {
   type: LedgerEntryType;
   day: number;
   isRecurring?: boolean;
+  checked?: boolean;
 }
 
 export interface QuincenaLedger {
@@ -158,5 +159,76 @@ export function copyRecurringToMonth(
       ...targetMonth.q2,
       items: newQ2Items,
     },
+  };
+}
+
+export interface GroupedExpenseItem {
+  key: string;
+  desc: string;
+  totalAmount: number;
+  count: number;
+  q1Amount: number;
+  q2Amount: number;
+  isRecurring: boolean;
+  itemIds: string[];
+}
+
+export interface GroupedExpensesSummary {
+  groups: GroupedExpenseItem[];
+  totalGroupedAmount: number;
+  totalGroupedCount: number;
+}
+
+/**
+ * Agrupa los gastos de la 1.ª y 2.ª quincena que tengan el mismo texto de descripción.
+ * Solo incluye los gastos donde `checked !== false`.
+ */
+export function groupLedgerExpenses(monthLedger: MonthLedger): GroupedExpensesSummary {
+  const map = new Map<string, GroupedExpenseItem>();
+
+  const processItems = (items: LedgerItem[], quincena: 'q1' | 'q2') => {
+    for (const item of items) {
+      if (item.type !== 'expense') continue;
+      if (item.checked === false) continue; // Si está desmarcado, se excluye
+
+      const normalized = item.desc.trim().toLowerCase();
+      if (!normalized) continue;
+
+      const amt = round2(item.amount);
+      const existing = map.get(normalized);
+
+      if (existing) {
+        existing.totalAmount = round2(existing.totalAmount + amt);
+        existing.count += 1;
+        if (quincena === 'q1') existing.q1Amount = round2(existing.q1Amount + amt);
+        if (quincena === 'q2') existing.q2Amount = round2(existing.q2Amount + amt);
+        if (item.isRecurring) existing.isRecurring = true;
+        existing.itemIds.push(item.id);
+      } else {
+        map.set(normalized, {
+          key: normalized,
+          desc: item.desc.trim(),
+          totalAmount: amt,
+          count: 1,
+          q1Amount: quincena === 'q1' ? amt : 0,
+          q2Amount: quincena === 'q2' ? amt : 0,
+          isRecurring: Boolean(item.isRecurring),
+          itemIds: [item.id],
+        });
+      }
+    }
+  };
+
+  processItems(monthLedger.q1.items, 'q1');
+  processItems(monthLedger.q2.items, 'q2');
+
+  const groups = Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+  const totalGroupedAmount = round2(groups.reduce((acc, g) => acc + g.totalAmount, 0));
+  const totalGroupedCount = groups.reduce((acc, g) => acc + g.count, 0);
+
+  return {
+    groups,
+    totalGroupedAmount,
+    totalGroupedCount,
   };
 }

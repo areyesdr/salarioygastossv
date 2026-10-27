@@ -11,6 +11,7 @@ import {
   Pencil,
   Check,
   X,
+  Layers,
 } from 'lucide-react';
 import {
   type MonthLedger,
@@ -19,6 +20,7 @@ import {
   computeQuincenaBalance,
   copyRecurringToMonth,
   createEmptyMonthLedger,
+  groupLedgerExpenses,
   MONTH_NAMES_ES,
 } from '../lib/monthlyLedger.ts';
 import { formatUSD } from '../lib/formatters.ts';
@@ -89,6 +91,7 @@ export function MonthlyLedgerView({
     day: number;
     type: LedgerEntryType;
     isRecurring: boolean;
+    checked: boolean;
   } | null>(null);
 
   // Localizar o inicializar el ledger del mes seleccionado
@@ -126,6 +129,50 @@ export function MonthlyLedgerView({
   const totalSobranteMonthPct =
     totalAvailableMonth > 0 ? Math.round((netRemaining / totalAvailableMonth) * 100) : 0;
 
+  // Resumen de gastos agrupados por descripción unificada
+  const groupedSummary = groupLedgerExpenses(activeMonthLedger);
+
+  // Handlers para activar o desactivar el check de un gasto para la tabla de agrupación
+  const handleToggleItemCheck = (itemId: string, quincena: 'q1' | 'q2') => {
+    const updatedItems = activeMonthLedger[quincena].items.map((i) => {
+      if (i.id !== itemId) return i;
+      return {
+        ...i,
+        checked: i.checked === false ? true : false,
+      };
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
+  const handleToggleAllChecks = (quincena: 'q1' | 'q2', selectAll: boolean) => {
+    const updatedItems = activeMonthLedger[quincena].items.map((i) => {
+      if (i.type !== 'expense') return i;
+      return {
+        ...i,
+        checked: selectAll,
+      };
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
   // Handlers para agregar partidas
   const handleAddQ1Item = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +186,7 @@ export function MonthlyLedgerView({
       type: q1Type,
       day: parseInt(q1Day, 10) || 15,
       isRecurring: q1Recurring,
+      checked: true,
     };
 
     const updated: MonthLedger = {
@@ -166,6 +214,7 @@ export function MonthlyLedgerView({
       type: q2Type,
       day: parseInt(q2Day, 10) || 30,
       isRecurring: q2Recurring,
+      checked: true,
     };
 
     const updated: MonthLedger = {
@@ -212,6 +261,7 @@ export function MonthlyLedgerView({
       day: item.day,
       type: item.type,
       isRecurring: Boolean(item.isRecurring),
+      checked: item.checked !== false,
     });
   };
 
@@ -230,6 +280,7 @@ export function MonthlyLedgerView({
         day: editingEntry.day,
         type: editingEntry.type,
         isRecurring: editingEntry.isRecurring,
+        checked: editingEntry.checked,
       };
     });
 
@@ -611,16 +662,31 @@ export function MonthlyLedgerView({
               <table className="table table-minimal align-middle mb-0 font-monospace" style={{ fontSize: '12px' }}>
                 <thead className="bg-light small">
                   <tr>
-                    <th style={{ width: '25%' }}>Saldo</th>
-                    <th style={{ width: '25%' }}>Monto</th>
+                    <th style={{ width: '5%' }} className="text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          q1Balance.computedItems.some((i) => i.type === 'expense') &&
+                          q1Balance.computedItems
+                            .filter((i) => i.type === 'expense')
+                            .every((i) => i.checked !== false)
+                        }
+                        onChange={(e) => handleToggleAllChecks('q1', e.target.checked)}
+                        className="form-check-input mt-0"
+                        title="Marcar o desmarcar todos los gastos de la 1.ª quincena para suma agrupada"
+                      />
+                    </th>
+                    <th style={{ width: '23%' }}>Saldo</th>
+                    <th style={{ width: '23%' }}>Monto</th>
                     <th style={{ width: '35%' }}>Descripción</th>
-                    <th className="text-center" style={{ width: '15%' }}>Día</th>
-                    <th></th>
+                    <th className="text-center" style={{ width: '10%' }}>Día</th>
+                    <th style={{ width: '4%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Fila Base: Saldo Inicial */}
                   <tr className="bg-slate-50 text-muted">
+                    <td className="text-center text-muted">—</td>
                     <td className="fw-bold text-slate-dark">{formatUSD(q1Balance.startingBalance)}</td>
                     <td className="text-muted">—</td>
                     <td className="font-sans small">Saldo inicial (Salario Neto)</td>
@@ -636,6 +702,21 @@ export function MonthlyLedgerView({
                     if (isEditing) {
                       return (
                         <tr key={item.id}>
+                          <td className="text-center align-middle">
+                            {editingEntry.type === 'expense' ? (
+                              <input
+                                type="checkbox"
+                                checked={editingEntry.checked}
+                                onChange={(e) =>
+                                  setEditingEntry({ ...editingEntry, checked: e.target.checked })
+                                }
+                                className="form-check-input mt-0"
+                                title="Incluir en suma agrupada"
+                              />
+                            ) : (
+                              <span className="text-muted small">—</span>
+                            )}
+                          </td>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">
@@ -731,6 +812,23 @@ export function MonthlyLedgerView({
 
                     return (
                       <tr key={item.id}>
+                        <td className="text-center align-middle">
+                          {!isIncome ? (
+                            <input
+                              type="checkbox"
+                              checked={item.checked !== false}
+                              onChange={() => handleToggleItemCheck(item.id, 'q1')}
+                              className="form-check-input mt-0"
+                              title={
+                                item.checked !== false
+                                  ? 'Incluido en la suma agrupada (clic para excluir)'
+                                  : 'Excluido de la suma agrupada (clic para incluir)'
+                              }
+                            />
+                          ) : (
+                            <span className="text-muted small">—</span>
+                          )}
+                        </td>
                         <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
                         <td className={`fw-semibold ${isIncome ? 'text-emerald' : 'text-slate-dark'}`}>
                           {isIncome ? `+${formatUSD(item.amount)}` : `-${formatUSD(item.amount)}`}
@@ -768,7 +866,7 @@ export function MonthlyLedgerView({
 
                   {q1Balance.computedItems.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center text-muted py-3 font-sans small">
+                      <td colSpan={6} className="text-center text-muted py-3 font-sans small">
                         Sin gastos registrados en la 1.ª quincena. Agrega uno abajo.
                       </td>
                     </tr>
@@ -937,16 +1035,31 @@ export function MonthlyLedgerView({
               <table className="table table-minimal align-middle mb-0 font-monospace" style={{ fontSize: '12px' }}>
                 <thead className="bg-light small">
                   <tr>
-                    <th style={{ width: '25%' }}>Saldo</th>
-                    <th style={{ width: '25%' }}>Monto</th>
+                    <th style={{ width: '5%' }} className="text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          q2Balance.computedItems.some((i) => i.type === 'expense') &&
+                          q2Balance.computedItems
+                            .filter((i) => i.type === 'expense')
+                            .every((i) => i.checked !== false)
+                        }
+                        onChange={(e) => handleToggleAllChecks('q2', e.target.checked)}
+                        className="form-check-input mt-0"
+                        title="Marcar o desmarcar todos los gastos de la 2.ª quincena para suma agrupada"
+                      />
+                    </th>
+                    <th style={{ width: '23%' }}>Saldo</th>
+                    <th style={{ width: '23%' }}>Monto</th>
                     <th style={{ width: '35%' }}>Descripción</th>
-                    <th className="text-center" style={{ width: '15%' }}>Día</th>
-                    <th></th>
+                    <th className="text-center" style={{ width: '10%' }}>Día</th>
+                    <th style={{ width: '4%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Fila Base: Saldo Inicial */}
                   <tr className="bg-slate-50 text-muted">
+                    <td className="text-center text-muted">—</td>
                     <td className="fw-bold text-slate-dark">{formatUSD(q2Balance.startingBalance)}</td>
                     <td className="text-muted">—</td>
                     <td className="font-sans small">Saldo inicial (Salario Neto)</td>
@@ -962,6 +1075,21 @@ export function MonthlyLedgerView({
                     if (isEditing) {
                       return (
                         <tr key={item.id}>
+                          <td className="text-center align-middle">
+                            {editingEntry.type === 'expense' ? (
+                              <input
+                                type="checkbox"
+                                checked={editingEntry.checked}
+                                onChange={(e) =>
+                                  setEditingEntry({ ...editingEntry, checked: e.target.checked })
+                                }
+                                className="form-check-input mt-0"
+                                title="Incluir en suma agrupada"
+                              />
+                            ) : (
+                              <span className="text-muted small">—</span>
+                            )}
+                          </td>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">
@@ -1057,6 +1185,23 @@ export function MonthlyLedgerView({
 
                     return (
                       <tr key={item.id}>
+                        <td className="text-center align-middle">
+                          {!isIncome ? (
+                            <input
+                              type="checkbox"
+                              checked={item.checked !== false}
+                              onChange={() => handleToggleItemCheck(item.id, 'q2')}
+                              className="form-check-input mt-0"
+                              title={
+                                item.checked !== false
+                                  ? 'Incluido en la suma agrupada (clic para excluir)'
+                                  : 'Excluido de la suma agrupada (clic para incluir)'
+                              }
+                            />
+                          ) : (
+                            <span className="text-muted small">—</span>
+                          )}
+                        </td>
                         <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
                         <td className={`fw-semibold ${isIncome ? 'text-emerald' : 'text-slate-dark'}`}>
                           {isIncome ? `+${formatUSD(item.amount)}` : `-${formatUSD(item.amount)}`}
@@ -1094,7 +1239,7 @@ export function MonthlyLedgerView({
 
                   {q2Balance.computedItems.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center text-muted py-3 font-sans small">
+                      <td colSpan={6} className="text-center text-muted py-3 font-sans small">
                         Sin gastos registrados en la 2.ª quincena. Agrega uno abajo.
                       </td>
                     </tr>
@@ -1193,6 +1338,113 @@ export function MonthlyLedgerView({
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Tabla de Suma Total de Gastos Agrupados por Concepto */}
+      <div className="card-soft mt-4 overflow-hidden border">
+        <div className="p-3 border-bottom bg-slate-50 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <div className="d-flex align-items-center gap-2 mb-0.5">
+              <Layers size={17} className="text-primary" />
+              <h6 className="fw-bold text-slate-dark mb-0">
+                Suma Total de Gastos Agrupados — {MONTH_NAMES_ES[selectedMonth - 1]} {selectedYear}
+              </h6>
+              <span className="badge bg-light text-slate-dark border font-monospace" style={{ fontSize: '11px' }}>
+                {groupedSummary.groups.length} {groupedSummary.groups.length === 1 ? 'concepto' : 'conceptos'} · {groupedSummary.totalGroupedCount} {groupedSummary.totalGroupedCount === 1 ? 'partida' : 'partidas'}
+              </span>
+            </div>
+            <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+              Los gastos con la misma descripción en el pago del 15 y del 30 se unifican automáticamente. Activa o desactiva el check en cada quincena para incluirlo o excluirlo del total.
+            </span>
+          </div>
+
+          <div className="text-md-end">
+            <span className="text-slate-muted d-block font-sans" style={{ fontSize: '11px' }}>
+              Total Agrupado Seleccionado:
+            </span>
+            <strong className="text-danger fs-5 font-monospace">
+              -{formatUSD(groupedSummary.totalGroupedAmount)}
+            </strong>
+          </div>
+        </div>
+
+        <div className="table-responsive">
+          <table className="table table-minimal align-middle mb-0 font-monospace" style={{ fontSize: '12px' }}>
+            <thead className="bg-light small">
+              <tr>
+                <th style={{ width: '35%' }}>Concepto / Gasto</th>
+                <th style={{ width: '15%' }} className="text-end">Pago del 15 (1.ª Q)</th>
+                <th style={{ width: '15%' }} className="text-end">Pago del 30 (2.ª Q)</th>
+                <th style={{ width: '15%' }} className="text-center">Frecuencia</th>
+                <th style={{ width: '20%' }} className="text-end">Suma Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupedSummary.groups.map((group) => {
+                const pctOfExpenses =
+                  totalExpenses > 0
+                    ? Math.round((group.totalAmount / totalExpenses) * 100)
+                    : 0;
+                return (
+                  <tr key={group.key}>
+                    <td className="font-sans">
+                      <div className="d-flex align-items-center gap-1.5">
+                        <span className="fw-semibold text-slate-dark">{group.desc}</span>
+                        {group.isRecurring && (
+                          <span className="badge-subtle ms-1" style={{ fontSize: '9px' }}>
+                            Fijo
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="text-end text-muted">
+                      {group.q1Amount > 0 ? formatUSD(group.q1Amount) : '—'}
+                    </td>
+                    <td className="text-end text-muted">
+                      {group.q2Amount > 0 ? formatUSD(group.q2Amount) : '—'}
+                    </td>
+                    <td className="text-center small text-muted font-sans">
+                      {group.count > 1 ? `${group.count} quincenas` : '1 quincena'}
+                    </td>
+                    <td className="text-end">
+                      <span className="fw-bold text-slate-dark">{formatUSD(group.totalAmount)}</span>
+                      <span className="text-muted small font-sans d-block" style={{ fontSize: '10px' }}>
+                        {pctOfExpenses}% del total de gastos
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {groupedSummary.groups.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center text-muted py-3 font-sans small">
+                    No hay gastos seleccionados para agrupar en este mes. Marca el check de cualquier gasto en las quincenas superiores para sumarlo aquí.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+            {groupedSummary.groups.length > 0 && (
+              <tfoot className="border-top bg-slate-50 font-sans">
+                <tr className="fw-bold">
+                  <td>Total de Gastos Agrupados</td>
+                  <td className="text-end font-monospace text-muted">
+                    {formatUSD(groupedSummary.groups.reduce((acc, g) => acc + g.q1Amount, 0))}
+                  </td>
+                  <td className="text-end font-monospace text-muted">
+                    {formatUSD(groupedSummary.groups.reduce((acc, g) => acc + g.q2Amount, 0))}
+                  </td>
+                  <td className="text-center text-muted small">
+                    {groupedSummary.totalGroupedCount} partidas
+                  </td>
+                  <td className="text-end font-monospace text-danger fs-6">
+                    -{formatUSD(groupedSummary.totalGroupedAmount)}
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
         </div>
       </div>
 
