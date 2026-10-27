@@ -137,7 +137,9 @@ export default function LoginPage() {
               </button>
               <button
                 type="button"
-                onClick={logout}
+                onClick={async () => {
+                  await logout();
+                }}
                 className="btn btn-sm btn-outline-danger py-1 px-2.5"
                 style={{ fontSize: '11px' }}
               >

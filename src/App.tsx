@@ -898,9 +898,10 @@ function AppShell() {
 
                     <button
                       type="button"
-                      onClick={() => {
-                        logout();
+                      onClick={async () => {
                         setShowProfileMenu(false);
+                        await logout();
+                        navigate('/');
                       }}
                       className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-2"
                     >
@@ -1485,7 +1486,7 @@ function AppShell() {
 
           <Route
             element={
-              <ProtectedRoute isAllowed={canAccessPrivateRoute(user)} redirectTo="/401" />
+              <ProtectedRoute isAllowed={canAccessPrivateRoute(user)} redirectTo="/login" />
             }
           >
             <Route

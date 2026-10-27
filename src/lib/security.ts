@@ -11,6 +11,7 @@ export interface SessionUser {
   loggedIn: boolean;
   role: UserRole;
   acceptedTermsAt: string;
+  lastActiveAt?: number;
 }
 
 export interface OwnedResource {

@@ -18,14 +18,8 @@ const AUTH_STORAGE_KEY = 'salarioygastossv_auth_v1';
 const DATA_STORAGE_KEY = 'salarioygastossv_state_v1';
 const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
-const DEFAULT_USER: SessionUser = {
-  id: 'usr-test-01',
-  name: 'Usuario Pruebas',
-  email: 'test@salariosv.com',
-  loggedIn: true,
-  role: 'user',
-  acceptedTermsAt: '2026-10-26T18:00:00.000Z',
-};
+// Límite de inactividad de sesión: 1 hora (3600 segundos)
+const SESSION_INACTIVITY_LIMIT_MS = 60 * 60 * 1000;
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -33,10 +27,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(() => {
     try {
       const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (!raw) return DEFAULT_USER;
-      return JSON.parse(raw);
+      if (!raw) return null;
+      const parsed: SessionUser = JSON.parse(raw);
+      if (!parsed || !parsed.loggedIn) return null;
+
+      // Verificar si la sesión guardada expiró por inactividad
+      if (parsed.lastActiveAt && Date.now() - parsed.lastActiveAt > SESSION_INACTIVITY_LIMIT_MS) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        return null;
+      }
+
+      return {
+        ...parsed,
+        lastActiveAt: Date.now(),
+      };
     } catch {
-      return DEFAULT_USER;
+      return null;
     }
   });
 
@@ -55,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loggedIn: true,
       role,
       acceptedTermsAt: authUser.created_at || new Date().toISOString(),
+      lastActiveAt: Date.now(),
     });
   }, []);
 
@@ -65,6 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         syncSupabaseUser(session.user);
+      } else {
+        // Si Supabase no tiene sesión activa, asegurarse de que no quede sesión residual
+        setUser((prev) => (prev?.id.startsWith('usr-') ? prev : null));
       }
     });
 
@@ -74,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         syncSupabaseUser(session.user);
       } else if (event === 'SIGNED_OUT') {
+        try {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+        } catch {
+          // ignore
+        }
         setUser(null);
       }
     });
@@ -83,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [syncSupabaseUser]);
 
+  // Persistir cambios de usuario en localStorage
   useEffect(() => {
     try {
       if (user) {
@@ -93,6 +109,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore storage errors
     }
+  }, [user]);
+
+  // Detector de actividad y expiración por inactividad
+  useEffect(() => {
+    if (!user) return;
+
+    const recordActivity = () => {
+      setUser((prev) => {
+        if (!prev) return null;
+        // Throttle: no re-renderizar si hubo actividad hace menos de 30 segundos
+        if (prev.lastActiveAt && Date.now() - prev.lastActiveAt < 30_000) {
+          return prev;
+        }
+        return {
+          ...prev,
+          lastActiveAt: Date.now(),
+        };
+      });
+    };
+
+    // Revisa periódicamente si se excedió el tiempo límite
+    const interval = setInterval(() => {
+      setUser((current) => {
+        if (!current?.lastActiveAt) return current;
+        if (Date.now() - current.lastActiveAt > SESSION_INACTIVITY_LIMIT_MS) {
+          try {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            if (isSupabaseConfigured) {
+              supabase.auth.signOut().catch(() => {});
+            }
+          } catch {
+            // ignore
+          }
+          return null;
+        }
+        return current;
+      });
+    }, 30_000);
+
+    window.addEventListener('click', recordActivity, { passive: true });
+    window.addEventListener('keydown', recordActivity, { passive: true });
+    window.addEventListener('scroll', recordActivity, { passive: true });
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', recordActivity);
+      window.removeEventListener('keydown', recordActivity);
+      window.removeEventListener('scroll', recordActivity);
+    };
   }, [user]);
 
   const loginWithCredentials = async (
@@ -182,6 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loggedIn: true,
       role,
       acceptedTermsAt: new Date().toISOString(),
+      lastActiveAt: Date.now(),
     });
   };
 
@@ -200,16 +266,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loggedIn: true,
       role: 'user',
       acceptedTermsAt: new Date().toISOString(),
+      lastActiveAt: Date.now(),
     });
   };
 
   const logout = async () => {
-    if (isSupabaseConfigured) {
-      try {
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      if (isSupabaseConfigured) {
         await supabase.auth.signOut();
-      } catch {
-        // ignore
       }
+    } catch {
+      // ignore
     }
     setUser(null);
   };
@@ -240,6 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         name: trimmedName || prev.name,
         email: trimmedEmail || prev.email,
+        lastActiveAt: Date.now(),
       };
     });
   };
