@@ -26,6 +26,8 @@ import {
   Monitor,
   Gift,
   TrendingUp,
+  Trash2,
+  Pencil,
 } from 'lucide-react';
 import {
   calcPayroll,
@@ -68,6 +70,8 @@ import {
   addSalaryRecordToSupabase,
   fetchUserProfileFromSupabase,
   updateProfileHireDateInSupabase,
+  updateSalaryRecordInSupabase,
+  deleteSalaryRecordFromSupabase,
   isSupabaseConfigured,
   type DbSalaryHistory,
 } from './lib/supabase.ts';
@@ -226,6 +230,7 @@ function AppShell() {
   );
   const [salarySaveFeedback, setSalarySaveFeedback] = useState<string>('');
   const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile menu on outside click
@@ -406,6 +411,44 @@ function AppShell() {
     });
   }, [user?.id]);
 
+  const handleStartEditSalaryRecord = (rec: DbSalaryHistory) => {
+    setEditingRecordId(rec.id || null);
+    setNewSalaryAmount(String(rec.gross_salary));
+    setNewSalaryEffectiveDate(rec.effective_date);
+    setNewSalaryReason(rec.reason || 'Aumento salarial');
+    setIsNewJob(Boolean(rec.hire_date || rec.company_name));
+    setNewJobCompany(rec.company_name || '');
+    setNewJobHireDate(rec.hire_date || rec.effective_date);
+    setSalarySaveFeedback('');
+  };
+
+  const handleCancelEditSalaryRecord = () => {
+    setEditingRecordId(null);
+    setNewSalaryAmount(String(monthlySalary));
+    setNewSalaryEffectiveDate(new Date().toISOString().slice(0, 10));
+    setNewSalaryReason('Aumento salarial');
+    setIsNewJob(false);
+    setNewJobCompany('');
+    setSalarySaveFeedback('');
+  };
+
+  const handleDeleteSalaryRecord = async (recId?: string) => {
+    if (!user?.id || !recId) return;
+
+    const success = await deleteSalaryRecordFromSupabase(user.id, recId);
+    if (success) {
+      setSalarySaveFeedback('Registro eliminado.');
+      setTimeout(() => setSalarySaveFeedback(''), 3000);
+      const updated = await fetchSalaryHistoryFromSupabase(user.id);
+      setSalaryHistoryList(updated);
+      if (editingRecordId === recId) {
+        handleCancelEditSalaryRecord();
+      }
+    } else {
+      setSalarySaveFeedback('Error al eliminar el registro.');
+    }
+  };
+
   const handleSaveSalaryRecord = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
@@ -417,16 +460,23 @@ function AppShell() {
     setSalarySaveFeedback('');
     try {
       const reasonText = isNewJob
-        ? `Nuevo empleo: ${newSalaryReason.trim() || 'Contratación'}`
+        ? (newSalaryReason.trim() ? newSalaryReason.trim() : 'Contratación')
         : (newSalaryReason.trim() || 'Aumento salarial');
 
-      const success = await addSalaryRecordToSupabase(user.id, {
+      const payload = {
         gross_salary: amt,
         effective_date: newSalaryEffectiveDate,
         reason: reasonText,
         company_name: isNewJob && newJobCompany.trim() ? newJobCompany.trim() : null,
         hire_date: isNewJob ? newJobHireDate : null,
-      });
+      };
+
+      let success: boolean;
+      if (editingRecordId) {
+        success = await updateSalaryRecordInSupabase(user.id, editingRecordId, payload);
+      } else {
+        success = await addSalaryRecordToSupabase(user.id, payload);
+      }
 
       if (success) {
         setMonthlySalary(amt);
@@ -434,12 +484,13 @@ function AppShell() {
         if (isNewJob && newJobHireDate) {
           handleHireDateChange(newJobHireDate);
         }
-        setSalarySaveFeedback('Guardado correctamente en Supabase.');
+        setSalarySaveFeedback(
+          editingRecordId ? 'Registro actualizado con éxito.' : 'Guardado correctamente en Supabase.'
+        );
         setTimeout(() => setSalarySaveFeedback(''), 3500);
         const updated = await fetchSalaryHistoryFromSupabase(user.id);
         setSalaryHistoryList(updated);
-        setIsNewJob(false);
-        setNewJobCompany('');
+        handleCancelEditSalaryRecord();
       } else {
         setSalarySaveFeedback('Error al guardar en Supabase.');
       }
@@ -1558,9 +1609,16 @@ function AppShell() {
 
                 {/* Formulario para registrar aumento */}
                 <div className="p-3.5 rounded bg-slate-50 border border-slate-200 mb-4">
-                  <h6 className="fw-semibold text-slate-dark mb-2" style={{ fontSize: '13px' }}>
-                    Registrar Nuevo Aumento o Ajuste
-                  </h6>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+                      {editingRecordId ? 'Editando Registro Salarial' : 'Registrar Nuevo Aumento o Ajuste'}
+                    </h6>
+                    {editingRecordId && (
+                      <span className="badge bg-warning-subtle text-warning-emphasis fw-medium" style={{ fontSize: '11px' }}>
+                        Modo Edición
+                      </span>
+                    )}
+                  </div>
                   <form onSubmit={handleSaveSalaryRecord} className="row g-2 align-items-end small">
                     <div className="col-12 col-sm-4">
                       <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
@@ -1658,14 +1716,31 @@ function AppShell() {
                           </span>
                         )}
                       </div>
-                      <button
-                        type="submit"
-                        disabled={isSavingSalary}
-                        className="btn btn-sm btn-dark px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5"
-                      >
-                        <TrendingUp size={13} />
-                        <span>{isSavingSalary ? 'Guardando...' : 'Guardar Aumento en Supabase'}</span>
-                      </button>
+                      <div className="d-flex align-items-center gap-2">
+                        {editingRecordId && (
+                          <button
+                            type="button"
+                            onClick={handleCancelEditSalaryRecord}
+                            className="btn btn-sm btn-outline-secondary px-3 py-1.5 fw-semibold"
+                          >
+                            Cancelar Edición
+                          </button>
+                        )}
+                        <button
+                          type="submit"
+                          disabled={isSavingSalary}
+                          className="btn btn-sm btn-dark px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5"
+                        >
+                          <TrendingUp size={13} />
+                          <span>
+                            {isSavingSalary
+                              ? 'Guardando...'
+                              : editingRecordId
+                              ? 'Guardar Cambios'
+                              : 'Guardar Aumento en Supabase'}
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </form>
                 </div>
@@ -1688,7 +1763,7 @@ function AppShell() {
                           <th>Salario Bruto</th>
                           <th>Líquido Estimado</th>
                           <th>Motivo / Empresa</th>
-                          <th className="text-center">Acción</th>
+                          <th className="text-center">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1719,21 +1794,48 @@ function AppShell() {
                                 )}
                               </td>
                               <td className="text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setMonthlySalary(rec.gross_salary);
-                                    setSalaryInput(rec.gross_salary.toFixed(2));
-                                    if (rec.hire_date) {
-                                      handleHireDateChange(rec.hire_date);
-                                    }
-                                    setShowSalaryHistoryModal(false);
-                                  }}
-                                  className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                                  style={{ fontSize: '11px' }}
-                                >
-                                  Cargar
-                                </button>
+                                <div className="d-flex align-items-center justify-content-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setMonthlySalary(rec.gross_salary);
+                                      setSalaryInput(rec.gross_salary.toFixed(2));
+                                      if (rec.hire_date) {
+                                        handleHireDateChange(rec.hire_date);
+                                      }
+                                      setShowSalaryHistoryModal(false);
+                                    }}
+                                    className="btn btn-xs btn-outline-secondary py-0.5 px-2"
+                                    style={{ fontSize: '11px' }}
+                                    title="Cargar salario a la calculadora"
+                                  >
+                                    Cargar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditSalaryRecord(rec)}
+                                    className="btn btn-xs btn-outline-primary py-0.5 px-1.5 d-inline-flex align-items-center"
+                                    style={{ fontSize: '11px' }}
+                                    title="Editar este registro"
+                                  >
+                                    <Pencil size={12} className="me-1" />
+                                    <span>Editar</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (window.confirm('¿Seguro que deseas eliminar este registro del historial salarial?')) {
+                                        handleDeleteSalaryRecord(rec.id);
+                                      }
+                                    }}
+                                    className="btn btn-xs btn-outline-danger py-0.5 px-1.5 d-inline-flex align-items-center"
+                                    style={{ fontSize: '11px' }}
+                                    title="Eliminar este registro"
+                                  >
+                                    <Trash2 size={12} className="me-1" />
+                                    <span>Borrar</span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );

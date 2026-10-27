@@ -252,3 +252,58 @@ export async function updateProfileHireDateInSupabase(
     return false;
   }
 }
+
+/**
+ * Modifica un registro salarial existente en Supabase.
+ */
+export async function updateSalaryRecordInSupabase(
+  userId: string,
+  recordId: string,
+  updates: Partial<Omit<DbSalaryHistory, 'id' | 'user_id' | 'created_at'>>
+): Promise<boolean> {
+  if (!isSupabaseConfigured || !userId || !recordId) return false;
+
+  try {
+    const { error } = await supabase
+      .from('salary_history')
+      .update(updates)
+      .eq('id', recordId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.warn('Error al actualizar registro salarial en Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Fallo de red al actualizar registro salarial:', err);
+    return false;
+  }
+}
+
+/**
+ * Elimina un registro del historial salarial en Supabase.
+ */
+export async function deleteSalaryRecordFromSupabase(
+  userId: string,
+  recordId: string
+): Promise<boolean> {
+  if (!isSupabaseConfigured || !userId || !recordId) return false;
+
+  try {
+    const { error } = await supabase
+      .from('salary_history')
+      .delete()
+      .eq('id', recordId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.warn('Error al eliminar registro salarial en Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('Fallo de red al eliminar registro salarial:', err);
+    return false;
+  }
+}
