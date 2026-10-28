@@ -57,10 +57,10 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
       className="container-fluid px-0"
     >
       {/* Encabezado Principal */}
-      <div className="card-soft p-4 mb-4">
+      <div className="card-soft p-3 p-md-4 mb-4">
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div>
-            <div className="d-flex align-items-center gap-2 mb-1">
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
               <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2 py-1">
                 ISSS & Código de Trabajo
               </span>
@@ -77,7 +77,7 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
             </p>
           </div>
 
-          <div className="bg-light p-2.5 rounded border text-end">
+          <div className="bg-light p-2.5 rounded border w-100 w-sm-auto text-start text-sm-end">
             <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
               Salario Base de Referencia
             </span>
@@ -94,9 +94,9 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
       <div className="row g-4 mb-4">
         {/* Panel Izquierdo: Configuración de la Incapacidad */}
         <div className="col-12 col-lg-5">
-          <div className="card-soft p-4 h-100">
+          <div className="card-soft p-3 p-md-4 h-100">
             <h6 className="fw-semibold text-slate-dark mb-3 d-flex align-items-center gap-2">
-              <Activity size={16} className="text-primary" />
+              <Activity size={16} className="text-primary shrink-0" />
               <span>Detalles de la Incapacidad</span>
             </h6>
 
@@ -112,16 +112,16 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                     setIncapacityType('common_illness');
                     if (daysInput > 60) setDaysInput(5);
                   }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 ${
+                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
                     incapacityType === 'common_illness'
                       ? 'border-primary bg-primary-subtle text-slate-dark'
                       : 'bg-white text-muted'
                   }`}
                 >
-                  <Activity size={16} className={incapacityType === 'common_illness' ? 'text-primary mt-0.5' : 'mt-0.5'} />
-                  <div>
-                    <span className="fw-semibold d-block small">Enfermedad o Accidente Común</span>
-                    <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+                  <Activity size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'common_illness' ? 'text-primary' : ''}`} />
+                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                    <span className="fw-semibold d-block small text-wrap">Enfermedad o Accidente Común</span>
+                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
                       Días 1 a 3 a cargo del patrono (75%). Día 4 en adelante subsidiado por el ISSS (75%).
                     </span>
                   </div>
@@ -133,16 +133,16 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                     setIncapacityType('work_accident');
                     if (daysInput > 60) setDaysInput(5);
                   }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 ${
+                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
                     incapacityType === 'work_accident'
                       ? 'border-primary bg-primary-subtle text-slate-dark'
                       : 'bg-white text-muted'
                   }`}
                 >
-                  <ShieldAlert size={16} className={incapacityType === 'work_accident' ? 'text-primary mt-0.5' : 'mt-0.5'} />
-                  <div>
-                    <span className="fw-semibold d-block small">Accidente de Trabajo / Riesgo Profesional</span>
-                    <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+                  <ShieldAlert size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'work_accident' ? 'text-primary' : ''}`} />
+                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                    <span className="fw-semibold d-block small text-wrap">Accidente de Trabajo / Riesgo Profesional</span>
+                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
                       Cubierto por el ISSS desde el 1.er día al 75% sin período de espera ni carencia de meses.
                     </span>
                   </div>
@@ -154,16 +154,16 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                     setIncapacityType('maternity');
                     setDaysInput(112);
                   }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 ${
+                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
                     incapacityType === 'maternity'
                       ? 'border-primary bg-primary-subtle text-slate-dark'
                       : 'bg-white text-muted'
                   }`}
                 >
-                  <Calendar size={16} className={incapacityType === 'maternity' ? 'text-primary mt-0.5' : 'mt-0.5'} />
-                  <div>
-                    <span className="fw-semibold d-block small">Maternidad (Pre y Post Natal)</span>
-                    <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+                  <Calendar size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'maternity' ? 'text-primary' : ''}`} />
+                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                    <span className="fw-semibold d-block small text-wrap">Maternidad (Pre y Post Natal)</span>
+                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
                       16 semanas (112 días continuos) cubiertas al 100% por el ISSS (tope $1,000/mes).
                     </span>
                   </div>
@@ -245,44 +245,44 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
 
         {/* Panel Derecho: Resultados Financieros y Desglose de Pago */}
         <div className="col-12 col-lg-7">
-          <div className="card-soft p-4 h-100 d-flex flex-column justify-content-between">
+          <div className="card-soft p-3 p-md-4 h-100 d-flex flex-column justify-content-between">
             <div>
-              <div className="d-flex justify-content-between align-items-center mb-3">
+              <div className="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-3">
                 <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                  <Wallet size={16} className="text-emerald" />
+                  <Wallet size={16} className="text-emerald shrink-0" />
                   <span>Liquidación Estimada del Período</span>
                 </h6>
-                <span className="badge bg-light text-slate-dark border font-monospace" style={{ fontSize: '11px' }}>
+                <span className="badge bg-light text-slate-dark border font-monospace shrink-0" style={{ fontSize: '11px' }}>
                   Total {result.totalDays} día(s)
                 </span>
               </div>
 
               {/* Tarjeta Principal de Monto Total - Directo al Bolsillo */}
-              <div className="p-3.5 rounded bg-light border mb-3">
-                <div className="d-flex justify-content-between align-items-baseline mb-1">
-                  <div>
-                    <span className="text-slate-dark fw-bold d-block">
+              <div className="p-3 p-sm-3.5 rounded bg-light border mb-3">
+                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-baseline gap-1 gap-sm-3 mb-1">
+                  <div style={{ minWidth: 0 }}>
+                    <span className="text-slate-dark fw-bold d-block text-wrap">
                       Dinero total que llegará a tu bolsillo:
                     </span>
-                    <span className="text-muted small font-sans" style={{ fontSize: '11.5px' }}>
+                    <span className="text-muted small font-sans d-block text-wrap" style={{ fontSize: '11.5px' }}>
                       Suma de lo que te paga tu empresa más lo que te deposita el Seguro Social
                     </span>
                   </div>
-                  <span className="fs-3 fw-bold font-monospace text-emerald">
+                  <span className="fs-3 fw-bold font-monospace text-emerald shrink-0">
                     {formatUSD(result.totalIncapacityPay)}
                   </span>
                 </div>
 
-                <div className="d-flex justify-content-between align-items-center small font-monospace text-muted pt-2.5 border-top mt-2">
-                  <span>Lo que habrías cobrado trabajando normal:</span>
-                  <span className="text-slate-dark">{formatUSD(result.regularEquivalentGross)}</span>
+                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-muted pt-2.5 border-top mt-2 gap-1">
+                  <span className="font-sans">Lo que habrías cobrado trabajando normal:</span>
+                  <span className="text-slate-dark font-monospace fw-semibold shrink-0">{formatUSD(result.regularEquivalentGross)}</span>
                 </div>
 
                 {result.wageLoss > 0 && (
                   <div className="pt-2 border-top mt-2">
-                    <div className="d-flex justify-content-between align-items-center small font-monospace text-terracotta">
-                      <span className="fw-semibold">Lo que dejas de ganar (no cubierto por ley):</span>
-                      <span className="fw-bold">-{formatUSD(result.wageLoss)}</span>
+                    <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-terracotta gap-1">
+                      <span className="fw-semibold font-sans">Lo que dejas de ganar (no cubierto por ley):</span>
+                      <span className="fw-bold font-monospace shrink-0">-{formatUSD(result.wageLoss)}</span>
                     </div>
                     <span className="text-muted d-block font-sans small mt-0.5" style={{ fontSize: '11px' }}>
                       ¿Por qué dejas de ganar esto? Porque a partir del 4.º día, el ISSS solo te paga el 75% de cada día. El 25% restante nadie lo cubre.
@@ -297,12 +297,12 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                 <div className="col-12 col-sm-6">
                   <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
                     <div>
-                      <div className="d-flex align-items-center justify-content-between mb-2">
+                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-2">
                         <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                          <Building2 size={14} className="text-secondary" />
+                          <Building2 size={14} className="text-secondary shrink-0" />
                           <span>1. Te paga tu Empresa</span>
                         </span>
-                        <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                        <span className="badge bg-light text-secondary border font-monospace shrink-0" style={{ fontSize: '10px' }}>
                           {result.employerDays} día(s)
                         </span>
                       </div>
@@ -336,12 +336,12 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                 <div className="col-12 col-sm-6">
                   <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
                     <div>
-                      <div className="d-flex align-items-center justify-content-between mb-2">
+                      <div className="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-2">
                         <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                          <ShieldAlert size={14} className="text-primary" />
+                          <ShieldAlert size={14} className="text-primary shrink-0" />
                           <span>2. Te paga el Seguro (ISSS)</span>
                         </span>
-                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style={{ fontSize: '10px' }}>
+                        <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace shrink-0" style={{ fontSize: '10px' }}>
                           {result.isssDays} día(s)
                         </span>
                       </div>
@@ -394,7 +394,7 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                   Para que tengas claro por qué recibes cada cantidad y qué retenciones aplican por ley:
                 </p>
                 <div className="table-responsive">
-                  <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11.5px' }}>
+                  <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11.5px', minWidth: '460px' }}>
                     <thead>
                       <tr className="text-muted">
                         <th>Quién te paga</th>
@@ -418,7 +418,7 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                       </tr>
                       <tr className="bg-emerald-50 text-emerald-950">
                         <td className="fw-bold text-emerald-900 d-flex align-items-center gap-1">
-                          <CheckCircle2 size={13} className="text-emerald" />
+                          <CheckCircle2 size={13} className="text-emerald shrink-0" />
                           <span>El Seguro ISSS (Día 4 en adelante)</span>
                         </td>
                         <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
@@ -438,7 +438,7 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
       </div>
 
       {/* Guía Informativa y de Trámites Oficiales (Portal del ISSS) */}
-      <div className="card-soft p-4">
+      <div className="card-soft p-3 p-md-4">
         <h6 className="fw-semibold text-slate-dark mb-3 d-flex align-items-center gap-2">
           <Info size={16} className="text-primary" />
           <span>Información Clave de Trámites y Derechos Laborales</span>

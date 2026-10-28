@@ -906,23 +906,21 @@ function AppShell() {
     <div className="min-h-screen d-flex flex-column app-root-layout">
       {/* Header Institucional Minimalista Sticky */}
       <header className="sticky-top header-sticky" style={{ zIndex: 1030 }}>
-        <nav className="navbar navbar-expand navbar-dark navbar-institutional py-2 px-3">
+        <nav className="navbar navbar-expand navbar-institutional py-2 px-3">
           <div className="container-constrained d-flex justify-content-between align-items-center">
             {/* Logo sobrio institucional */}
             <Link to="/" className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-2">
               <div
-                className="d-flex align-items-center justify-content-center rounded font-monospace fw-bold text-white shrink-0"
+                className="d-flex align-items-center justify-content-center rounded font-monospace fw-bold shrink-0 navbar-brand-badge"
                 style={{
                   width: '28px',
                   height: '28px',
                   fontSize: '12px',
-                  backgroundColor: '#1e293b',
-                  border: '1px solid rgba(255,255,255,0.12)',
                 }}
               >
                 SV
               </div>
-              <span className="fs-6 fw-semibold text-white tracking-tight">MiNominaSV</span>
+              <span className="fs-6 fw-semibold navbar-brand-title tracking-tight">MiNominaSV</span>
             </Link>
 
             {/* Enlaces de Navegación Secundarios Centrales (Desktop) */}
@@ -1031,7 +1029,7 @@ function AppShell() {
                     <button
                       type="button"
                       onClick={() => setShowProfileMenu((prev) => !prev)}
-                      className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-2.5"
+                      className="btn btn-sm btn-nav-auth d-inline-flex align-items-center gap-2 py-1 px-2.5"
                       style={{ fontSize: '12px' }}
                     >
                       <User size={13} />
@@ -1121,7 +1119,7 @@ function AppShell() {
                 ) : (
                   <Link
                     to="/login"
-                    className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1.5 py-1 px-2.5 px-sm-3"
+                    className="btn btn-sm btn-nav-auth d-inline-flex align-items-center gap-1.5 py-1 px-2.5 px-sm-3"
                     style={{ fontSize: '12px', fontWeight: 500 }}
                   >
                     <LogIn size={13} />
