@@ -95,6 +95,9 @@ export function MonthlyLedgerView({
     checked: boolean;
   } | null>(null);
 
+  // Pestaña activa para vista móvil (Ambas, Pago del 15 o Pago del 30)
+  const [mobileQuincenaTab, setMobileQuincenaTab] = useState<'both' | 'q1' | 'q2'>('both');
+
   // Localizar o inicializar el ledger del mes seleccionado
   const activeMonthLedger =
     monthLedgers.find(
@@ -420,7 +423,7 @@ export function MonthlyLedgerView({
     <div className="w-100">
       {/* Barra de Pestañas de Meses (Estilo Hojas de Excel) */}
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div className="d-flex align-items-center gap-1 overflow-auto pb-1" style={{ maxWidth: '100%' }}>
+        <div className="d-flex align-items-center gap-1 overflow-auto pb-1 w-100 w-lg-auto" style={{ maxWidth: '100%', scrollbarWidth: 'none' }}>
           <button
             type="button"
             onClick={() => setSelectedMonth((prev) => (prev > 1 ? prev - 1 : 12))}
@@ -466,7 +469,7 @@ export function MonthlyLedgerView({
         </div>
 
         {/* Acciones del Mes */}
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex flex-wrap align-items-center gap-2 w-100 w-lg-auto justify-content-between justify-content-lg-end">
           {legalBonuses && (
             <button
               type="button"
@@ -596,10 +599,44 @@ export function MonthlyLedgerView({
         </div>
       </div>
 
+      {/* Switcher de Quincenas para Móviles (Evita scroll vertical excesivo) */}
+      <div className="d-flex d-lg-none mb-3 p-1 bg-light border rounded gap-1" role="group" aria-label="Filtro de quincenas en móvil">
+        <button
+          type="button"
+          onClick={() => setMobileQuincenaTab('both')}
+          className={`btn btn-sm flex-fill py-1.5 px-2 ${
+            mobileQuincenaTab === 'both' ? 'btn-dark fw-semibold shadow-xs' : 'btn-light border-0 text-muted'
+          }`}
+          style={{ fontSize: '12px' }}
+        >
+          Ambas Quincenas
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileQuincenaTab('q1')}
+          className={`btn btn-sm flex-fill py-1.5 px-2 ${
+            mobileQuincenaTab === 'q1' ? 'btn-dark fw-semibold shadow-xs' : 'btn-light border-0 text-muted'
+          }`}
+          style={{ fontSize: '12px' }}
+        >
+          Pago del 15
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileQuincenaTab('q2')}
+          className={`btn btn-sm flex-fill py-1.5 px-2 ${
+            mobileQuincenaTab === 'q2' ? 'btn-dark fw-semibold shadow-xs' : 'btn-light border-0 text-muted'
+          }`}
+          style={{ fontSize: '12px' }}
+        >
+          Pago del 30
+        </button>
+      </div>
+
       {/* Doble Columna Quincenal: Pago del 15 y Pago del 30 */}
       <div className="row g-4 align-items-start">
         {/* COLUMNA 1: PAGO DEL 15 */}
-        <div className="col-12 col-lg-6">
+        <div className={`col-12 col-lg-6 ${mobileQuincenaTab === 'q2' ? 'd-none d-lg-block' : ''}`}>
           <div className="card-soft overflow-hidden h-100">
             {/* Cabecera Pago del 15 */}
             <div className="p-3 border-bottom bg-slate-50 d-flex justify-content-between align-items-center">
@@ -972,7 +1009,7 @@ export function MonthlyLedgerView({
         </div>
 
         {/* COLUMNA 2: PAGO DEL 30 */}
-        <div className="col-12 col-lg-6">
+        <div className={`col-12 col-lg-6 ${mobileQuincenaTab === 'q1' ? 'd-none d-lg-block' : ''}`}>
           <div className="card-soft overflow-hidden h-100">
             {/* Cabecera Pago del 30 */}
             <div className="p-3 border-bottom bg-slate-50 d-flex justify-content-between align-items-center">

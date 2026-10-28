@@ -921,4 +921,100 @@ body.bg-light {
   background: #334155;
 }
 
+/* ==========================================================================
+   Optimizaciones Móviles (Sticky Header & Horizontal Swipe Tabs)
+   ========================================================================== */
+header.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+.navbar-institutional {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobile-nav-strip {
+  background-color: #0d1527;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+[data-bs-theme="light"] .mobile-nav-strip {
+  background-color: #172133;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+[data-bs-theme="dark"] .mobile-nav-strip {
+  background-color: #090d16;
+  border-bottom: 1px solid #1e293b;
+}
+
+.mobile-nav-scroll {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+}
+
+.mobile-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-nav-pill {
+  flex-shrink: 0;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.mobile-nav-pill:active,
+.mobile-nav-pill:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.mobile-nav-pill.active {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Botón flotante para subir rápido al inicio */
+.btn-scroll-top {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1040;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
 

@@ -227,25 +227,25 @@ export function ExpensesView({
               : 'Catálogo de compromisos fijos/recurrentes, costo en horas laborales y metas de bonos.'}
           </p>
         </div>
-        <div className="btn-group p-1 bg-light border rounded" role="group">
+        <div className="w-100 w-sm-auto d-flex p-1 bg-light border rounded gap-1" role="group">
           <button
             type="button"
-            className={`btn btn-sm d-flex align-items-center gap-2 ${
-              activeSubView === 'ledger' ? 'btn-primary shadow-xs' : 'btn-light text-slate-dark border-0'
+            className={`btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-1.5 py-1.5 px-2.5 ${
+              activeSubView === 'ledger' ? 'btn-primary shadow-xs fw-semibold' : 'btn-light text-slate-dark border-0'
             }`}
             onClick={() => setActiveSubView('ledger')}
           >
-            <BookOpen size={15} />
-            <span>Libreta Quincenal (Por Meses)</span>
+            <BookOpen size={14} />
+            <span>Libreta Quincenal <span className="d-none d-sm-inline">(Por Meses)</span></span>
           </button>
           <button
             type="button"
-            className={`btn btn-sm d-flex align-items-center gap-2 ${
-              activeSubView === 'catalog' ? 'btn-primary shadow-xs' : 'btn-light text-slate-dark border-0'
+            className={`btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-1.5 py-1.5 px-2.5 ${
+              activeSubView === 'catalog' ? 'btn-primary shadow-xs fw-semibold' : 'btn-light text-slate-dark border-0'
             }`}
             onClick={() => setActiveSubView('catalog')}
           >
-            <ListFilter size={15} />
+            <ListFilter size={14} />
             <span>Gastos Fijos & Horas</span>
           </button>
         </div>

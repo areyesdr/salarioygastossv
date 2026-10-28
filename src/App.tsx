@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   SlidersHorizontal,
   ChevronDown,
+  ChevronUp,
   User,
   Shield,
   RotateCcw,
@@ -234,7 +235,17 @@ function AppShell() {
   const [isSavingSalary, setIsSavingSalary] = useState<boolean>(false);
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Escuchar scroll para mostrar botón volver arriba en pantallas móviles
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 280);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -893,40 +904,251 @@ function AppShell() {
 
   return (
     <div className="min-h-screen d-flex flex-column app-root-layout">
-      {/* Header Institucional Minimalista */}
-      <nav className="navbar navbar-expand navbar-dark navbar-institutional py-2.5 px-3">
-        <div className="container-constrained d-flex justify-content-between align-items-center">
-          {/* Logo sobrio institucional */}
-          <Link to="/" className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-3">
-            <div
-              className="d-flex align-items-center justify-content-center rounded font-monospace fw-bold text-white"
-              style={{
-                width: '28px',
-                height: '28px',
-                fontSize: '12px',
-                backgroundColor: '#1e293b',
-                border: '1px solid rgba(255,255,255,0.12)',
-              }}
-            >
-              SV
-            </div>
-            <span className="fs-6 fw-semibold text-white tracking-tight">MiNominaSV</span>
-          </Link>
+      {/* Header Institucional Minimalista Sticky */}
+      <header className="sticky-top" style={{ zIndex: 1030 }}>
+        <nav className="navbar navbar-expand navbar-dark navbar-institutional py-2 px-3">
+          <div className="container-constrained d-flex justify-content-between align-items-center">
+            {/* Logo sobrio institucional */}
+            <Link to="/" className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-2">
+              <div
+                className="d-flex align-items-center justify-content-center rounded font-monospace fw-bold text-white shrink-0"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '12px',
+                  backgroundColor: '#1e293b',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                }}
+              >
+                SV
+              </div>
+              <span className="fs-6 fw-semibold text-white tracking-tight">MiNominaSV</span>
+            </Link>
 
-          {/* Enlaces de Navegación Secundarios Centrales */}
-          <div className="d-flex align-items-center gap-1 mx-auto flex-wrap justify-content-center">
+            {/* Enlaces de Navegación Secundarios Centrales (Desktop) */}
+            <div className="d-none d-lg-flex align-items-center gap-1 mx-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('payroll');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isCalculatorRoute && calcTab === 'payroll' ? 'active' : ''
+                }`}
+              >
+                <Scale size={14} />
+                <span>Calculadora</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('bonuses');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isCalculatorRoute && calcTab === 'bonuses' ? 'active' : ''
+                }`}
+              >
+                <Calendar size={14} />
+                <span>Bonos de Ley</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('hourly');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isCalculatorRoute && calcTab === 'hourly' ? 'active' : ''
+                }`}
+              >
+                <Clock size={14} />
+                <span>Costo Hora</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCalcTab('incapacity');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isCalculatorRoute && calcTab === 'incapacity' ? 'active' : ''
+                }`}
+              >
+                <Activity size={14} />
+                <span>Incapacidades</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/mis-gastos')}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isExpensesRoute ? 'active' : ''
+                }`}
+              >
+                <Wallet size={14} />
+                <span>Mis Gastos</span>
+              </button>
+            </div>
+
+            {/* Selector de Tema Visual y Acceso de Usuario */}
+            <div className="d-flex align-items-center gap-2">
+              <div className="theme-toggle-control" role="group" aria-label="Selector de tema visual">
+                <button
+                  type="button"
+                  title="Tema del sistema (detecta configuración del OS)"
+                  className={`theme-toggle-btn ${themeMode === 'system' ? 'active' : ''}`}
+                  onClick={() => setThemeMode('system')}
+                >
+                  <Monitor size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Modo claro"
+                  className={`theme-toggle-btn ${themeMode === 'light' ? 'active' : ''}`}
+                  onClick={() => setThemeMode('light')}
+                >
+                  <Sun size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="Modo oscuro"
+                  className={`theme-toggle-btn ${themeMode === 'dark' ? 'active' : ''}`}
+                  onClick={() => setThemeMode('dark')}
+                >
+                  <Moon size={13} />
+                </button>
+              </div>
+
+              {/* Área de Autenticación Sobria a la Derecha */}
+              <div className="d-flex align-items-center ms-1">
+                {user?.loggedIn ? (
+                  <div className="position-relative" ref={profileMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileMenu((prev) => !prev)}
+                      className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-2.5"
+                      style={{ fontSize: '12px' }}
+                    >
+                      <User size={13} />
+                      <span className="d-none d-sm-inline">{user.name}</span>
+                      <ChevronDown size={11} className="opacity-75" />
+                    </button>
+
+                    {showProfileMenu && (
+                      <div
+                        className="dropdown-menu dropdown-menu-end show shadow-sm p-2 mt-1 border"
+                        style={{ minWidth: '220px', maxWidth: 'calc(100vw - 2rem)', right: 0, left: 'auto', zIndex: 1050, fontSize: '13px' }}
+                      >
+                        <div className="px-2 py-1 mb-1 border-bottom">
+                          <span className="small text-muted d-block" style={{ fontSize: '11px' }}>
+                            Sesión activa
+                          </span>
+                          <strong className="text-dark d-block">{user.name}</strong>
+                          <span className="text-muted d-block font-monospace" style={{ fontSize: '11px' }}>
+                            {user.email}
+                          </span>
+                        </div>
+
+                        {user.role === 'admin' && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setShowProfileMenu(false)}
+                            className="dropdown-item py-1.5 d-flex align-items-center gap-2 text-dark"
+                          >
+                            <Shield size={13} />
+                            <span>Panel de Administración</span>
+                          </Link>
+                        )}
+
+                        <Link
+                          to="/terminos"
+                          onClick={() => setShowProfileMenu(false)}
+                          className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
+                        >
+                          <Scale size={13} />
+                          <span>Términos de Uso</span>
+                        </Link>
+                        <Link
+                          to="/privacidad"
+                          onClick={() => setShowProfileMenu(false)}
+                          className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
+                        >
+                          <Shield size={13} />
+                          <span>Privacidad y Datos ARCO</span>
+                        </Link>
+
+                        <div className="dropdown-divider my-1" />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (effectiveOwnerUser) {
+                              setExpenses((prev) => prev.filter((e) => e.ownerId !== effectiveOwnerUser.id));
+                              setBonusGoals((prev) => prev.filter((g) => g.ownerId !== effectiveOwnerUser.id));
+                            }
+                            setMonthlySalary(MINIMUM_WAGES_2026.comercio.monthly);
+                            setSalaryInput(MINIMUM_WAGES_2026.comercio.monthly.toFixed(2));
+                            setExtraMonthlyBonus(0);
+                            setBonusInput('0.00');
+                            setShowProfileMenu(false);
+                          }}
+                          className="dropdown-item py-1.5 text-secondary d-flex align-items-center gap-2"
+                        >
+                          <RotateCcw size={13} />
+                          <span>Reiniciar datos a cero</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setShowProfileMenu(false);
+                            await logout();
+                            navigate('/');
+                          }}
+                          className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-2"
+                        >
+                          <LogOut size={13} />
+                          <span>Cerrar Sesión</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1.5 py-1 px-2.5 px-sm-3"
+                    style={{ fontSize: '12px', fontWeight: 500 }}
+                  >
+                    <LogIn size={13} />
+                    <span className="d-none d-sm-inline">Iniciar Sesión</span>
+                    <span className="d-inline d-sm-none">Entrar</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Barra de navegación horizontal swipeable para móviles */}
+        <div className="mobile-nav-strip d-lg-none">
+          <div className="mobile-nav-scroll">
             <button
               type="button"
               onClick={() => {
                 setCalcTab('payroll');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+              className={`mobile-nav-pill ${
                 isCalculatorRoute && calcTab === 'payroll' ? 'active' : ''
               }`}
             >
-              <Scale size={14} />
-              <span className="d-none d-sm-inline">Calculadora</span>
+              <Scale size={13} />
+              <span>Calculadora</span>
             </button>
 
             <button
@@ -935,12 +1157,12 @@ function AppShell() {
                 setCalcTab('bonuses');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+              className={`mobile-nav-pill ${
                 isCalculatorRoute && calcTab === 'bonuses' ? 'active' : ''
               }`}
             >
-              <Calendar size={14} />
-              <span className="d-none d-sm-inline">Bonos de Ley</span>
+              <Calendar size={13} />
+              <span>Bonos de Ley</span>
             </button>
 
             <button
@@ -949,12 +1171,12 @@ function AppShell() {
                 setCalcTab('hourly');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+              className={`mobile-nav-pill ${
                 isCalculatorRoute && calcTab === 'hourly' ? 'active' : ''
               }`}
             >
-              <Clock size={14} />
-              <span className="d-none d-sm-inline">Costo Hora</span>
+              <Clock size={13} />
+              <span>Costo Hora</span>
             </button>
 
             <button
@@ -963,161 +1185,25 @@ function AppShell() {
                 setCalcTab('incapacity');
                 if (!isCalculatorRoute) navigate('/');
               }}
-              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+              className={`mobile-nav-pill ${
                 isCalculatorRoute && calcTab === 'incapacity' ? 'active' : ''
               }`}
             >
-              <Activity size={14} />
-              <span className="d-none d-sm-inline">Incapacidades</span>
+              <Activity size={13} />
+              <span>Incapacidades</span>
             </button>
 
             <button
               type="button"
               onClick={() => navigate('/mis-gastos')}
-              className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                isExpensesRoute ? 'active' : ''
-              }`}
+              className={`mobile-nav-pill ${isExpensesRoute ? 'active' : ''}`}
             >
-              <Wallet size={14} />
-              <span className="d-none d-sm-inline">Mis Gastos</span>
+              <Wallet size={13} />
+              <span>Mis Gastos</span>
             </button>
-          </div>
-
-          {/* Selector de Modo Oscuro / Sistema / Claro */}
-          <div className="theme-toggle-control me-2" role="group" aria-label="Selector de tema visual">
-            <button
-              type="button"
-              title="Tema del sistema (detecta configuración del OS)"
-              className={`theme-toggle-btn ${themeMode === 'system' ? 'active' : ''}`}
-              onClick={() => setThemeMode('system')}
-            >
-              <Monitor size={13} />
-            </button>
-            <button
-              type="button"
-              title="Modo claro"
-              className={`theme-toggle-btn ${themeMode === 'light' ? 'active' : ''}`}
-              onClick={() => setThemeMode('light')}
-            >
-              <Sun size={13} />
-            </button>
-            <button
-              type="button"
-              title="Modo oscuro"
-              className={`theme-toggle-btn ${themeMode === 'dark' ? 'active' : ''}`}
-              onClick={() => setThemeMode('dark')}
-            >
-              <Moon size={13} />
-            </button>
-          </div>
-
-          {/* Área de Autenticación Sobria a la Derecha */}
-          <div className="d-flex align-items-center ms-1">
-            {user?.loggedIn ? (
-              <div className="position-relative" ref={profileMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowProfileMenu((prev) => !prev)}
-                  className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-2.5"
-                  style={{ fontSize: '12px' }}
-                >
-                  <User size={13} />
-                  <span>{user.name}</span>
-                  <ChevronDown size={11} className="opacity-75" />
-                </button>
-
-                {showProfileMenu && (
-                  <div
-                    className="dropdown-menu dropdown-menu-end show shadow-sm p-2 mt-1 border"
-                    style={{ minWidth: '220px', maxWidth: 'calc(100vw - 2rem)', right: 0, left: 'auto', zIndex: 1050, fontSize: '13px' }}
-                  >
-                    <div className="px-2 py-1 mb-1 border-bottom">
-                      <span className="small text-muted d-block" style={{ fontSize: '11px' }}>
-                        Sesión activa
-                      </span>
-                      <strong className="text-dark d-block">{user.name}</strong>
-                      <span className="text-muted d-block font-monospace" style={{ fontSize: '11px' }}>
-                        {user.email}
-                      </span>
-                    </div>
-
-                    {user.role === 'admin' && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setShowProfileMenu(false)}
-                        className="dropdown-item py-1.5 d-flex align-items-center gap-2 text-dark"
-                      >
-                        <Shield size={13} />
-                        <span>Panel de Administración</span>
-                      </Link>
-                    )}
-
-                    <Link
-                      to="/terminos"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
-                    >
-                      <Scale size={13} />
-                      <span>Términos de Uso</span>
-                    </Link>
-                    <Link
-                      to="/privacidad"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
-                    >
-                      <Shield size={13} />
-                      <span>Privacidad y Datos ARCO</span>
-                    </Link>
-
-                    <div className="dropdown-divider my-1" />
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (effectiveOwnerUser) {
-                          setExpenses((prev) => prev.filter((e) => e.ownerId !== effectiveOwnerUser.id));
-                          setBonusGoals((prev) => prev.filter((g) => g.ownerId !== effectiveOwnerUser.id));
-                        }
-                        setMonthlySalary(MINIMUM_WAGES_2026.comercio.monthly);
-                        setSalaryInput(MINIMUM_WAGES_2026.comercio.monthly.toFixed(2));
-                        setExtraMonthlyBonus(0);
-                        setBonusInput('0.00');
-                        setShowProfileMenu(false);
-                      }}
-                      className="dropdown-item py-1.5 text-secondary d-flex align-items-center gap-2"
-                    >
-                      <RotateCcw size={13} />
-                      <span>Reiniciar datos a cero</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setShowProfileMenu(false);
-                        await logout();
-                        navigate('/');
-                      }}
-                      className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-2"
-                    >
-                      <LogOut size={13} />
-                      <span>Cerrar Sesión</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-2 py-1 px-3"
-                style={{ fontSize: '12px', fontWeight: 500 }}
-              >
-                <LogIn size={13} />
-                <span>Iniciar Sesión</span>
-              </Link>
-            )}
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Estado de Carga Inicial para evitar mostrar datos provisionales */}
       {(isCalculatorRoute || isExpensesRoute) && isInitialLoading ? (
@@ -2137,6 +2223,19 @@ function AppShell() {
           </div>
         </div>
       </footer>
+
+      {/* Botón flotante para volver arriba en pantallas móviles */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="btn btn-dark btn-scroll-top d-lg-none"
+          aria-label="Volver arriba"
+        >
+          <ChevronUp size={14} />
+          <span>Arriba</span>
+        </button>
+      )}
     </div>
   );
 }
