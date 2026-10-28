@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MiNominaSV · Nómina, Prestaciones y Presupuesto El Salvador</title>
+    <meta name="description" content="Calculadora salarial y de prestaciones laborales de El Salvador. Cálculo de sueldo neto, deducciones de ley ISSS y AFP, retención de Impuesto sobre la Renta (ISR), horas extras, aguinaldo, vacación e incapacidades médicas según la legislación laboral salvadoreña." />
+    <meta name="keywords" content="calculadora salarial el salvador, calculo sueldo neto el salvador, deducciones isss afp, retencion renta el salvador, tabla isr hacienda sv, horas extras codigo de trabajo sv, subsidio incapacidad isss, aguinaldo el salvador" />
+    <meta name="author" content="MiNominaSV" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="MiNominaSV · Calculadora Salarial y Prestaciones Laborales en El Salvador" />
+    <meta property="og:description" content="Herramienta en línea para cálculo exacto de nómina, retenciones de ISR, AFP, ISSS, subsidios de incapacidad y presupuesto quincenal en El Salvador." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_SV" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,6 +20,94 @@
     />
   </head>
   <body class="bg-light">
+    <noscript>
+      <main style="max-width: 900px; margin: 2rem auto; padding: 1.5rem; font-family: sans-serif; line-height: 1.6; color: #1e293b;">
+        <h1>MiNominaSV · Calculadora Salarial y Prestaciones Laborales de El Salvador</h1>
+        <p>
+          MiNominaSV es una plataforma web para el cálculo transparente de nómina, prestaciones de ley y gestión presupuestaria quincenal en El Salvador, conforme a la normativa del Código de Trabajo, la Ley del Seguro Social, la Ley del Sistema de Ahorro para Pensiones (SAP) y las Tablas de Retención del Impuesto sobre la Renta (ISR) del Ministerio de Hacienda.
+        </p>
+
+        <section>
+          <h2>Deducciones Obligatorias de Ley en El Salvador</h2>
+          <ul>
+            <li>
+              <strong>Instituto Salvadoreño del Seguro Social (ISSS):</strong> Tasa laboral del 3.00% sobre el salario nominal, con un techo máximo de cotización de $1,000.00 mensuales (descuento máximo para el trabajador: $30.00 al mes o $15.00 por quincena).
+            </li>
+            <li>
+              <strong>Administradoras de Fondos de Pensiones (AFP Crecer / Confía):</strong> Aporte obligatorio del trabajador del 7.25% sobre la totalidad de las remuneraciones gravables, sin techo superior de cotización.
+            </li>
+            <li>
+              <strong>Impuesto sobre la Renta (ISR):</strong> Se calcula sobre la renta imponible obtenida tras deducir el ISSS y la AFP del salario nominal, aplicando las escalas progresivas oficiales publicadas por la Dirección General de Impuestos Internos (DGII).
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Tabla de Retención de Renta Mensual (Ministerio de Hacienda)</h2>
+          <table border="1" cellpadding="6" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-top: 0.5rem; margin-bottom: 1rem;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th>Tramo</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>Porcentaje</th>
+                <th>Sobre el exceso de</th>
+                <th>Cuota Fija</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>I</td>
+                <td>$0.01</td>
+                <td>$472.00</td>
+                <td>Sin retención</td>
+                <td>$0.00</td>
+                <td>$0.00</td>
+              </tr>
+              <tr>
+                <td>II</td>
+                <td>$472.01</td>
+                <td>$895.24</td>
+                <td>10%</td>
+                <td>$472.00</td>
+                <td>$17.67</td>
+              </tr>
+              <tr>
+                <td>III</td>
+                <td>$895.25</td>
+                <td>$2,038.10</td>
+                <td>20%</td>
+                <td>$895.24</td>
+                <td>$60.00</td>
+              </tr>
+              <tr>
+                <td>IV</td>
+                <td>$2,038.11</td>
+                <td>En adelante</td>
+                <td>30%</td>
+                <td>$2,038.10</td>
+                <td>$288.57</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Prestaciones Laborales y Cálculos Adicionales</h2>
+          <ul>
+            <li><strong>Vacación Anual Remunerada:</strong> 15 días continuos de descanso remunerado con una bonificación legal obligatoria del 30% calculada sobre el salario quincenal (Código de Trabajo, Arts. 177 y subsiguientes).</li>
+            <li><strong>Aguinaldo de Ley:</strong> Compensación de fin de año según antigüedad laboral (1 a 3 años: 15 días; 3 a 10 años: 19 días; más de 10 años: 21 días de salario).</li>
+            <li><strong>Horas Extraordinarias:</strong> Horas extras diurnas (recargo del 100% sobre el valor hora normal) y nocturnas (recargo adicional del 25% por nocturnidad más 100% extraordinario).</li>
+            <li><strong>Subsidio de Incapacidad Temporal ISSS:</strong> Cobertura del 75% del salario promedio diario a partir del 4.° día de reposo prescrito, conforme al Reglamento para la Aplicación del Régimen del Seguro Social y el Artículo 53 de la Ley del ISSS.</li>
+          </ul>
+        </section>
+
+        <footer style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #cbd5e1;">
+          <p><a href="/terminos">Términos y Condiciones de Uso</a> | <a href="/privacidad">Política de Privacidad y Cookies</a></p>
+          <small>Para disfrutar de la experiencia interactiva, cálculo en tiempo real y libreta presupuestaria quincenal, habilita JavaScript en tu navegador.</small>
+        </footer>
+      </main>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

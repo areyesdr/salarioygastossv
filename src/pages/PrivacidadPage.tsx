@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Download, Trash2, UserCheck, Lock, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Download, Trash2, UserCheck, Lock, ArrowLeft, CheckCircle2, Cookie, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 
 export default function PrivacidadPage() {
@@ -110,7 +110,58 @@ export default function PrivacidadPage() {
           </div>
         </div>
 
-        {/* 2. Centro de Control ARCO */}
+        {/* 2. Uso de Cookies y Publicidad de Terceros (Google AdSense) */}
+        <div className="p-3.5 rounded bg-slate-50 border border-slate-200 mb-4">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Cookie size={16} className="text-secondary shrink-0" />
+            <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+              Uso de Cookies y Redes Publicitarias (Google AdSense)
+            </h6>
+          </div>
+          <p className="text-muted small mb-2" style={{ fontSize: '12px' }}>
+            Para garantizar el acceso público y gratuito a nuestras calculadoras y guías laborales en El Salvador, MiNominaSV puede mostrar anuncios patrocinados servidos por Google AdSense y sus redes asociadas.
+          </p>
+          <ul className="text-muted small space-y-1.5 ps-3 mb-3" style={{ fontSize: '12px' }}>
+            <li>
+              <strong>Cookies de proveedores externos:</strong> Terceros, incluido Google, utilizan cookies para publicar anuncios basados en las visitas previas del usuario a este sitio web o a otros sitios en Internet.
+            </li>
+            <li>
+              <strong>Publicidad personalizada:</strong> Las cookies de publicidad permiten a Google y a sus socios mostrar anuncios basados en los intereses y navegación de los usuarios.
+            </li>
+            <li>
+              <strong>Almacenamiento local (localStorage):</strong> Los datos de salario, deducciones y libreta de gastos se procesan de forma privada en el almacenamiento local de tu navegador y no se transfieren a redes publicitarias.
+            </li>
+          </ul>
+          <div className="pt-2.5 border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span className="small text-muted font-sans" style={{ fontSize: '11px' }}>
+              Puedes gestionar o inhabilitar la publicidad personalizada en cualquier momento:
+            </span>
+            <div className="d-flex flex-wrap gap-2">
+              <a
+                href="https://policies.google.com/technologies/ads"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-xs btn-outline-secondary d-inline-flex align-items-center gap-1.5 py-1 px-2.5"
+                style={{ fontSize: '11px' }}
+              >
+                <span>Configuración de Anuncios de Google</span>
+                <ExternalLink size={11} />
+              </a>
+              <a
+                href="https://www.aboutads.info/choices/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-xs btn-outline-secondary d-inline-flex align-items-center gap-1.5 py-1 px-2.5"
+                style={{ fontSize: '11px' }}
+              >
+                <span>AboutAds Choices</span>
+                <ExternalLink size={11} />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Centro de Control ARCO */}
         <div className="pt-3 border-top">
           <h6 className="fw-semibold text-slate-dark mb-1">
             Centro de Control de Derechos ARCO (Acceso, Rectificación, Cancelación y Oposición)
