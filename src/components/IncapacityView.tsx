@@ -7,6 +7,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  ExternalLink,
   FileText,
   HelpCircle,
   Info,
@@ -481,6 +482,63 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
                 Puedes registrar tu cuenta bancaria personal en el portal en línea del ISSS para recibir el depósito directo,
                 o cobrarlo en las ventanillas de bancos autorizados presentando tu DUI vigente una vez emitida la planilla de subsidio.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sección Especial: Retención de Subsidio por Mora Patronal o Planilla no Pagada */}
+        <div className="mt-3 pt-3 border-top">
+          <div className="p-3 rounded border bg-white">
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <AlertCircle size={16} className="text-primary shrink-0" />
+              <h6 className="fw-bold text-slate-dark mb-0 font-sans" style={{ fontSize: '13px' }}>
+                ¿Por qué el Seguro Social retiene tu subsidio? (Planilla presentada vs. pagada)
+              </h6>
+            </div>
+
+            <div className="row g-3 small font-sans text-muted" style={{ fontSize: '11.5px' }}>
+              <div className="col-12 col-md-6">
+                <strong className="text-slate-dark d-block mb-1">
+                  1. Planilla presentada en OVISSS no equivale a planilla pagada
+                </strong>
+                <p className="mb-2">
+                  La empresa puede haber cargado la nómina en el Sistema de Planilla Única del ISSS, pero si no ha liquidado el mandamiento de pago (NPE) en el banco, el sistema financiero del ISSS registra a la empresa en estado de mora y <strong>congela el trámite en tránsito</strong> hacia la Sección de Subsidios. El sistema tarda entre 24 y 72 horas hábiles en liberar el subsidio tras la conciliación bancaria del pago.
+                </p>
+                <div className="p-2 rounded bg-light border text-slate-dark">
+                  <strong>Qué pedir a tu empresa:</strong> Solicita al departamento de Recursos Humanos o Contabilidad el comprobante bancario del pago del NPE del mes de tu reposo o la captura de pantalla con estado «Pagada» en OVISSS.
+                </div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <strong className="text-slate-dark d-block mb-1">
+                  2. Responsabilidad legal patronal (Art. 53 Ley del Seguro Social)
+                </strong>
+                <p className="mb-2">
+                  La Ley del Seguro Social establece que si el trabajador deja de percibir las prestaciones en dinero debido al incumplimiento de obligaciones o mora patronal, <strong>el patrono está obligado a pagar directamente de sus propios fondos el 100% del subsidio que el empleado dejó de recibir</strong>, sin perjuicio de las multas impuestas por el ISSS.
+                </p>
+                <div className="p-2 rounded bg-light border text-slate-dark">
+                  <strong>Plazo de cobro:</strong> Tienes hasta <strong>1 año</strong> a partir de la fecha de cada día de reposo para cobrar el subsidio antes de que prescriba.
+                </div>
+              </div>
+            </div>
+
+            {/* Canales Oficiales de Consulta del ISSS */}
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-3 border-top mt-3">
+              <div className="d-flex flex-wrap align-items-center gap-3 small font-sans text-muted" style={{ fontSize: '11px' }}>
+                <span><strong>Canales Oficiales del ISSS:</strong></span>
+                <span>Teléfono Call Center: <strong className="text-slate-dark">127</strong></span>
+                <span>Correo Subsidios: <strong className="text-slate-dark font-monospace">secre.subsidios@isss.gob.sv</strong></span>
+              </div>
+              <a
+                href="https://portal.isss.gob.sv"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-xs btn-primary d-inline-flex align-items-center gap-1.5 py-1 px-2.5 fw-semibold"
+                style={{ fontSize: '11px' }}
+              >
+                <span>Consultar trámite en portal ISSS con DUI</span>
+                <ExternalLink size={12} />
+              </a>
             </div>
           </div>
         </div>
