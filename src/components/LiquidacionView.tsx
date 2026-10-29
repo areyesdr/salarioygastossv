@@ -13,6 +13,10 @@ import {
   Equal,
   ChevronDown,
   ChevronUp,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Info,
 } from 'lucide-react';
 import {
   calcLiquidacion,
@@ -537,6 +541,166 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
             </div>
 
             <div className="card-body p-3 p-md-4">
+              {/* Cuadro de Aclaración Jurídica Dinámica: ¿Qué aplica y qué no aplica? */}
+              <div className="p-3 rounded bg-body-tertiary border border-slate-200 mb-4">
+                <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                  <div className="d-flex align-items-center gap-2">
+                    <Scale size={16} className="text-primary shrink-0" />
+                    <h6 className="fw-bold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+                      ¿Qué conceptos aplican por ley y cuáles no en tu caso?
+                    </h6>
+                  </div>
+                  <span className="badge bg-primary-subtle text-primary border font-sans" style={{ fontSize: '11px' }}>
+                    {result.motivoLabel}
+                  </span>
+                </div>
+
+                {motivo === 'renuncia_voluntaria' && (
+                  <div className="space-y-2">
+                    {result.seniority.years < 2 ? (
+                      <>
+                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-danger-subtle bg-opacity-20 border border-danger-subtle">
+                          <XCircle size={15} className="text-danger shrink-0 mt-0.5" />
+                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                            <strong>NO aplica indemnización por renuncia ($0.00):</strong> La Ley D.L. 592 exige al menos 2 años cumplidos de servicio continuo en la empresa. Con {result.seniority.formattedSeniority}, la indemnización de renuncia es de $0.00.
+                          </div>
+                        </div>
+
+                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                          <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                            <strong>SÍ aplican obligatoriamente tus prestaciones acumuladas (Art. 52 Constitución):</strong>
+                            <ul className="mb-0 ps-3 mt-1 space-y-1">
+                              <li>
+                                <strong>Aguinaldo proporcional (Art. 202 Código de Trabajo):</strong> Por los {result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados desde el 12 de diciembre. <em>¡No requiere 2 años de servicio!</em>
+                              </li>
+                              <li>
+                                <strong>Vacación proporcional (Art. 187 Código de Trabajo):</strong> Por los {result.derechosAdquiridos.vacacionDaysInPeriod} días laborados desde tu último aniversario (cumples el requisito de más de 200 días en el año laboral). <em>¡Tampoco requiere 2 años de servicio total!</em>
+                              </li>
+                              <li>
+                                <strong>Días de salario trabajados:</strong> Todo día laborado que no te hayan pagado en la quincena.
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-warning-subtle bg-opacity-20 border border-warning-subtle">
+                          <AlertTriangle size={15} className="text-warning shrink-0 mt-0.5" />
+                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                            <strong>Ojo con la mala información:</strong> Si en recursos humanos o en llamadas te dicen <em>"si renuncia antes de 2 años no le dan nada"</em>, se refieren únicamente a la indemnización. Tus vacaciones y aguinaldo proporcionales son derechos irrenunciables garantizados por la Constitución.
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                          <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                            <strong>SÍ aplica prestación por renuncia (D.L. 592):</strong> Al tener 2 o más años cumplidos ({result.seniority.formattedSeniority}), te corresponden 15 días de salario por año laborado ({result.indemnizacion.daysComputed} días computados) con tope de 2 salarios mínimos diarios del sector.
+                          </div>
+                        </div>
+                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-info-subtle bg-opacity-20 border border-info-subtle">
+                          <Info size={15} className="text-info shrink-0 mt-0.5" />
+                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                            <strong>Requisito de preaviso de ley:</strong> Para que sea válida, debes presentar tu carta de renuncia con 15 días de anticipación (operativos) o 30 días (cargos de jefatura o técnicos especializados).
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {motivo === 'despido_injustificado' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplica indemnización completa (Art. 58 Código de Trabajo):</strong> 30 días de salario básico (1 mes) por cada año de servicio y proporcional por meses/días. Garantía mínima de 15 días de salario. Tope legal de 4 salarios mínimos mensuales.
+                      </div>
+                    </div>
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-info-subtle bg-opacity-20 border border-info-subtle">
+                      <CheckCircle2 size={15} className="text-info shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplican todas tus prestaciones acumuladas:</strong> Vacación proporcional (+30%), aguinaldo proporcional y salarios adeudados. La indemnización está 100% exenta de retenciones de ISR, ISSS y AFP.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {motivo === 'despido_justificado' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-danger-subtle bg-opacity-20 border border-danger-subtle">
+                      <XCircle size={15} className="text-danger shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>NO aplica indemnización por despido ($0.00):</strong> Al existir causal grave según el Art. 50 del Código de Trabajo.
+                      </div>
+                    </div>
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplican obligatoriamente tus prestaciones acumuladas:</strong> Vacación proporcional, aguinaldo proporcional y días trabajados pendientes. La empresa no puede retenerte estos derechos.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {motivo === 'liquidacion_anual' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplica 1 mes completo de salario pactado ({formatUSD(salary)}):</strong> Pago convenido para saldar el pasivo laboral de 1 año de trabajo.
+                      </div>
+                    </div>
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplica vacación anual completa (15 días + 30% bono) y aguinaldo completo de diciembre:</strong> Totalmente garantizados en el cheque de fin de año.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {motivo === 'despido_indirecto' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplica indemnización completa de 30 días/año (Art. 53 y 58 CT):</strong> Si te viste forzado a retirarte por falta de pago, acoso o rebaja salarial del patrono, la ley te otorga el 100% de la indemnización por despido injustificado más tus prestaciones acumuladas.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {motivo === 'mutuo_acuerdo' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-purple-subtle bg-opacity-20 border border-purple-subtle">
+                      <CheckCircle2 size={15} className="text-purple shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplica la indemnización convenida ({pactoPorcentaje}%):</strong> Más el 100% de tus prestaciones acumuladas de ley. Debe formalizarse ante el MTPS o en acta notarial para plena validez.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {motivo === 'fin_contrato' && (
+                  <div className="space-y-2">
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-secondary-subtle border">
+                      <XCircle size={15} className="text-secondary shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>NO aplica indemnización por despido ($0.00):</strong> Al finalizar el plazo pactado en contratos por tiempo determinado.
+                      </div>
+                    </div>
+                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
+                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
+                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
+                        <strong>SÍ aplican las prestaciones de ley proporcionales:</strong> Calculadas sobre los meses y días laborados durante la vigencia del contrato.
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Bloque 1: Indemnización o Compensación */}
               <div className="mb-4">
                 <div className="d-flex align-items-center justify-content-between mb-2">
