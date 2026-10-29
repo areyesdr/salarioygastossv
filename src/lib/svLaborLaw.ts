@@ -1296,7 +1296,8 @@ export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
     vacacionDaysInPeriod = Math.min(365, Math.max(1, diffVac));
 
     if (input.motivo === 'liquidacion_anual' && (y >= 1 || totalDays >= 360)) {
-      // Liquidación anual regular completa (15 días)
+      // Liquidación anual regular completa (15 días sobre el año completo)
+      vacacionDaysInPeriod = 365;
       vacacionDays = 15;
     } else {
       vacacionDays = round2((vacacionDaysInPeriod / 365) * 15);

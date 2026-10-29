@@ -4,12 +4,15 @@ import {
   Scale,
   Calendar,
   FileText,
-  Info,
   DollarSign,
   ShieldCheck,
   Building,
   Briefcase,
   Percent,
+  Plus,
+  Equal,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   calcLiquidacion,
@@ -24,21 +27,23 @@ interface LiquidacionViewProps {
 }
 
 export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: LiquidacionViewProps) {
-  const [salary, setSalary] = useState<number>(initialSalary > 0 ? initialSalary : 408.8);
+  const [salary, setSalary] = useState<number>(initialSalary > 0 ? initialSalary : 944.19);
   const [salaryInput, setSalaryInput] = useState<string>(
-    (initialSalary > 0 ? initialSalary : 408.8).toFixed(2)
+    (initialSalary > 0 ? initialSalary : 944.19).toFixed(2)
   );
 
-  // Fechas por defecto: 2 años atrás hasta la fecha actual
+  // Fechas por defecto: 2 años atrás hasta hoy
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultHireDate = new Date(Date.now() - 2 * 365 * 86_400_000).toISOString().split('T')[0];
 
   const [hireDate, setHireDate] = useState<string>(defaultHireDate);
   const [endDate, setEndDate] = useState<string>(todayStr);
-  const [motivo, setMotivo] = useState<LiquidacionMotivo>('despido_injustificado');
+  const [motivo, setMotivo] = useState<LiquidacionMotivo>('liquidacion_anual');
   const [salarioPendienteDias, setSalarioPendienteDias] = useState<number>(0);
   const [sectorId, setSectorId] = useState<MinimumWageSector['id']>('comercio');
   const [pactoPorcentaje, setPactoPorcentaje] = useState<number>(100);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [showLegalDetails, setShowLegalDetails] = useState<boolean>(false);
 
   const result = useMemo(() => {
     return calcLiquidacion({
@@ -61,55 +66,67 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
   };
 
   const presetSalaries = [
-    { label: 'S. Mín. ($408.80)', amount: 408.8 },
+    { label: 'S. Mínimo ($408.80)', amount: 408.8 },
     { label: '$600.00', amount: 600 },
     { label: '$800.00', amount: 800 },
+    { label: '$944.19', amount: 944.19 },
     { label: '$1,200.00', amount: 1200 },
-    { label: '$2,000.00 (Topado)', amount: 2000 },
   ];
 
-  const motivosList: { id: LiquidacionMotivo; label: string; badge: string; badgeColor: string }[] = [
+  const presetDiasAdeudados = [
+    { label: '0 días (al día)', days: 0 },
+    { label: '3 días', days: 3 },
+    { label: '7 días (1 sem.)', days: 7 },
+    { label: '15 días (1 quinc.)', days: 15 },
+  ];
+
+  const motivosList: {
+    id: LiquidacionMotivo;
+    title: string;
+    sub: string;
+    badge: string;
+  }[] = [
+    {
+      id: 'liquidacion_anual',
+      title: 'Liquidación anual (Finiquito de fin de año)',
+      sub: 'Tu empresa te liquida cada año para abonar tu pasivo laboral',
+      badge: '1 mes sueldo + Aguinaldo + Vacación',
+    },
     {
       id: 'despido_injustificado',
-      label: 'Despido sin causa justificada (Injustificado)',
+      title: 'Me despidieron sin causa (Injustificado)',
+      sub: 'Despido unilateral sin causal probada por el patrono',
       badge: 'Art. 58 CT · 30 días/año',
-      badgeColor: 'bg-primary-subtle text-primary border-primary-subtle',
     },
     {
       id: 'renuncia_voluntaria',
-      label: 'Renuncia voluntaria con prestación de ley',
-      badge: 'D.L. 592 · 15 días/año (≥ 2 años)',
-      badgeColor: 'bg-info-subtle text-info border-info-subtle',
-    },
-    {
-      id: 'liquidacion_anual',
-      label: 'Liquidación anual / Finiquito de fin de año',
-      badge: '1 mes + Aguinaldo + Vacación',
-      badgeColor: 'bg-success-subtle text-success border-success-subtle',
+      title: 'Renuncio voluntariamente',
+      sub: 'Prestación económica si tienes 2 años o más en la empresa',
+      badge: 'D.L. 592 · 15 días/año',
     },
     {
       id: 'despido_indirecto',
-      label: 'Despido indirecto (Falta grave patronal)',
-      badge: 'Art. 53 CT · Equivalente a despido',
-      badgeColor: 'bg-warning-subtle text-warning border-warning-subtle',
+      title: 'Despido indirecto (Falta patronal grave)',
+      sub: 'Incumplimiento de pago, rebaja de sueldo o acoso',
+      badge: 'Art. 53 CT · Igual a despido',
     },
     {
       id: 'mutuo_acuerdo',
-      label: 'Terminación por mutuo acuerdo',
-      badge: 'Art. 54 CT · Porcentaje acordado',
-      badgeColor: 'bg-purple-subtle text-purple border-purple-subtle',
+      title: 'Terminación por mutuo acuerdo',
+      sub: 'Arreglo acordado entre empresa y trabajador',
+      badge: 'Art. 54 CT · % convenido',
     },
     {
       id: 'despido_justificado',
-      label: 'Despido con causa justificada (Falta grave del empleado)',
-      badge: 'Art. 50 CT · Solo derechos adquiridos',
-      badgeColor: 'bg-danger-subtle text-danger border-danger-subtle',
+      title: 'Despido con causa justificada',
+      sub: 'Falta grave del trabajador según Art. 50 del Código',
+      badge: '$0 indemnización · Solo prestaciones',
     },
     {
       id: 'fin_contrato',
-      label: 'Vencimiento de contrato a plazo fijo',
-      badge: 'Art. 25/48 CT · Solo derechos adquiridos',
-      badgeColor: 'bg-secondary-subtle text-secondary border-secondary-subtle',
+      title: 'Vencimiento de contrato a plazo fijo',
+      sub: 'Finalizó el plazo establecido en el contrato formal',
+      badge: '$0 indemnización · Solo prestaciones',
     },
   ];
 
@@ -128,30 +145,31 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
           <div className="d-flex align-items-center gap-2">
             <Scale className="text-primary" size={24} />
             <h5 className="fw-bold mb-0 text-slate-dark">
-              Calculadora de Liquidaciones y Finiquitos de Ley
+              Calculadora de Liquidación y Finiquito Laboral
             </h5>
           </div>
           <p className="text-muted small mb-0 mt-1">
-            Cálculo oficial conforme al Código de Trabajo de El Salvador, Ley D.L. 592 y parámetros del Ministerio de Trabajo (MTPS).
+            Conoce exactamente cuánto dinero te corresponde recibir en El Salvador y de dónde sale cada centavo.
           </p>
         </div>
       </div>
 
       <div className="row g-4">
-        {/* Panel Izquierdo: Parámetros del Trabajador y Motivo */}
+        {/* Panel Izquierdo: Entradas Simples y Guiadas */}
         <div className="col-12 col-lg-5">
-          <div className="card shadow-xs border-slate-200 h-100">
+          <div className="card shadow-xs border-slate-200">
             <div className="card-header bg-slate-50 border-bottom border-slate-200 py-3">
-              <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
-                <Briefcase size={16} className="text-secondary" />
-                <span>Datos Laborales y Motivo de Salida</span>
+              <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
+                <Briefcase size={16} className="text-primary" />
+                <span>Paso 1: Tus Datos de Salario y Fechas</span>
               </h6>
             </div>
+
             <div className="card-body p-3 p-md-4">
-              {/* Salario Mensual */}
+              {/* 1. Salario Mensual */}
               <div className="mb-3">
                 <label className="form-label small fw-semibold text-slate-dark d-flex justify-content-between align-items-center">
-                  <span>Salario Mensual Nominal</span>
+                  <span>1. ¿Cuánto ganas al mes? (Salario nominal)</span>
                   <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
                     Diario: {formatUSD(result.dailyRealSalary)}
                   </span>
@@ -165,10 +183,9 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                     className="form-control font-monospace fw-semibold"
                     value={salaryInput}
                     onChange={(e) => handleSalaryChange(e.target.value)}
-                    placeholder="408.80"
+                    placeholder="944.19"
                   />
                 </div>
-                {/* Salarios rápidos */}
                 <div className="d-flex flex-wrap gap-1.5">
                   {presetSalaries.map((preset) => (
                     <button
@@ -191,205 +208,277 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                 </div>
               </div>
 
-              {/* Fechas de Ingreso y Salida */}
-              <div className="row g-2 mb-3">
-                <div className="col-12 col-sm-6">
-                  <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1">
-                    <Calendar size={13} className="text-secondary" />
-                    <span>Fecha de Ingreso</span>
+              {/* 2. DÍAS DE SALARIO TRABAJADOS QUE TE DEBEN (UBICADO ARRIBA PARA VISIBILIDAD) */}
+              <div className="p-3 rounded bg-light border border-slate-200 mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-1.5">
+                  <label className="form-label small fw-bold text-slate-dark mb-0 d-flex align-items-center gap-1.5">
+                    <DollarSign size={14} className="text-success" />
+                    <span>2. ¿Cuántos días te deben de la quincena actual?</span>
                   </label>
-                  <input
-                    type="date"
-                    className="form-control form-control-sm font-monospace"
-                    value={hireDate}
-                    onChange={(e) => setHireDate(e.target.value)}
-                  />
+                  <span className="fw-bold font-monospace text-success small">
+                    {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
+                  </span>
                 </div>
-                <div className="col-12 col-sm-6">
-                  <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1">
-                    <Calendar size={13} className="text-secondary" />
-                    <span>Fecha de Finalización</span>
-                  </label>
+                <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
+                  Si trabajaste días que aún no te han pagado, márcalos aquí para sumarlos a tu cheque:
+                </p>
+                <div className="d-flex flex-wrap gap-1.5 mb-2">
+                  {presetDiasAdeudados.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className={`btn btn-xs py-1 px-2 ${
+                        salarioPendienteDias === item.days
+                          ? 'btn-success text-white'
+                          : 'btn-outline-secondary'
+                      }`}
+                      style={{ fontSize: '11px' }}
+                      onClick={() => setSalarioPendienteDias(item.days)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="input-group input-group-sm">
+                  <span className="input-group-text bg-white text-muted">Otro número de días:</span>
                   <input
-                    type="date"
-                    className="form-control form-control-sm font-monospace"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    type="number"
+                    min="0"
+                    max="31"
+                    className="form-control font-monospace text-center"
+                    value={salarioPendienteDias}
+                    onChange={(e) => setSalarioPendienteDias(Number.parseInt(e.target.value || '0', 10))}
                   />
+                  <span className="input-group-text bg-white text-muted">días</span>
                 </div>
               </div>
 
-              {/* Badge de Antigüedad Resultante */}
-              <div className="p-2.5 rounded bg-light border border-slate-200 mb-3 d-flex align-items-center justify-content-between">
-                <span className="small text-muted" style={{ fontSize: '12px' }}>
-                  Antigüedad Laboral:
-                </span>
-                <span className="fw-bold text-slate-dark font-monospace small" style={{ fontSize: '12px' }}>
-                  {result.seniority.formattedSeniority} ({result.seniority.totalDays} días)
-                </span>
-              </div>
-
-              {/* Selector de Motivo de Salida */}
+              {/* 3. Fechas y Antigüedad */}
               <div className="mb-3">
-                <label className="form-label small fw-semibold text-slate-dark">
-                  Motivo de Terminación o Cálculo
+                <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1 mb-1.5">
+                  <Calendar size={13} className="text-primary" />
+                  <span>3. Fechas de tu empleo (Para calcular tu tiempo trabajado)</span>
                 </label>
-                <div className="space-y-1.5">
+                <div className="row g-2 mb-2">
+                  <div className="col-12 col-sm-6">
+                    <span className="text-muted d-block small" style={{ fontSize: '11px' }}>Fecha de Ingreso:</span>
+                    <input
+                      type="date"
+                      className="form-control form-control-sm font-monospace"
+                      value={hireDate}
+                      onChange={(e) => setHireDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-12 col-sm-6">
+                    <span className="text-muted d-block small" style={{ fontSize: '11px' }}>Fecha de Salida / Fin:</span>
+                    <input
+                      type="date"
+                      className="form-control form-control-sm font-monospace"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded bg-body-tertiary border border-slate-200 d-flex align-items-center justify-content-between">
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>
+                    Tu tiempo en la empresa:
+                  </span>
+                  <span className="fw-bold text-slate-dark font-monospace small" style={{ fontSize: '12px' }}>
+                    {result.seniority.formattedSeniority}
+                  </span>
+                </div>
+              </div>
+
+              {/* 4. Selector de Motivo */}
+              <div className="mb-3">
+                <label className="form-label small fw-semibold text-slate-dark mb-1.5">
+                  4. ¿Por qué motivo termina la relación de trabajo?
+                </label>
+                <div className="space-y-2">
                   {motivosList.map((m) => (
-                    <label
+                    <div
                       key={m.id}
-                      className={`d-flex flex-column p-2.5 rounded border cursor-pointer transition-all ${
+                      onClick={() => setMotivo(m.id)}
+                      className={`p-2.5 rounded border transition-all cursor-pointer ${
                         motivo === m.id
-                          ? 'border-primary bg-primary-subtle bg-opacity-10 shadow-xs'
+                          ? 'border-primary bg-primary-subtle bg-opacity-15 shadow-xs'
                           : 'border-slate-200 hover-bg-light'
                       }`}
                       style={{ cursor: 'pointer' }}
                     >
-                      <div className="d-flex align-items-center justify-content-between mb-1">
+                      <div className="d-flex align-items-start gap-2">
+                        <input
+                          type="radio"
+                          name="motivo_radio"
+                          className="form-check-input mt-1 shrink-0"
+                          checked={motivo === m.id}
+                          onChange={() => setMotivo(m.id)}
+                        />
+                        <div className="flex-grow-1">
+                          <div className="d-flex flex-wrap align-items-center justify-content-between gap-1">
+                            <span className="small fw-bold text-slate-dark" style={{ fontSize: '13px' }}>
+                              {m.title}
+                            </span>
+                            <span className="badge bg-secondary-subtle text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                              {m.badge}
+                            </span>
+                          </div>
+                          <p className="text-muted small mb-0 mt-0.5" style={{ fontSize: '11px' }}>
+                            {m.sub}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Opciones avanzadas (Colapsadas para no saturar) */}
+              <div className="border-top pt-2">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1 small"
+                  style={{ fontSize: '12px' }}
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                  {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>Opciones avanzadas (Sector de salario mínimo y mutuo acuerdo)</span>
+                </button>
+
+                {showAdvanced && (
+                  <div className="p-3 rounded bg-light border border-slate-200 mt-2">
+                    {motivo === 'mutuo_acuerdo' && (
+                      <div className="mb-3">
+                        <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1">
+                          <Percent size={13} className="text-purple" />
+                          <span>Porcentaje de Indemnización Pactado</span>
+                        </label>
                         <div className="d-flex align-items-center gap-2">
                           <input
-                            type="radio"
-                            name="motivo_radio"
-                            className="form-check-input mt-0"
-                            checked={motivo === m.id}
-                            onChange={() => setMotivo(m.id)}
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            className="form-range"
+                            value={pactoPorcentaje}
+                            onChange={(e) => setPactoPorcentaje(Number.parseInt(e.target.value, 10))}
                           />
-                          <span className="small fw-semibold text-slate-dark" style={{ fontSize: '13px' }}>
-                            {m.label}
+                          <span className="badge bg-purple font-monospace text-white py-1 px-2">
+                            {pactoPorcentaje}%
                           </span>
                         </div>
                       </div>
-                      <span className="badge align-self-start font-monospace" style={{ fontSize: '10px' }}>
-                        {m.badge}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
+                    )}
 
-              {/* Parámetros específicos según motivo */}
-              {motivo === 'mutuo_acuerdo' && (
-                <div className="p-2.5 rounded bg-purple-subtle bg-opacity-20 border border-purple-subtle mb-3">
-                  <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1.5">
-                    <Percent size={13} className="text-purple" />
-                    <span>Porcentaje de Indemnización Pactado</span>
-                  </label>
-                  <div className="d-flex align-items-center gap-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      className="form-range"
-                      value={pactoPorcentaje}
-                      onChange={(e) => setPactoPorcentaje(Number.parseInt(e.target.value, 10))}
-                    />
-                    <span className="badge bg-purple font-monospace text-white py-1.5 px-2" style={{ fontSize: '12px' }}>
-                      {pactoPorcentaje}%
-                    </span>
+                    <div>
+                      <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1 mb-1">
+                        <Building size={13} className="text-secondary" />
+                        <span>Sector para Salario Mínimo Legal</span>
+                      </label>
+                      <select
+                        className="form-select form-select-sm"
+                        value={sectorId}
+                        onChange={(e) => setSectorId(e.target.value as MinimumWageSector['id'])}
+                      >
+                        {Object.values(MINIMUM_WAGES_2026).map((sec) => (
+                          <option key={sec.id} value={sec.id}>
+                            {sec.name} (${sec.monthly.toFixed(2)}/mes)
+                          </option>
+                        ))}
+                      </select>
+                      <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
+                        Define el tope de 4 salarios mínimos mensuales en despido o 2 diarios en renuncia.
+                      </small>
+                    </div>
                   </div>
-                  <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
-                    Porcentaje acordado sobre la indemnización de despido (Art. 54 CT).
-                  </small>
-                </div>
-              )}
-
-              {/* Días pendientes de pago */}
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-slate-dark d-flex justify-content-between align-items-center">
-                  <span>Días de salario adeudados en la quincena/mes</span>
-                  <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
-                    {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
-                  </span>
-                </label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light text-muted">Días:</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="30"
-                    className="form-control font-monospace"
-                    value={salarioPendienteDias}
-                    onChange={(e) => setSalarioPendienteDias(Number.parseInt(e.target.value || '0', 10))}
-                  />
-                </div>
-              </div>
-
-              {/* Sector Económico */}
-              <div>
-                <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                  <Building size={13} className="text-secondary" />
-                  <span>Sector para Salario Mínimo Legal</span>
-                </label>
-                <select
-                  className="form-select form-select-sm"
-                  value={sectorId}
-                  onChange={(e) => setSectorId(e.target.value as MinimumWageSector['id'])}
-                >
-                  {Object.values(MINIMUM_WAGES_2026).map((sec) => (
-                    <option key={sec.id} value={sec.id}>
-                      {sec.name} (${sec.monthly.toFixed(2)}/mes)
-                    </option>
-                  ))}
-                </select>
-                <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
-                  Determina los topes de 4 salarios mínimos (despido) o 2 diarios (renuncia).
-                </small>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Panel Derecho: Liquidación Oficial y Desglose Financiero */}
+        {/* Panel Derecho: Explicación Visual Clara y Simple de ¿De Dónde Sale el Dinero? */}
         <div className="col-12 col-lg-7">
           <div className="card shadow-xs border-slate-200">
-            {/* Header del Total Neto */}
-            <div className="card-body p-3 p-md-4 bg-primary text-white rounded-top">
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                <div>
-                  <span className="text-white-50 text-uppercase fw-semibold tracking-wider" style={{ fontSize: '11px' }}>
-                    Total Liquidación / Finiquito a Percibir
-                  </span>
-                  <h2 className="display-6 fw-bold font-monospace mb-0 mt-1">
-                    {formatUSD(result.totalLiquidacion)}
-                  </h2>
-                  <div className="d-flex align-items-center gap-2 mt-2">
-                    <span className="badge bg-white text-primary fw-bold" style={{ fontSize: '11px' }}>
-                      {result.motivoLabel}
-                    </span>
+            {/* Header con Ecuación Visual Clara */}
+            <div className="card-header bg-primary text-white p-3 p-md-4 border-0">
+              <span className="text-white-50 text-uppercase fw-semibold tracking-wider d-block mb-1" style={{ fontSize: '11px' }}>
+                Total a Recibir en tu Finiquito
+              </span>
+              <h1 className="display-5 fw-bold font-monospace mb-2 text-white">
+                {formatUSD(result.totalLiquidacion)}
+              </h1>
+              <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span className="badge bg-white text-primary fw-bold" style={{ fontSize: '11px' }}>
+                  {result.motivoLabel}
+                </span>
+                <span className="badge bg-primary-subtle text-white border border-white-50" style={{ fontSize: '11px' }}>
+                  Antigüedad: {result.seniority.formattedSeniority}
+                </span>
+              </div>
+
+              {/* Ecuación Visual: Indemnización + Prestaciones = Total */}
+              <div className="p-3 rounded bg-black bg-opacity-25 border border-white-50 border-opacity-25">
+                <span className="text-white fw-bold d-block mb-2 small" style={{ fontSize: '12px' }}>
+                  ¿De dónde sale este total de {formatUSD(result.totalLiquidacion)}?
+                </span>
+                <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                  <div className="p-2 rounded bg-white bg-opacity-10 text-center flex-grow-1">
+                    <span className="d-block text-white-50 small" style={{ fontSize: '10px' }}>1. INDEMNIZACIÓN</span>
+                    <strong className="font-monospace text-white fs-6">
+                      {formatUSD(result.indemnizacion.amount)}
+                    </strong>
+                  </div>
+
+                  <Plus size={16} className="text-white-50 shrink-0" />
+
+                  <div className="p-2 rounded bg-white bg-opacity-10 text-center flex-grow-1">
+                    <span className="d-block text-white-50 small" style={{ fontSize: '10px' }}>2. PRESTACIONES DE LEY</span>
+                    <strong className="font-monospace text-white fs-6">
+                      {formatUSD(result.derechosAdquiridos.total)}
+                    </strong>
+                  </div>
+
+                  <Equal size={16} className="text-white-50 shrink-0" />
+
+                  <div className="p-2 rounded bg-white text-dark text-center flex-grow-1">
+                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>TOTAL CHEQUE</span>
+                    <strong className="font-monospace text-primary fs-6">
+                      {formatUSD(result.totalLiquidacion)}
+                    </strong>
                   </div>
                 </div>
 
-                <div className="text-sm-end border-sm-start border-white-50 ps-sm-3">
-                  <div className="small mb-1">
-                    <span className="text-white-50">Exento de ISR / ISSS / AFP: </span>
-                    <strong className="font-monospace text-white">{formatUSD(result.totalExentoISR)}</strong>
-                  </div>
-                  <div className="small">
-                    <span className="text-white-50">Sujeto a deducciones ordinarias: </span>
-                    <strong className="font-monospace text-white">{formatUSD(result.totalGravadoISR)}</strong>
-                  </div>
+                {/* Exento de Impuestos */}
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2.5 pt-2 border-top border-white border-opacity-20 small" style={{ fontSize: '11px' }}>
+                  <span className="text-white-50">
+                    🛡️ Libre de Renta / ISSS / AFP: <strong className="text-white font-monospace">{formatUSD(result.totalExentoISR)}</strong>
+                  </span>
+                  <span className="text-white-50">
+                    Sujeto a deducciones ordinarias: <strong className="text-white font-monospace">{formatUSD(result.totalGravadoISR)}</strong>
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="card-body p-3 p-md-4">
-              {/* Bloque 1: Indemnización o Prestación por Tiempo Laborado */}
+              {/* Bloque 1: Indemnización o Compensación */}
               <div className="mb-4">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
                     <ShieldCheck size={16} className="text-primary" />
-                    <span>Compensación o Indemnización por Tiempo Laborado</span>
+                    <span>1. Compensación o Indemnización por Tiempo Laborado</span>
                   </h6>
-                  <span className="fw-bold font-monospace text-primary" style={{ fontSize: '15px' }}>
+                  <span className="fw-bold font-monospace text-primary fs-6">
                     {formatUSD(result.indemnizacion.amount)}
                   </span>
                 </div>
 
-                <div className="p-3 rounded bg-light border border-slate-200">
+                <div className="p-3 rounded bg-body-tertiary border border-slate-200">
                   <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-2 border-bottom">
-                    <span className="text-muted small" style={{ fontSize: '12px' }}>
-                      Estado del Derecho:
+                    <span className="small text-muted" style={{ fontSize: '12px' }}>
+                      ¿Aplica indemnización en este caso?
                     </span>
                     <span
                       className={`badge ${
@@ -397,146 +486,167 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                           ? 'bg-success-subtle text-success border border-success-subtle'
                           : 'bg-secondary-subtle text-secondary border border-secondary-subtle'
                       }`}
-                      style={{ fontSize: '11px' }}
                     >
-                      {result.indemnizacion.applies ? 'Aplica Indemnización / Prestación' : 'No Aplica'}
+                      {result.indemnizacion.applies ? 'Sí aplica por ley' : 'No aplica indemnización'}
                     </span>
                   </div>
 
-                  <div className="row g-2 small text-muted mb-2" style={{ fontSize: '12px' }}>
-                    <div className="col-6 col-sm-3">
-                      <span>Días computados:</span>
-                      <strong className="d-block text-slate-dark font-monospace">
-                        {result.indemnizacion.daysComputed} días
-                      </strong>
-                    </div>
-                    <div className="col-6 col-sm-3">
-                      <span>Salario base cálculo:</span>
-                      <strong className="d-block text-slate-dark font-monospace">
-                        {formatUSD(result.indemnizacion.baseMonthlySalary)}
-                      </strong>
-                    </div>
-                    <div className="col-6 col-sm-3">
-                      <span>Tope legal sector:</span>
-                      <strong className="d-block text-slate-dark font-monospace">
-                        {result.indemnizacion.monthlyCap > 0 ? formatUSD(result.indemnizacion.monthlyCap) : 'N/A'}
-                      </strong>
-                    </div>
-                    <div className="col-6 col-sm-3">
-                      <span>¿Aplica tope legal?</span>
-                      <strong className={`d-block ${result.indemnizacion.isCapped ? 'text-warning fw-bold' : 'text-slate-dark'}`}>
-                        {result.indemnizacion.isCapped ? 'Sí (Topado)' : 'No (Salario Real)'}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <p className="small text-muted mb-0 font-sans" style={{ fontSize: '11px' }}>
-                    <Info size={12} className="d-inline me-1 text-primary" />
+                  <p className="text-slate-dark small mb-2" style={{ fontSize: '12px' }}>
                     {result.indemnizacion.explanation}
                   </p>
+
+                  {result.indemnizacion.applies && (
+                    <div className="row g-2 small text-muted pt-2 border-top" style={{ fontSize: '11px' }}>
+                      <div className="col-6 col-sm-3">
+                        <span>Días computados:</span>
+                        <strong className="d-block text-slate-dark font-monospace">
+                          {result.indemnizacion.daysComputed} días
+                        </strong>
+                      </div>
+                      <div className="col-6 col-sm-3">
+                        <span>Salario base usado:</span>
+                        <strong className="d-block text-slate-dark font-monospace">
+                          {formatUSD(result.indemnizacion.baseMonthlySalary)}
+                        </strong>
+                      </div>
+                      <div className="col-6 col-sm-3">
+                        <span>Tope legal sector:</span>
+                        <strong className="d-block text-slate-dark font-monospace">
+                          {result.indemnizacion.monthlyCap > 0 ? formatUSD(result.indemnizacion.monthlyCap) : 'Sin tope'}
+                        </strong>
+                      </div>
+                      <div className="col-6 col-sm-3">
+                        <span>¿Aplica tope legal?</span>
+                        <strong className={`d-block ${result.indemnizacion.isCapped ? 'text-warning fw-bold' : 'text-slate-dark'}`}>
+                          {result.indemnizacion.isCapped ? 'Sí (Topado)' : 'No (Salario Real)'}
+                        </strong>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Bloque 2: Derechos Adquiridos Irrenunciables */}
+              {/* Bloque 2: Prestaciones de Ley Acumuladas */}
               <div className="mb-4">
-                <div className="d-flex align-items-center justify-content-between mb-2">
+                <div className="d-flex align-items-center justify-content-between mb-1">
                   <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
                     <DollarSign size={16} className="text-success" />
-                    <span>Derechos Adquiridos de Ley (Irrenunciables)</span>
+                    <span>2. Prestaciones Acumuladas de Ley (Las que te tocan sí o sí)</span>
                   </h6>
-                  <span className="fw-bold font-monospace text-success" style={{ fontSize: '15px' }}>
+                  <span className="fw-bold font-monospace text-success fs-6">
                     {formatUSD(result.derechosAdquiridos.total)}
                   </span>
                 </div>
+                <p className="text-muted small mb-3" style={{ fontSize: '11px' }}>
+                  Por ley laboral en El Salvador, el empleador está obligado a pagarte estos 3 conceptos sin importar si renuncias o te despiden:
+                </p>
 
-                <div className="table-responsive">
-                  <table className="table table-sm table-bordered mb-0 align-middle" style={{ fontSize: '12px' }}>
-                    <thead className="table-light">
-                      <tr>
-                        <th>Concepto Legal</th>
-                        <th className="text-center">Días Computados</th>
-                        <th className="text-end">Monto Calculado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <strong>Vacación Proporcional + 30%</strong>
-                          <div className="text-muted" style={{ fontSize: '11px' }}>
-                            {result.derechosAdquiridos.vacacionDays} días de vacación sobre {result.derechosAdquiridos.vacacionDaysInPeriod} días trabajados en el periodo (Art. 177 y 187 CT).
-                          </div>
-                        </td>
-                        <td className="text-center font-monospace">
-                          {result.derechosAdquiridos.vacacionDays} d
-                        </td>
-                        <td className="text-end font-monospace fw-semibold text-slate-dark">
-                          {formatUSD(result.derechosAdquiridos.vacacionTotal)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <strong>Aguinaldo Proporcional</strong>
-                          <div className="text-muted" style={{ fontSize: '11px' }}>
-                            Calculado desde el 12 de diciembre anterior ({result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados, base de {result.derechosAdquiridos.aguinaldoSeniorityDays} días, Art. 196-202 CT).
-                          </div>
-                        </td>
-                        <td className="text-center font-monospace">
-                          {result.derechosAdquiridos.aguinaldoSeniorityDays} d base
-                        </td>
-                        <td className="text-end font-monospace fw-semibold text-slate-dark">
-                          {formatUSD(result.derechosAdquiridos.aguinaldoAmount)}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <strong>Salarios Pendientes Adeudados</strong>
-                          <div className="text-muted" style={{ fontSize: '11px' }}>
-                            Días laborados devengados en la última quincena o mes no cobrados.
-                          </div>
-                        </td>
-                        <td className="text-center font-monospace">
-                          {result.derechosAdquiridos.salarioPendienteDias} d
-                        </td>
-                        <td className="text-end font-monospace fw-semibold text-slate-dark">
-                          {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
-                        </td>
-                      </tr>
-                    </tbody>
-                    <tfoot className="table-light fw-bold">
-                      <tr>
-                        <td colSpan={2} className="text-end">Subtotal Derechos Adquiridos:</td>
-                        <td className="text-end font-monospace text-success">
-                          {formatUSD(result.derechosAdquiridos.total)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+                {/* Lista de Prestaciones sin tablas rotas en modo oscuro */}
+                <div className="space-y-2.5">
+                  {/* Vacación */}
+                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                      <div>
+                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
+                          🌴 Vacación ({motivo === 'liquidacion_anual' ? 'Anual completa de 15 días' : `${result.derechosAdquiridos.vacacionDays} días proporcionales`}) + 30% bono de ley
+                        </strong>
+                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
+                          {motivo === 'liquidacion_anual'
+                            ? `15 días de salario ($${(salary / 2).toFixed(2)}) + 30% de bono obligatorio ($${(salary * 0.15).toFixed(2)})`
+                            : `Acumulada desde tu último aniversario laboral (${result.derechosAdquiridos.vacacionDaysInPeriod} días trabajados en el periodo).`}
+                        </p>
+                      </div>
+                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
+                        {formatUSD(result.derechosAdquiridos.vacacionTotal)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Aguinaldo */}
+                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                      <div>
+                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
+                          🎁 Aguinaldo de ley ({result.derechosAdquiridos.aguinaldoSeniorityDays} días de base por tu antigüedad)
+                        </strong>
+                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
+                          {motivo === 'liquidacion_anual'
+                            ? `Aguinaldo completo de fin de año (${result.derechosAdquiridos.aguinaldoSeniorityDays} días de salario).`
+                            : `Proporcional desde el 12 de diciembre anterior (${result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados en el periodo).`}
+                        </p>
+                      </div>
+                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
+                        {formatUSD(result.derechosAdquiridos.aguinaldoAmount)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Salarios pendientes */}
+                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                      <div>
+                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
+                          💼 Días de salario trabajados pendientes de cobro
+                        </strong>
+                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
+                          {result.derechosAdquiridos.salarioPendienteDias > 0
+                            ? `${result.derechosAdquiridos.salarioPendienteDias} días trabajados en la quincena actual que aún no te han pagado.`
+                            : 'Estás al día con tus pagos ordinarios (0 días adeudados).'}
+                        </p>
+                      </div>
+                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
+                        {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barra de Subtotal compatible con temas claro y oscuro */}
+                <div className="p-3 rounded bg-success-subtle bg-opacity-20 border border-success-subtle mt-3 d-flex justify-content-between align-items-center">
+                  <span className="small fw-semibold text-slate-dark" style={{ fontSize: '12px' }}>
+                    Subtotal Prestaciones de Ley:
+                  </span>
+                  <strong className="font-monospace text-success fs-6">
+                    {formatUSD(result.derechosAdquiridos.total)}
+                  </strong>
                 </div>
               </div>
 
-              {/* Fundamento Jurídico Oficial y Normativa MTPS */}
-              <div className="p-3 rounded bg-slate-50 border border-slate-200">
-                <div className="d-flex align-items-center gap-2 mb-2">
-                  <FileText size={15} className="text-primary" />
-                  <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
-                    Fundamentos Jurídicos Oficiales Aplicados
-                  </h6>
-                </div>
-                <div className="d-flex flex-wrap gap-1.5 mb-2.5">
-                  {result.legalArticles.map((art) => (
-                    <span key={art} className="badge bg-light text-slate-dark border border-slate-300 font-sans" style={{ fontSize: '11px' }}>
-                      {art}
-                    </span>
-                  ))}
-                </div>
-                <ul className="text-muted small ps-3 mb-0 space-y-1" style={{ fontSize: '11px' }}>
-                  {result.notes.map((note) => (
-                    <li key={note}>{note}</li>
-                  ))}
-                  <li>
-                    Este cálculo sigue el procedimiento formal del Ministerio de Trabajo y Previsión Social (MTPS) para audiencias de conciliación y finiquitos ante la Dirección General de Inspección de Trabajo.
-                  </li>
-                </ul>
+              {/* Fundamentos Legales Oficiales (Colapsables para lectura limpia) */}
+              <div className="border-top pt-3">
+                <button
+                  type="button"
+                  className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5 small"
+                  style={{ fontSize: '12px' }}
+                  onClick={() => setShowLegalDetails(!showLegalDetails)}
+                >
+                  <FileText size={13} className="text-primary" />
+                  <span>{showLegalDetails ? 'Ocultar base jurídica y artículos de ley' : 'Ver base jurídica oficial del Ministerio de Trabajo y Código'}</span>
+                  {showLegalDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+
+                {showLegalDetails && (
+                  <div className="p-3 rounded bg-body-tertiary border border-slate-200 mt-2">
+                    <h6 className="fw-bold text-slate-dark mb-2" style={{ fontSize: '12px' }}>
+                      Artículos y Decretos Oficiales Aplicados
+                    </h6>
+                    <div className="d-flex flex-wrap gap-1.5 mb-2.5">
+                      {result.legalArticles.map((art) => (
+                        <span key={art} className="badge bg-light text-slate-dark border border-slate-300 font-sans" style={{ fontSize: '11px' }}>
+                          {art}
+                        </span>
+                      ))}
+                    </div>
+                    <ul className="text-muted small ps-3 mb-0 space-y-1" style={{ fontSize: '11px' }}>
+                      {result.notes.map((note) => (
+                        <li key={note}>{note}</li>
+                      ))}
+                      <li>
+                        Este cálculo sigue las tablas y procedimientos que utiliza la Dirección General de Inspección de Trabajo del MTPS para emitir la Hoja Oficial de Liquidación en El Salvador.
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>
