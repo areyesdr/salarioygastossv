@@ -924,6 +924,7 @@ export function calcQuincena25(options: Quincena25CalculationOptions): Quincena2
 
 export type OvertimeTypeId =
   | 'ordinary'
+  | 'ordinary_night'
   | 'extra_day'
   | 'extra_night'
   | 'rest_day'
@@ -941,9 +942,15 @@ export interface OvertimeRateRule {
 export const OVERTIME_RULES: OvertimeRateRule[] = [
   {
     id: 'ordinary',
-    label: 'Hora ordinaria diurna',
+    label: 'Hora ordinaria diurna (6:00 a.m. - 7:00 p.m.)',
     legalBasis: 'Salario base por hora (100%)',
     multiplier: 1.0,
+  },
+  {
+    id: 'ordinary_night',
+    label: 'Hora ordinaria nocturna (7:00 p.m. - 6:00 a.m.)',
+    legalBasis: 'Art. 168 C.T. · 25% recargo de ley obligatorio (1.25x)',
+    multiplier: 1.25,
   },
   {
     id: 'extra_day',

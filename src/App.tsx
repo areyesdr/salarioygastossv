@@ -314,6 +314,7 @@ function AppShell() {
   const [hoursPerDay, setHoursPerDay] = useState<number>(8);
   const [overtimeHoursMap, setOvertimeHoursMap] = useState<Record<OvertimeTypeId, number>>({
     ordinary: 0,
+    ordinary_night: 0,
     extra_day: 4,
     extra_night: 2,
     rest_day: 0,

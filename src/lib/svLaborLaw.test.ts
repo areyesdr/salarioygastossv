@@ -118,8 +118,10 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     const hr = calcHourlyAndOvertime(1200, 985.45, 30, 8);
     assert.equal(hr.grossDaily, 40.0);
     assert.equal(hr.grossHourly, 5.0);
+    const ordinaryNight = hr.overtimeRates.find((r) => r.id === 'ordinary_night');
     const extraDay = hr.overtimeRates.find((r) => r.id === 'extra_day');
     const extraNight = hr.overtimeRates.find((r) => r.id === 'extra_night');
+    assert.equal(ordinaryNight?.hourlyRateUsd, 6.25); // 5.0 * 1.25 = 6.25 (Art. 168 CT)
     assert.equal(extraDay?.hourlyRateUsd, 10.0);
     assert.equal(extraNight?.hourlyRateUsd, 11.25);
   });
