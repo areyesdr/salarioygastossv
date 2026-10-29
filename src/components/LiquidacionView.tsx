@@ -488,40 +488,52 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                 {formatUSD(result.totalLiquidacion)}
               </h1>
               <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span className="badge bg-white text-primary fw-bold" style={{ fontSize: '11px' }}>
+                <span className="badge bg-white text-primary fw-bold shadow-xs" style={{ fontSize: '11px' }}>
                   {result.motivoLabel}
                 </span>
-                <span className="badge bg-primary-subtle text-white border border-white-50" style={{ fontSize: '11px' }}>
+                <span className="badge bg-white text-slate-dark fw-semibold shadow-xs" style={{ fontSize: '11px' }}>
                   Antigüedad: {result.seniority.formattedSeniority}
                 </span>
               </div>
 
               {/* Ecuación Visual: Indemnización + Prestaciones = Total */}
-              <div className="p-3 rounded bg-black bg-opacity-25 border border-white-50 border-opacity-25">
+              <div
+                className="p-3 rounded"
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.22)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)'
+                }}
+              >
                 <span className="text-white fw-bold d-block mb-2 small" style={{ fontSize: '12px' }}>
                   ¿De dónde sale este total de {formatUSD(result.totalLiquidacion)}?
                 </span>
                 <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                  <div className="p-2 rounded bg-white bg-opacity-10 text-center flex-grow-1">
-                    <span className="d-block text-white-50 small" style={{ fontSize: '10px' }}>1. INDEMNIZACIÓN</span>
-                    <strong className="font-monospace text-white fs-6">
+                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-white-50">
+                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>
+                      1. INDEMNIZACIÓN
+                    </span>
+                    <strong className="font-monospace text-slate-dark fs-6">
                       {formatUSD(result.indemnizacion.amount)}
                     </strong>
                   </div>
 
-                  <Plus size={16} className="text-white-50 shrink-0" />
+                  <Plus size={18} className="text-white fw-bold shrink-0" />
 
-                  <div className="p-2 rounded bg-white bg-opacity-10 text-center flex-grow-1">
-                    <span className="d-block text-white-50 small" style={{ fontSize: '10px' }}>2. PRESTACIONES DE LEY</span>
-                    <strong className="font-monospace text-white fs-6">
+                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-white-50">
+                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>
+                      2. PRESTACIONES DE LEY
+                    </span>
+                    <strong className="font-monospace text-slate-dark fs-6">
                       {formatUSD(result.derechosAdquiridos.total)}
                     </strong>
                   </div>
 
-                  <Equal size={16} className="text-white-50 shrink-0" />
+                  <Equal size={18} className="text-white fw-bold shrink-0" />
 
-                  <div className="p-2 rounded bg-white text-dark text-center flex-grow-1">
-                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>TOTAL CHEQUE</span>
+                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-primary border-opacity-50">
+                    <span className="d-block text-primary small fw-bold" style={{ fontSize: '10px' }}>
+                      TOTAL CHEQUE
+                    </span>
                     <strong className="font-monospace text-primary fs-6">
                       {formatUSD(result.totalLiquidacion)}
                     </strong>
@@ -529,11 +541,14 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                 </div>
 
                 {/* Exento de Impuestos */}
-                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2.5 pt-2 border-top border-white border-opacity-20 small" style={{ fontSize: '11px' }}>
-                  <span className="text-white-50">
+                <div
+                  className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2.5 pt-2 border-top border-white border-opacity-25 small"
+                  style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.9)' }}
+                >
+                  <span>
                     🛡️ Libre de Renta / ISSS / AFP: <strong className="text-white font-monospace">{formatUSD(result.totalExentoISR)}</strong>
                   </span>
-                  <span className="text-white-50">
+                  <span>
                     Sujeto a deducciones ordinarias: <strong className="text-white font-monospace">{formatUSD(result.totalGravadoISR)}</strong>
                   </span>
                 </div>
