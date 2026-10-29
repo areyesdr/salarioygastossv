@@ -42,6 +42,9 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
   const [salarioPendienteDias, setSalarioPendienteDias] = useState<number>(0);
   const [sectorId, setSectorId] = useState<MinimumWageSector['id']>('comercio');
   const [pactoPorcentaje, setPactoPorcentaje] = useState<number>(100);
+  const [incluirQuincena25, setIncluirQuincena25] = useState<boolean>(false);
+  const [yaCobroVacacion, setYaCobroVacacion] = useState<boolean>(false);
+  const [yaCobroAguinaldo, setYaCobroAguinaldo] = useState<boolean>(false);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [showLegalDetails, setShowLegalDetails] = useState<boolean>(false);
 
@@ -54,8 +57,22 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
       salarioPendienteDias,
       sectorId,
       pactoPorcentajeMutuo: pactoPorcentaje,
+      incluirQuincena25,
+      yaCobroVacacion,
+      yaCobroAguinaldo,
     });
-  }, [salary, hireDate, endDate, motivo, salarioPendienteDias, sectorId, pactoPorcentaje]);
+  }, [
+    salary,
+    hireDate,
+    endDate,
+    motivo,
+    salarioPendienteDias,
+    sectorId,
+    pactoPorcentaje,
+    incluirQuincena25,
+    yaCobroVacacion,
+    yaCobroAguinaldo,
+  ]);
 
   const handleSalaryChange = (valStr: string) => {
     setSalaryInput(valStr);
@@ -334,6 +351,63 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                 </div>
               </div>
 
+              {/* 5. Ajustes de Pagos Previos y Quincena 25 */}
+              <div className="p-3 rounded bg-light border border-slate-200 mb-3">
+                <label className="form-label small fw-bold text-slate-dark mb-2 d-flex align-items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-primary" />
+                  <span>5. ¿Ya te pagaron alguna prestación o deseas incluir Quincena 25?</span>
+                </label>
+                <div className="space-y-2">
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      id="check_ya_vacacion"
+                      className="form-check-input"
+                      checked={yaCobroVacacion}
+                      onChange={(e) => setYaCobroVacacion(e.target.checked)}
+                    />
+                    <label htmlFor="check_ya_vacacion" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
+                      <strong>Ya me pagaron o ya gocé las vacaciones</strong>
+                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
+                        Márcalo si tu empresa ya te canceló las vacaciones y no te deben este concepto.
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      id="check_ya_aguinaldo"
+                      className="form-check-input"
+                      checked={yaCobroAguinaldo}
+                      onChange={(e) => setYaCobroAguinaldo(e.target.checked)}
+                    />
+                    <label htmlFor="check_ya_aguinaldo" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
+                      <strong>Ya me pagaron el aguinaldo de este periodo</strong>
+                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
+                        Márcalo si ya recibiste tu aguinaldo correspondiente a estas fechas.
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="form-check pt-2 border-top border-slate-300">
+                    <input
+                      type="checkbox"
+                      id="check_q25"
+                      className="form-check-input"
+                      checked={incluirQuincena25}
+                      onChange={(e) => setIncluirQuincena25(e.target.checked)}
+                    />
+                    <label htmlFor="check_q25" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
+                      <strong className="text-primary">⭐ Incluir pago de Quincena 25 (Decreto 499)</strong>
+                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
+                        Suma 1 quincena completa ({formatUSD(salary / 2)}) 100% exenta de renta, ISSS y AFP (para salidas en enero o finiquito anual pactado con sueldo ≤ $1,500).
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Opciones avanzadas (Colapsadas para no saturar) */}
               <div className="border-top pt-2">
                 <button
@@ -548,15 +622,17 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                     <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
                       <div>
                         <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
-                          🌴 Vacación ({motivo === 'liquidacion_anual' ? 'Anual completa de 15 días' : `${result.derechosAdquiridos.vacacionDays} días proporcionales`}) + 30% bono de ley
+                          🌴 Vacación {yaCobroVacacion ? '(Ya gozada o pagada)' : motivo === 'liquidacion_anual' ? 'Anual completa de 15 días (+30% bono)' : `${result.derechosAdquiridos.vacacionDays} días proporcionales (+30% bono)`}
                         </strong>
                         <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                          {motivo === 'liquidacion_anual'
+                          {yaCobroVacacion
+                            ? 'Marcaste este concepto como ya cancelado o gozado previamente ($0.00).'
+                            : motivo === 'liquidacion_anual'
                             ? `15 días de salario ($${(salary / 2).toFixed(2)}) + 30% de bono obligatorio ($${(salary * 0.15).toFixed(2)})`
                             : `Acumulada desde tu último aniversario laboral (${result.derechosAdquiridos.vacacionDaysInPeriod} días trabajados en el periodo).`}
                         </p>
                       </div>
-                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
+                      <span className={`fw-bold font-monospace fs-6 shrink-0 ${yaCobroVacacion ? 'text-muted' : 'text-slate-dark'}`}>
                         {formatUSD(result.derechosAdquiridos.vacacionTotal)}
                       </span>
                     </div>
@@ -567,19 +643,40 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                     <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
                       <div>
                         <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
-                          🎁 Aguinaldo de ley ({result.derechosAdquiridos.aguinaldoSeniorityDays} días de base por tu antigüedad)
+                          🎁 Aguinaldo de ley {yaCobroAguinaldo ? '(Ya pagado)' : `(${result.derechosAdquiridos.aguinaldoSeniorityDays} días de base por tu antigüedad)`}
                         </strong>
                         <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                          {motivo === 'liquidacion_anual'
+                          {yaCobroAguinaldo
+                            ? 'Marcaste este concepto como ya cancelado previamente ($0.00).'
+                            : motivo === 'liquidacion_anual'
                             ? `Aguinaldo completo de fin de año (${result.derechosAdquiridos.aguinaldoSeniorityDays} días de salario).`
                             : `Proporcional desde el 12 de diciembre anterior (${result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados en el periodo).`}
                         </p>
                       </div>
-                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
+                      <span className={`fw-bold font-monospace fs-6 shrink-0 ${yaCobroAguinaldo ? 'text-muted' : 'text-slate-dark'}`}>
                         {formatUSD(result.derechosAdquiridos.aguinaldoAmount)}
                       </span>
                     </div>
                   </div>
+
+                  {/* Quincena 25 si está activa */}
+                  {result.derechosAdquiridos.quincena25Applies && (
+                    <div className="p-3 rounded bg-primary-subtle bg-opacity-20 border border-primary-subtle">
+                      <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+                        <div>
+                          <strong className="text-primary small d-block" style={{ fontSize: '13px' }}>
+                            ⭐ Quincena 25 (Decreto Legislativo N.º 499)
+                          </strong>
+                          <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
+                            1 quincena completa de salario ({formatUSD(salary / 2)}), 100% libre de retención de renta, ISSS y AFP.
+                          </p>
+                        </div>
+                        <span className="fw-bold font-monospace text-primary fs-6 shrink-0">
+                          {formatUSD(result.derechosAdquiridos.quincena25Amount)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Salarios pendientes */}
                   <div className="p-3 rounded bg-body-tertiary border border-slate-200">

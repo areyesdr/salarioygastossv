@@ -1175,6 +1175,9 @@ export interface LiquidacionInput {
   salarioPendienteDias?: number; // Días laborados adeudados en la quincena/mes
   sectorId?: MinimumWageSector['id']; // Sector económico para salarios mínimos (default: comercio)
   pactoPorcentajeMutuo?: number; // % acordado de indemnización en mutuo acuerdo (default: 100)
+  incluirQuincena25?: boolean; // Incluir pago de Quincena 25 (Decreto 499)
+  yaCobroVacacion?: boolean; // Marcar si la vacación del periodo ya fue gozada/pagada
+  yaCobroAguinaldo?: boolean; // Marcar si el aguinaldo del periodo ya fue pagado
 }
 
 export interface LiquidacionResult {
@@ -1212,12 +1215,16 @@ export interface LiquidacionResult {
     vacacionBonus30: number;
     vacacionTotal: number;
     vacacionDaysInPeriod: number;
+    vacacionAlreadyPaid: boolean;
     aguinaldoSeniorityDays: number;
     aguinaldoDaysInPeriod: number;
     aguinaldoAmount: number;
     aguinaldoIsExempt: boolean;
+    aguinaldoAlreadyPaid: boolean;
     salarioPendienteDias: number;
     salarioPendienteAmount: number;
+    quincena25Applies: boolean;
+    quincena25Amount: number;
     total: number;
   };
   totalLiquidacion: number;
@@ -1307,6 +1314,14 @@ export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
     vacacionTotal = round2(vacacionRawAmount + vacacionBonus30);
   }
 
+  // Si el usuario ya gozó o le pagaron la vacación del periodo corriente
+  if (input.yaCobroVacacion) {
+    vacacionDays = 0;
+    vacacionRawAmount = 0;
+    vacacionBonus30 = 0;
+    vacacionTotal = 0;
+  }
+
   // 2. Aguinaldo Proporcional (Art. 196-202 Código de Trabajo)
   // Periodo oficial: del 12 de diciembre del año anterior al 11 de diciembre del corriente
   let aguinaldoSeniorityDays = 15;
@@ -1332,6 +1347,11 @@ export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
     } else {
       aguinaldoAmount = round2((aguinaldoDaysInPeriod / 365) * aguinaldoSeniorityDays * (safeSalary / 30));
     }
+  }
+
+  // Si el usuario ya cobró el aguinaldo de este periodo
+  if (input.yaCobroAguinaldo) {
+    aguinaldoAmount = 0;
   }
   const aguinaldoIsExempt = aguinaldoAmount <= RATES.AGUINALDO_DECREE_EXEMPTION;
 
@@ -1541,16 +1561,33 @@ export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
     }
   }
 
-  const totalDerechosAdquiridos = round2(vacacionTotal + aguinaldoAmount + salarioPendienteAmount);
+  let quincena25Applies = false;
+  let quincena25Amount = 0;
+
+  if (input.incluirQuincena25 && safeSalary > 0) {
+    if (safeSalary <= RATES.QUINCENA_25_CAP) {
+      quincena25Applies = true;
+      quincena25Amount = round2(safeSalary / 2);
+      legalArticles.push('Decreto Legislativo N.º 499 (Ley Quincena 25)');
+      notes.push('Incluye Quincena 25 (Decreto 499): 50% del salario mensual, 100% exenta de ISR, ISSS y AFP.');
+    } else {
+      notes.push(`Quincena 25 no aplica: el salario ($${safeSalary.toFixed(2)}) supera el tope de $${RATES.QUINCENA_25_CAP.toFixed(2)}.`);
+    }
+  }
+
+  const totalDerechosAdquiridos = round2(
+    vacacionTotal + aguinaldoAmount + salarioPendienteAmount + quincena25Amount
+  );
   const totalLiquidacion = round2(indemnizacionAmount + totalDerechosAdquiridos);
 
   // Tratamiento fiscal (ISR)
   // Indemnización y prestación D.L. 592 están 100% exentas según Art. 4 num. 3 Ley de ISR.
   // Aguinaldo exento hasta $1,500.
+  // Quincena 25 100% exenta de ISR, ISSS y AFP (Decreto 499).
   const aguinaldoExento = Math.min(aguinaldoAmount, RATES.AGUINALDO_DECREE_EXEMPTION);
   const aguinaldoGravado = Math.max(0, aguinaldoAmount - RATES.AGUINALDO_DECREE_EXEMPTION);
 
-  const totalExentoISR = round2(indemnizacionAmount + aguinaldoExento);
+  const totalExentoISR = round2(indemnizacionAmount + aguinaldoExento + quincena25Amount);
   const totalGravadoISR = round2(salarioPendienteAmount + vacacionTotal + aguinaldoGravado);
 
   return {
@@ -1588,12 +1625,16 @@ export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
       vacacionBonus30,
       vacacionTotal,
       vacacionDaysInPeriod,
+      vacacionAlreadyPaid: Boolean(input.yaCobroVacacion),
       aguinaldoSeniorityDays,
       aguinaldoDaysInPeriod,
       aguinaldoAmount,
       aguinaldoIsExempt,
+      aguinaldoAlreadyPaid: Boolean(input.yaCobroAguinaldo),
       salarioPendienteDias,
       salarioPendienteAmount,
+      quincena25Applies,
+      quincena25Amount,
       total: totalDerechosAdquiridos,
     },
     totalLiquidacion,
