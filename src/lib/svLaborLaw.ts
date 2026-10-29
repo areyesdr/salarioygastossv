@@ -1155,3 +1155,451 @@ export function calcIncapacity({
   };
 }
 
+/**
+ * Modos de terminación o cálculo de liquidación laboral en El Salvador
+ */
+export type LiquidacionMotivo =
+  | 'despido_injustificado'
+  | 'renuncia_voluntaria'
+  | 'liquidacion_anual'
+  | 'despido_indirecto'
+  | 'despido_justificado'
+  | 'mutuo_acuerdo'
+  | 'fin_contrato';
+
+export interface LiquidacionInput {
+  monthlySalary: number;
+  hireDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  motivo: LiquidacionMotivo;
+  salarioPendienteDias?: number; // Días laborados adeudados en la quincena/mes
+  sectorId?: MinimumWageSector['id']; // Sector económico para salarios mínimos (default: comercio)
+  pactoPorcentajeMutuo?: number; // % acordado de indemnización en mutuo acuerdo (default: 100)
+}
+
+export interface LiquidacionResult {
+  monthlySalary: number;
+  dailyRealSalary: number;
+  hireDate: string;
+  endDate: string;
+  motivo: LiquidacionMotivo;
+  motivoLabel: string;
+  motivoDescription: string;
+  legalArticles: string[];
+  seniority: {
+    years: number;
+    months: number;
+    days: number;
+    totalDays: number;
+    formattedSeniority: string;
+    yearsEquivalent: number;
+  };
+  indemnizacion: {
+    applies: boolean;
+    daysComputed: number;
+    baseMonthlySalary: number;
+    dailyBaseSalary: number;
+    isCapped: boolean;
+    monthlyCap: number;
+    dailyCap: number;
+    amount: number;
+    explanation: string;
+    isExemptISR: boolean;
+  };
+  derechosAdquiridos: {
+    vacacionDays: number;
+    vacacionRawAmount: number;
+    vacacionBonus30: number;
+    vacacionTotal: number;
+    vacacionDaysInPeriod: number;
+    aguinaldoSeniorityDays: number;
+    aguinaldoDaysInPeriod: number;
+    aguinaldoAmount: number;
+    aguinaldoIsExempt: boolean;
+    salarioPendienteDias: number;
+    salarioPendienteAmount: number;
+    total: number;
+  };
+  totalLiquidacion: number;
+  totalExentoISR: number;
+  totalGravadoISR: number;
+  notes: string[];
+}
+
+/**
+ * Calcula la liquidación laboral y finiquito según el Código de Trabajo de El Salvador
+ * y la Ley Reguladora de la Prestación Económica por Renuncia Voluntaria (D.L. 592).
+ */
+export function calcLiquidacion(input: LiquidacionInput): LiquidacionResult {
+  const safeSalary = Math.max(0, Number.isFinite(input.monthlySalary) ? input.monthlySalary : 0);
+  const dailyRealSalary = round2(safeSalary / 30);
+  const sector = MINIMUM_WAGES_2026[input.sectorId ?? 'comercio'];
+  const salarioPendienteDias = Math.max(0, Math.round(input.salarioPendienteDias ?? 0));
+
+  const hire = new Date(`${input.hireDate}T00:00:00`);
+  const end = new Date(`${input.endDate}T00:00:00`);
+
+  const isValidDates =
+    Boolean(input.hireDate) &&
+    Boolean(input.endDate) &&
+    !Number.isNaN(hire.getTime()) &&
+    !Number.isNaN(end.getTime()) &&
+    end >= hire;
+
+  let y = 0;
+  let m = 0;
+  let d = 0;
+  let totalDays = 0;
+
+  if (isValidDates) {
+    y = end.getFullYear() - hire.getFullYear();
+    m = end.getMonth() - hire.getMonth();
+    d = end.getDate() - hire.getDate();
+
+    if (d < 0) {
+      const prevMonthLastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+      d += prevMonthLastDay;
+      m -= 1;
+    }
+    if (m < 0) {
+      m += 12;
+      y -= 1;
+    }
+    const diffMs = end.getTime() - hire.getTime();
+    totalDays = Math.max(0, Math.floor(diffMs / 86_400_000)) + 1; // inclusivo
+  }
+
+  const parts: string[] = [];
+  if (y > 0) parts.push(`${y} ${y === 1 ? 'año' : 'años'}`);
+  if (m > 0) parts.push(`${m} ${m === 1 ? 'mes' : 'meses'}`);
+  if (d > 0 || parts.length === 0) parts.push(`${d} ${d === 1 ? 'día' : 'días'}`);
+  const formattedSeniority = isValidDates ? parts.join(', ') : 'Fechas inválidas';
+  const yearsEquivalent = isValidDates ? round2(totalDays / 365) : 0;
+
+  // 1. Vacación Proporcional (Art. 177 y 187 Código de Trabajo)
+  // Calcula días transcurridos desde el último aniversario de ingreso
+  let vacacionDaysInPeriod = 0;
+  let vacacionDays = 0;
+  let vacacionRawAmount = 0;
+  let vacacionBonus30 = 0;
+  let vacacionTotal = 0;
+
+  if (isValidDates && totalDays > 0) {
+    const endYear = end.getFullYear();
+    let lastAnniversary = new Date(endYear, hire.getMonth(), hire.getDate());
+    if (lastAnniversary > end) {
+      lastAnniversary = new Date(endYear - 1, hire.getMonth(), hire.getDate());
+    }
+    // Si aún no cumple 1 año, su inicio de cómputo es hireDate
+    const vacPeriodStart = y >= 1 ? lastAnniversary : hire;
+    const diffVac = Math.floor((end.getTime() - vacPeriodStart.getTime()) / 86_400_000) + 1;
+    vacacionDaysInPeriod = Math.min(365, Math.max(1, diffVac));
+
+    if (input.motivo === 'liquidacion_anual' && (y >= 1 || totalDays >= 360)) {
+      // Liquidación anual regular completa (15 días)
+      vacacionDays = 15;
+    } else {
+      vacacionDays = round2((vacacionDaysInPeriod / 365) * 15);
+    }
+    vacacionRawAmount = round2(vacacionDays * (safeSalary / 30));
+    vacacionBonus30 = round2(vacacionRawAmount * 0.3);
+    vacacionTotal = round2(vacacionRawAmount + vacacionBonus30);
+  }
+
+  // 2. Aguinaldo Proporcional (Art. 196-202 Código de Trabajo)
+  // Periodo oficial: del 12 de diciembre del año anterior al 11 de diciembre del corriente
+  let aguinaldoSeniorityDays = 15;
+  if (y >= 10) aguinaldoSeniorityDays = 21;
+  else if (y >= 3) aguinaldoSeniorityDays = 19;
+  else aguinaldoSeniorityDays = 15;
+
+  let aguinaldoDaysInPeriod = 0;
+  let aguinaldoAmount = 0;
+
+  if (isValidDates && totalDays > 0) {
+    const endYear = end.getFullYear();
+    let priorDec12 = new Date(endYear - 1, 11, 12); // 12 dic año anterior
+    if (end.getMonth() === 11 && end.getDate() >= 12) {
+      priorDec12 = new Date(endYear, 11, 12);
+    }
+    const agPeriodStart = hire > priorDec12 ? hire : priorDec12;
+    const diffAg = Math.floor((end.getTime() - agPeriodStart.getTime()) / 86_400_000) + 1;
+    aguinaldoDaysInPeriod = Math.min(365, Math.max(1, diffAg));
+
+    if (input.motivo === 'liquidacion_anual' && (y >= 1 || totalDays >= 360)) {
+      aguinaldoAmount = round2(aguinaldoSeniorityDays * (safeSalary / 30));
+    } else {
+      aguinaldoAmount = round2((aguinaldoDaysInPeriod / 365) * aguinaldoSeniorityDays * (safeSalary / 30));
+    }
+  }
+  const aguinaldoIsExempt = aguinaldoAmount <= RATES.AGUINALDO_DECREE_EXEMPTION;
+
+  // 3. Salario Pendiente Adeudado
+  const salarioPendienteAmount = round2(salarioPendienteDias * dailyRealSalary);
+
+  // 4. Indemnización o Compensación Económica según Motivo
+  let appliesIndemnizacion = false;
+  let daysComputed = 0;
+  let isCapped = false;
+  let baseMonthlySalary = safeSalary;
+  let dailyBaseSalary = dailyRealSalary;
+  let monthlyCap = 0;
+  let dailyCap = 0;
+  let indemnizacionAmount = 0;
+  let explanation = '';
+  let motivoLabel = '';
+  let motivoDescription = '';
+  const legalArticles: string[] = [];
+  const notes: string[] = [];
+
+  // Topes legales
+  const cap4SalariosMinimos = round2(sector.monthly * 4); // Art. 58 Código de Trabajo
+  const cap2SalariosMinimosDiarios = round2(sector.daily * 2); // Art. 8 Ley D.L. 592
+
+  switch (input.motivo) {
+    case 'despido_injustificado': {
+      motivoLabel = 'Despido sin causa justificada (Injustificado)';
+      motivoDescription = 'Terminación unilateral del contrato de trabajo por parte del empleador sin causal legal acreditada.';
+      legalArticles.push('Art. 58 Código de Trabajo de El Salvador', 'Art. 4 num. 3 Ley de Impuesto sobre la Renta');
+      notes.push('Exento de retención de Impuesto sobre la Renta (ISR), ISSS y AFP según la legislación vigente.');
+      notes.push('En ningún caso la indemnización puede ser inferior a 15 días de salario básico (Art. 58 inc. 2).');
+
+      if (isValidDates && totalDays > 0) {
+        appliesIndemnizacion = true;
+        // 30 días de salario por año completo más fracción proporcional
+        const endYear = end.getFullYear();
+        let lastAnniversary = new Date(endYear, hire.getMonth(), hire.getDate());
+        if (lastAnniversary > end) {
+          lastAnniversary = new Date(endYear - 1, hire.getMonth(), hire.getDate());
+        }
+        const fracDays = y >= 1 ? Math.max(0, Math.floor((end.getTime() - lastAnniversary.getTime()) / 86_400_000)) : totalDays;
+        const rawDays = y * 30 + (fracDays / 365) * 30;
+        daysComputed = round2(Math.max(15, rawDays));
+
+        monthlyCap = cap4SalariosMinimos;
+        dailyCap = round2(cap4SalariosMinimos / 30);
+        isCapped = safeSalary > monthlyCap;
+        baseMonthlySalary = isCapped ? monthlyCap : safeSalary;
+        dailyBaseSalary = round2(baseMonthlySalary / 30);
+        indemnizacionAmount = round2((daysComputed / 30) * baseMonthlySalary);
+
+        explanation = isCapped
+          ? `Calculado sobre 30 días/año (garantía mín. 15 días). Aplica tope de 4 salarios mínimos mensuales ($${monthlyCap.toFixed(2)}).`
+          : 'Calculado sobre 30 días de salario básico por cada año laborado y proporcional por meses y días.';
+      }
+      break;
+    }
+
+    case 'despido_indirecto': {
+      motivoLabel = 'Despido indirecto (Retiro por culpa del empleador)';
+      motivoDescription = 'El trabajador se da por despedido debido a faltas graves del empleador (falta de pago, rebaja salarial, malos tratos o acoso).';
+      legalArticles.push('Art. 53 y 58 Código de Trabajo de El Salvador', 'Art. 4 num. 3 Ley de ISR');
+      notes.push('La ley reconoce el mismo derecho indemnizatorio que un despido sin justa causa.');
+      notes.push('Exento de ISR, ISSS y AFP.');
+
+      if (isValidDates && totalDays > 0) {
+        appliesIndemnizacion = true;
+        const endYear = end.getFullYear();
+        let lastAnniversary = new Date(endYear, hire.getMonth(), hire.getDate());
+        if (lastAnniversary > end) {
+          lastAnniversary = new Date(endYear - 1, hire.getMonth(), hire.getDate());
+        }
+        const fracDays = y >= 1 ? Math.max(0, Math.floor((end.getTime() - lastAnniversary.getTime()) / 86_400_000)) : totalDays;
+        const rawDays = y * 30 + (fracDays / 365) * 30;
+        daysComputed = round2(Math.max(15, rawDays));
+
+        monthlyCap = cap4SalariosMinimos;
+        dailyCap = round2(cap4SalariosMinimos / 30);
+        isCapped = safeSalary > monthlyCap;
+        baseMonthlySalary = isCapped ? monthlyCap : safeSalary;
+        dailyBaseSalary = round2(baseMonthlySalary / 30);
+        indemnizacionAmount = round2((daysComputed / 30) * baseMonthlySalary);
+
+        explanation = isCapped
+          ? `Equivalente a despido injustificado (Art. 53 y 58). Aplica tope de 4 salarios mínimos ($${monthlyCap.toFixed(2)}).`
+          : 'Equivalente a despido injustificado: 30 días por año y proporcional con garantía mínima de 15 días.';
+      }
+      break;
+    }
+
+    case 'renuncia_voluntaria': {
+      motivoLabel = 'Renuncia voluntaria con prestación de ley';
+      motivoDescription = 'Dimisión voluntaria del empleado amparada en la Ley Reguladora de la Prestación Económica por Renuncia Voluntaria (D.L. 592).';
+      legalArticles.push('Ley Reguladora de la Prestación Económica por Renuncia Voluntaria (D.L. 592)', 'Art. 4 num. 3 Ley de ISR');
+
+      if (!isValidDates || totalDays === 0) {
+        appliesIndemnizacion = false;
+        explanation = 'Fechas no válidas.';
+      } else if (y < 2) {
+        appliesIndemnizacion = false;
+        daysComputed = 0;
+        indemnizacionAmount = 0;
+        explanation = `No genera prestación económica por renuncia: el D.L. 592 exige al menos 2 años cumplidos de servicio continuo en la empresa (antigüedad calculada: ${formattedSeniority}).`;
+        notes.push('Al tener menos de 2 años de servicio, la renuncia solo liquida los derechos adquiridos (vacaciones, aguinaldo y salarios devengados).');
+      } else {
+        appliesIndemnizacion = true;
+        const endYear = end.getFullYear();
+        let lastAnniversary = new Date(endYear, hire.getMonth(), hire.getDate());
+        if (lastAnniversary > end) {
+          lastAnniversary = new Date(endYear - 1, hire.getMonth(), hire.getDate());
+        }
+        const fracDays = Math.max(0, Math.floor((end.getTime() - lastAnniversary.getTime()) / 86_400_000));
+        daysComputed = round2(y * 15 + (fracDays / 365) * 15);
+        dailyCap = cap2SalariosMinimosDiarios;
+        monthlyCap = round2(dailyCap * 30);
+        isCapped = dailyRealSalary > dailyCap;
+        dailyBaseSalary = isCapped ? dailyCap : dailyRealSalary;
+        baseMonthlySalary = round2(dailyBaseSalary * 30);
+        indemnizacionAmount = round2((daysComputed / 30) * baseMonthlySalary);
+
+        explanation = isCapped
+          ? `15 días de salario por año laborado (D.L. 592). Aplica tope de 2 salarios mínimos diarios ($${dailyCap.toFixed(2)}/día o $${monthlyCap.toFixed(2)}/mes).`
+          : '15 días de salario básico por cada año de servicio continuo y proporcional por fracciones de año.';
+        notes.push('Exige preaviso formal por escrito: 15 días para empleados operativos o 30 días para cargos de jefatura o técnicos especializados.');
+        notes.push('Prestación exenta de retención de Impuesto sobre la Renta (ISR), ISSS y AFP.');
+      }
+      break;
+    }
+
+    case 'liquidacion_anual': {
+      motivoLabel = 'Liquidación anual / Finiquito de fin de año';
+      motivoDescription = 'Corte periódico anual pactado por la empresa o convención colectiva para abonar pasivo laboral y derechos al 31 de diciembre.';
+      legalArticles.push('Código de Trabajo de El Salvador', 'Práctica laboral empresarial y pactos colectivos');
+      notes.push('Modalidad utilizada por empresas salvadoreñas para no acumular pasivo laboral plurianual.');
+      notes.push('Comprende 1 mes de salario base o proporcional del año, más aguinaldo de diciembre y vacación anual completa.');
+
+      if (isValidDates && totalDays > 0) {
+        appliesIndemnizacion = true;
+        const daysInCurrentYear = Math.min(365, totalDays);
+        if (daysInCurrentYear >= 365 || y >= 1) {
+          daysComputed = 30;
+          indemnizacionAmount = safeSalary;
+        } else {
+          daysComputed = round2((daysInCurrentYear / 365) * 30);
+          indemnizacionAmount = round2((daysInCurrentYear / 365) * safeSalary);
+        }
+        baseMonthlySalary = safeSalary;
+        dailyBaseSalary = dailyRealSalary;
+        isCapped = false;
+        explanation = y >= 1
+          ? 'Compensación/indemnización de 1 mes completo de salario pactado por el año laborado.'
+          : `Compensación proporcional a ${totalDays} días laborados en el año en curso.`;
+      }
+      break;
+    }
+
+    case 'mutuo_acuerdo': {
+      motivoLabel = 'Terminación por mutuo acuerdo';
+      motivoDescription = 'Convenio bilateral de cese de labores con gratificación o indemnización pactada entre patrono y trabajador.';
+      legalArticles.push('Art. 54 Código de Trabajo de El Salvador', 'Art. 4 num. 3 Ley de ISR');
+      notes.push('Para tener plena validez jurídica debe formalizarse en acta ante el Ministerio de Trabajo (MTPS) o ante notario en documento privado autenticado.');
+
+      if (isValidDates && totalDays > 0) {
+        appliesIndemnizacion = true;
+        const pactoPorcentaje = Math.min(100, Math.max(0, input.pactoPorcentajeMutuo ?? 100));
+        const fullIndemnizacionDays = (totalDays / 365) * 30;
+        daysComputed = round2((Math.max(15, fullIndemnizacionDays) * pactoPorcentaje) / 100);
+
+        monthlyCap = cap4SalariosMinimos;
+        dailyCap = round2(cap4SalariosMinimos / 30);
+        isCapped = safeSalary > monthlyCap;
+        baseMonthlySalary = isCapped ? monthlyCap : safeSalary;
+        dailyBaseSalary = round2(baseMonthlySalary / 30);
+        indemnizacionAmount = round2(daysComputed * dailyBaseSalary);
+
+        explanation = `Monto acordado al ${pactoPorcentaje}% de la indemnización por despido${
+          isCapped ? ` (topado a $${monthlyCap.toFixed(2)})` : ''
+        }.`;
+      }
+      break;
+    }
+
+    case 'despido_justificado': {
+      motivoLabel = 'Despido con causa justificada';
+      motivoDescription = 'Terminación por falta grave o causal legal imputable al trabajador según el Artículo 50 del Código de Trabajo.';
+      legalArticles.push('Art. 50 Código de Trabajo de El Salvador');
+      appliesIndemnizacion = false;
+      daysComputed = 0;
+      indemnizacionAmount = 0;
+      explanation = 'No genera derecho a indemnización económica. La ley garantiza únicamente el pago de derechos adquiridos irrenunciables.';
+      notes.push('El empleador debe comprobar la causal ante los tribunales en caso de controversia.');
+      notes.push('Los derechos adquiridos (vacaciones, aguinaldo proporcional y salarios pendientes) son inalienables.');
+      break;
+    }
+
+    case 'fin_contrato': {
+      motivoLabel = 'Vencimiento de contrato a plazo fijo';
+      motivoDescription = 'Expiración del plazo estipulado en contratos legalmente sujetos a plazo determinado.';
+      legalArticles.push('Arts. 25, 48 y 51 Código de Trabajo de El Salvador');
+      appliesIndemnizacion = false;
+      daysComputed = 0;
+      indemnizacionAmount = 0;
+      explanation = 'No genera indemnización por despido al haberse cumplido el plazo pactado legalmente.';
+      notes.push('Solo corresponden los derechos adquiridos proporcionales generados durante el plazo del contrato.');
+      break;
+    }
+  }
+
+  const totalDerechosAdquiridos = round2(vacacionTotal + aguinaldoAmount + salarioPendienteAmount);
+  const totalLiquidacion = round2(indemnizacionAmount + totalDerechosAdquiridos);
+
+  // Tratamiento fiscal (ISR)
+  // Indemnización y prestación D.L. 592 están 100% exentas según Art. 4 num. 3 Ley de ISR.
+  // Aguinaldo exento hasta $1,500.
+  const aguinaldoExento = Math.min(aguinaldoAmount, RATES.AGUINALDO_DECREE_EXEMPTION);
+  const aguinaldoGravado = Math.max(0, aguinaldoAmount - RATES.AGUINALDO_DECREE_EXEMPTION);
+
+  const totalExentoISR = round2(indemnizacionAmount + aguinaldoExento);
+  const totalGravadoISR = round2(salarioPendienteAmount + vacacionTotal + aguinaldoGravado);
+
+  return {
+    monthlySalary: safeSalary,
+    dailyRealSalary,
+    hireDate: input.hireDate,
+    endDate: input.endDate,
+    motivo: input.motivo,
+    motivoLabel,
+    motivoDescription,
+    legalArticles,
+    seniority: {
+      years: y,
+      months: m,
+      days: d,
+      totalDays,
+      formattedSeniority,
+      yearsEquivalent,
+    },
+    indemnizacion: {
+      applies: appliesIndemnizacion,
+      daysComputed,
+      baseMonthlySalary,
+      dailyBaseSalary,
+      isCapped,
+      monthlyCap,
+      dailyCap,
+      amount: indemnizacionAmount,
+      explanation,
+      isExemptISR: true,
+    },
+    derechosAdquiridos: {
+      vacacionDays,
+      vacacionRawAmount,
+      vacacionBonus30,
+      vacacionTotal,
+      vacacionDaysInPeriod,
+      aguinaldoSeniorityDays,
+      aguinaldoDaysInPeriod,
+      aguinaldoAmount,
+      aguinaldoIsExempt,
+      salarioPendienteDias,
+      salarioPendienteAmount,
+      total: totalDerechosAdquiridos,
+    },
+    totalLiquidacion,
+    totalExentoISR,
+    totalGravadoISR,
+    notes,
+  };
+}
+
+

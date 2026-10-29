@@ -9,6 +9,7 @@ import {
   calcHourlyAndOvertime,
   calcSeniorityFromHireDate,
   calcIncapacity,
+  calcLiquidacion,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
 import {
@@ -289,5 +290,99 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(resMaternity.isssDailySubsidio, 26.67);
     assert.equal(resMaternity.isssTotalSubsidio, 2987.04);
   });
+
+  it('calculates severance and termination settlements (liquidaciones y finiquitos) accurately', () => {
+    // Caso 1: Despido injustificado (Art. 58 CT) - 2 años exactos, salario de $800
+    // 2 años = 60 días de salario indemnizatorio. Sin topar porque $800 < $1,635.20 (4 salarios mín.)
+    const resDespido = calcLiquidacion({
+      monthlySalary: 800,
+      hireDate: '2024-01-01',
+      endDate: '2026-01-01',
+      motivo: 'despido_injustificado',
+      salarioPendienteDias: 5,
+    });
+    assert.equal(resDespido.seniority.years, 2);
+    assert.equal(resDespido.indemnizacion.applies, true);
+    assert.equal(resDespido.indemnizacion.isCapped, false);
+    assert.equal(resDespido.indemnizacion.daysComputed >= 60, true);
+    assert.equal(resDespido.indemnizacion.amount > 1500, true);
+    assert.equal(resDespido.derechosAdquiridos.salarioPendienteDias, 5);
+    assert.equal(resDespido.derechosAdquiridos.salarioPendienteAmount, 133.35); // 5 * 26.67
+    assert.equal(resDespido.totalExentoISR >= resDespido.indemnizacion.amount, true);
+
+    // Caso 2: Despido injustificado con salario alto ($2,500) y tope de 4 salarios mínimos
+    // Base se topa a 4 * 408.80 = $1,635.20
+    const resHigh = calcLiquidacion({
+      monthlySalary: 2500,
+      hireDate: '2024-01-01',
+      endDate: '2025-01-01',
+      motivo: 'despido_injustificado',
+    });
+    assert.equal(resHigh.indemnizacion.isCapped, true);
+    assert.equal(resHigh.indemnizacion.baseMonthlySalary, 1635.2);
+    assert.equal(resHigh.indemnizacion.amount, 1635.2); // 30 días con base topada exacta (4 * $408.80)
+
+    // Caso 3: Despido injustificado con antigüedad corta (3 meses) - garantía mínima 15 días (Art. 58 inc. 2)
+    const resShort = calcLiquidacion({
+      monthlySalary: 600,
+      hireDate: '2026-01-01',
+      endDate: '2026-03-31',
+      motivo: 'despido_injustificado',
+    });
+    assert.equal(resShort.indemnizacion.daysComputed, 15);
+    assert.equal(resShort.indemnizacion.amount, 300); // 15 * 20.00
+
+    // Caso 4: Renuncia voluntaria (D.L. 592) con menos de 2 años de servicio (< 2 años = $0 prestación)
+    const resRenunciaCorta = calcLiquidacion({
+      monthlySalary: 700,
+      hireDate: '2024-06-01',
+      endDate: '2025-11-01', // 1 año y 5 meses
+      motivo: 'renuncia_voluntaria',
+    });
+    assert.equal(resRenunciaCorta.indemnizacion.applies, false);
+    assert.equal(resRenunciaCorta.indemnizacion.amount, 0);
+    // Pero conserva derechos adquiridos (vacaciones y aguinaldo)
+    assert.equal(resRenunciaCorta.derechosAdquiridos.vacacionTotal > 0, true);
+    assert.equal(resRenunciaCorta.totalLiquidacion > 0, true);
+
+    // Caso 5: Renuncia voluntaria con 3 años de servicio y salario de $600
+    // 3 años * 15 días = 45 días. Salario diario = $20.00 <= $27.26 (tope 2 salarios mínimos diarios)
+    const resRenunciaValida = calcLiquidacion({
+      monthlySalary: 600,
+      hireDate: '2023-01-01',
+      endDate: '2026-01-01',
+      motivo: 'renuncia_voluntaria',
+    });
+    assert.equal(resRenunciaValida.indemnizacion.applies, true);
+    assert.equal(resRenunciaValida.indemnizacion.isCapped, false);
+    assert.equal(resRenunciaValida.indemnizacion.daysComputed >= 45, true);
+    assert.equal(resRenunciaValida.indemnizacion.amount >= 900, true);
+
+    // Caso 6: Despido justificado (Art. 50 CT)
+    const resJustificado = calcLiquidacion({
+      monthlySalary: 900,
+      hireDate: '2023-01-01',
+      endDate: '2026-01-01',
+      motivo: 'despido_justificado',
+    });
+    assert.equal(resJustificado.indemnizacion.applies, false);
+    assert.equal(resJustificado.indemnizacion.amount, 0);
+    assert.equal(resJustificado.derechosAdquiridos.total > 0, true);
+    assert.equal(resJustificado.totalLiquidacion, resJustificado.derechosAdquiridos.total);
+
+    // Caso 7: Liquidación anual regular (1 año completo)
+    const resAnual = calcLiquidacion({
+      monthlySalary: 1000,
+      hireDate: '2025-01-01',
+      endDate: '2025-12-31',
+      motivo: 'liquidacion_anual',
+    });
+    assert.equal(resAnual.indemnizacion.applies, true);
+    assert.equal(resAnual.indemnizacion.amount, 1000.0); // 1 mes completo
+    assert.equal(resAnual.derechosAdquiridos.vacacionDays, 15);
+    assert.equal(resAnual.derechosAdquiridos.vacacionTotal, 650.0); // 15 * 33.33 * 1.30 = 650
+    assert.equal(resAnual.derechosAdquiridos.aguinaldoAmount, 500.0); // 15 días al 12 dic = 15 * 33.33
+  });
 });
+
 

@@ -58,6 +58,7 @@ import { PayrollView } from './components/PayrollView.tsx';
 import { BonusesView } from './components/BonusesView.tsx';
 import { HourlyView } from './components/HourlyView.tsx';
 import { IncapacityView } from './components/IncapacityView.tsx';
+import { LiquidacionView } from './components/LiquidacionView.tsx';
 import {
   ExpensesView,
   type ExpenseCategory,
@@ -89,7 +90,7 @@ import Error404 from './pages/errors/Error404.tsx';
 import Error500 from './pages/errors/Error500.tsx';
 import Error503 from './pages/errors/Error503.tsx';
 
-type CalculatorTab = 'payroll' | 'bonuses' | 'hourly' | 'incapacity';
+type CalculatorTab = 'payroll' | 'bonuses' | 'hourly' | 'incapacity' | 'liquidacion';
 
 const DEFAULT_EXPENSES: ExpenseItem[] = [
   {
@@ -983,6 +984,20 @@ function AppShell() {
 
               <button
                 type="button"
+                onClick={() => {
+                  setCalcTab('liquidacion');
+                  if (!isCalculatorRoute) navigate('/');
+                }}
+                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
+                  isCalculatorRoute && calcTab === 'liquidacion' ? 'active' : ''
+                }`}
+              >
+                <Scale size={14} />
+                <span>Liquidación</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => navigate('/mis-gastos')}
                 className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
                   isExpensesRoute ? 'active' : ''
@@ -1189,6 +1204,20 @@ function AppShell() {
             >
               <Activity size={13} />
               <span>Incapacidades</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCalcTab('liquidacion');
+                if (!isCalculatorRoute) navigate('/');
+              }}
+              className={`mobile-nav-pill ${
+                isCalculatorRoute && calcTab === 'liquidacion' ? 'active' : ''
+              }`}
+            >
+              <Scale size={13} />
+              <span>Liquidación</span>
             </button>
 
             <button
@@ -2096,6 +2125,12 @@ function AppShell() {
                 )}
                 {calcTab === 'incapacity' && (
                   <IncapacityView
+                    monthlySalary={monthlySalary}
+                    formatUSD={formatUSD}
+                  />
+                )}
+                {calcTab === 'liquidacion' && (
+                  <LiquidacionView
                     monthlySalary={monthlySalary}
                     formatUSD={formatUSD}
                   />
