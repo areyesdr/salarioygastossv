@@ -9,6 +9,7 @@ import {
   calcHourlyAndOvertime,
   calcSeniorityFromHireDate,
   calcIncapacity,
+  calcIncapacitySplitQuincenas,
   calcLiquidacion,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
@@ -382,6 +383,69 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(resAnual.derechosAdquiridos.vacacionDays, 15);
     assert.equal(resAnual.derechosAdquiridos.vacacionTotal, 650.0); // 15 * 33.33 * 1.30 = 650
     assert.equal(resAnual.derechosAdquiridos.aguinaldoAmount, 500.0); // 15 días al 12 dic = 15 * 33.33
+  });
+
+  it('calculates incapacities spanning across two consecutive biweekly periods (quincenas) accurately', () => {
+    // Caso 1: Salario $800, Enfermedad común de 10 días: 4 días en Q1 y 6 días en Q2
+    // Empresa paga 100% primeros 3 días
+    // En Q1: 4 días de incapacidad (3 carencia patronal, 1 día ISSS), 11 días trabajados (15 - 4)
+    // En Q2: 6 días de incapacidad (0 carencia porque ya se cumplió en Q1, 6 días ISSS), 9 días trabajados (15 - 6)
+    const split1 = calcIncapacitySplitQuincenas({
+      monthlySalary: 800,
+      type: 'common_illness',
+      q1IncapacityDays: 4,
+      q2IncapacityDays: 6,
+      employerPays100FirstDays: true,
+    });
+
+    assert.equal(split1.totalIncapacityDays, 10);
+    // Q1
+    assert.equal(split1.q1.workedDays, 11);
+    assert.equal(split1.q1.employerIncapacityDays, 3);
+    assert.equal(split1.q1.isssIncapacityDays, 1);
+    assert.equal(split1.q1.isssTotalSubsidio, 20.0); // 1 día * $20.00
+    assert.equal(split1.q1.employerDiscountAmount > 0, true);
+
+    // Q2
+    assert.equal(split1.q2.workedDays, 9);
+    assert.equal(split1.q2.employerIncapacityDays, 0); // carencia completada en Q1
+    assert.equal(split1.q2.isssIncapacityDays, 6);
+    assert.equal(split1.q2.isssTotalSubsidio, 120.0); // 6 días * $20.00
+
+    // Caso 2: Carencia partida entre Q1 y Q2
+    // Ejemplo: Incapacidad de 5 días que empezó en el día 14 (2 días en Q1 y 3 días en Q2)
+    // En Q1: 2 días de incapacidad -> los 2 son carencia patronal. ISSS = 0 días.
+    // En Q2: 3 días de incapacidad -> 1 día restante de carencia patronal y 2 días para el ISSS.
+    const split2 = calcIncapacitySplitQuincenas({
+      monthlySalary: 600,
+      type: 'common_illness',
+      q1IncapacityDays: 2,
+      q2IncapacityDays: 3,
+      employerPays100FirstDays: false,
+    });
+
+    assert.equal(split2.q1.employerIncapacityDays, 2);
+    assert.equal(split2.q1.isssIncapacityDays, 0);
+    assert.equal(split2.q1.isssTotalSubsidio, 0.0);
+
+    assert.equal(split2.q2.employerIncapacityDays, 1);
+    assert.equal(split2.q2.isssIncapacityDays, 2);
+    assert.equal(split2.q2.isssTotalSubsidio, 30.0); // 2 * ($20 * 0.75) = 2 * 15 = 30.0
+
+    // Caso 3: Accidente de trabajo (sin carencia patronal)
+    // 5 días en Q1 y 5 días en Q2 -> Todo corre a cargo del ISSS desde el día 1
+    const splitAccident = calcIncapacitySplitQuincenas({
+      monthlySalary: 800,
+      type: 'work_accident',
+      q1IncapacityDays: 5,
+      q2IncapacityDays: 5,
+    });
+    assert.equal(splitAccident.q1.employerIncapacityDays, 0);
+    assert.equal(splitAccident.q1.isssIncapacityDays, 5);
+    assert.equal(splitAccident.q2.employerIncapacityDays, 0);
+    assert.equal(splitAccident.q2.isssIncapacityDays, 5);
+    assert.equal(splitAccident.q1.isssTotalSubsidio, 100.0);
+    assert.equal(splitAccident.q2.isssTotalSubsidio, 100.0);
   });
 });
 

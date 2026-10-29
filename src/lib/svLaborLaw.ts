@@ -1155,6 +1155,197 @@ export function calcIncapacity({
   };
 }
 
+export interface IncapacitySplitQuincenasParams {
+  monthlySalary: number;
+  type: IncapacityType;
+  q1IncapacityDays: number;
+  q2IncapacityDays: number;
+  employerPays100FirstDays?: boolean;
+}
+
+export interface IncapacityQuincenaBreakdown {
+  quincenaIndex: 1 | 2;
+  label: string;
+  totalDaysInQuincena: number;
+  workedDays: number;
+  incapacityDays: number;
+  employerIncapacityDays: number;
+  isssIncapacityDays: number;
+
+  workedGrossPay: number;
+  employerIncapacityGrossPay: number;
+  totalEmployerGross: number;
+  employerDiscountAmount: number;
+
+  afpEmployee: number;
+  isssEmployee: number;
+  isr: number;
+  totalEmployeeDeductions: number;
+  employerNetPay: number;
+
+  isssDailySubsidio: number;
+  isssTotalSubsidio: number;
+
+  totalPocketPay: number;
+  normalBiweeklyNetPay: number;
+  pocketDifference: number;
+}
+
+export interface IncapacitySplitQuincenasResult {
+  monthlySalary: number;
+  dailyRealSalary: number;
+  dailyCotizableSalary: number;
+  isSalaryCappedByISSS: boolean;
+  type: IncapacityType;
+  totalIncapacityDays: number;
+  q1: IncapacityQuincenaBreakdown;
+  q2: IncapacityQuincenaBreakdown;
+  totalEmployerGross: number;
+  totalEmployerNet: number;
+  totalIsssSubsidio: number;
+  totalPocketPay: number;
+  normalTwoQuincenasNet: number;
+  totalPocketLoss: number;
+}
+
+/**
+ * Calcula la liquidación de una incapacidad cuando abarca dos quincenas consecutivas (Q1 y Q2).
+ * Modela con exactitud:
+ * 1. Días laborados normales vs días de reposo en cada período.
+ * 2. Carencia patronal (primeros 3 días) traspasada ordenadamente de Q1 a Q2.
+ * 3. Descuento de colilla que aplica la empresa en cada quincena por los días subsidiados por el ISSS.
+ * 4. Subsidio neto que entrega el ISSS en cada quincena (0% retenciones).
+ * 5. Impacto real de bolsillo frente al salario neto normal.
+ */
+export function calcIncapacitySplitQuincenas({
+  monthlySalary,
+  type,
+  q1IncapacityDays,
+  q2IncapacityDays,
+  employerPays100FirstDays = false,
+}: IncapacitySplitQuincenasParams): IncapacitySplitQuincenasResult {
+  const safeSalary = Math.max(0, monthlySalary);
+  const q1Incap = Math.max(0, Math.min(15, Math.floor(q1IncapacityDays)));
+  const q2Incap = Math.max(0, Math.min(15, Math.floor(q2IncapacityDays)));
+  const totalIncapacityDays = q1Incap + q2Incap;
+
+  const dailyRealSalary = round2(safeSalary / 30);
+  const cappedMonthly = Math.min(safeSalary, RATES.ISSS_CAP_MONTHLY);
+  const dailyCotizableSalary = round2(cappedMonthly / 30);
+  const isSalaryCappedByISSS = safeSalary > RATES.ISSS_CAP_MONTHLY;
+
+  const isssRate = type === 'maternity' ? 1.0 : 0.75;
+  const employerRate = employerPays100FirstDays ? 1.0 : 0.75;
+  const isssDailySubsidio = round2(dailyCotizableSalary * isssRate);
+  const employerDailyAmount = round2(dailyRealSalary * employerRate);
+
+  // Distribución de carencia patronal (3 días en enfermedad común)
+  let q1EmployerDays = 0;
+  let q1IsssDays = 0;
+  let q2EmployerDays = 0;
+  let q2IsssDays = 0;
+
+  if (type === 'common_illness') {
+    q1EmployerDays = Math.min(q1Incap, 3);
+    q1IsssDays = Math.max(0, q1Incap - q1EmployerDays);
+    const remainingCarencia = Math.max(0, 3 - q1EmployerDays);
+    q2EmployerDays = Math.min(q2Incap, remainingCarencia);
+    q2IsssDays = Math.max(0, q2Incap - q2EmployerDays);
+  } else {
+    // Accidente laboral y maternidad: 100% ISSS desde el día 1
+    q1EmployerDays = 0;
+    q1IsssDays = q1Incap;
+    q2EmployerDays = 0;
+    q2IsssDays = q2Incap;
+  }
+
+  // Quincenas normales de referencia
+  const normalPayroll = calcPayroll(safeSalary, 'biweekly');
+  const normalQ1Net = normalPayroll.quincenaDetails?.q1.netPay ?? normalPayroll.netPay;
+  const normalQ2Net = normalPayroll.quincenaDetails?.q2.netPay ?? normalPayroll.netPay;
+
+  function buildQuincena(
+    quincenaIndex: 1 | 2,
+    incapDays: number,
+    empDays: number,
+    issDays: number,
+    normalNet: number
+  ): IncapacityQuincenaBreakdown {
+    const workedDays = Math.max(0, 15 - incapDays);
+    const workedGrossPay = round2(workedDays * dailyRealSalary);
+    const employerIncapacityGrossPay = round2(empDays * employerDailyAmount);
+    const totalEmployerGross = round2(workedGrossPay + employerIncapacityGrossPay);
+    const normalQuincenaGross = round2(safeSalary / 2);
+    const employerDiscountAmount = round2(Math.max(0, normalQuincenaGross - totalEmployerGross));
+
+    const afpEmployee = round2(totalEmployerGross * RATES.AFP_EE);
+    const isssEmployee = round2(Math.min(totalEmployerGross * RATES.ISSS_EE, RATES.ISSS_MAX_EE_BIWEEKLY));
+    const taxable = Math.max(0, round2(totalEmployerGross - afpEmployee - isssEmployee));
+    const isr = calcISR(taxable, 'biweekly').isr;
+    const totalEmployeeDeductions = round2(afpEmployee + isssEmployee + isr);
+    const employerNetPay = round2(Math.max(0, totalEmployerGross - totalEmployeeDeductions));
+
+    const isssTotalSubsidio = round2(issDays * isssDailySubsidio);
+    const totalPocketPay = round2(employerNetPay + isssTotalSubsidio);
+    const pocketDifference = round2(normalNet - totalPocketPay);
+
+    return {
+      quincenaIndex,
+      label: quincenaIndex === 1 ? '1.ª Quincena' : '2.ª Quincena',
+      totalDaysInQuincena: 15,
+      workedDays,
+      incapacityDays: incapDays,
+      employerIncapacityDays: empDays,
+      isssIncapacityDays: issDays,
+
+      workedGrossPay,
+      employerIncapacityGrossPay,
+      totalEmployerGross,
+      employerDiscountAmount,
+
+      afpEmployee,
+      isssEmployee,
+      isr,
+      totalEmployeeDeductions,
+      employerNetPay,
+
+      isssDailySubsidio,
+      isssTotalSubsidio,
+
+      totalPocketPay,
+      normalBiweeklyNetPay: normalNet,
+      pocketDifference,
+    };
+  }
+
+  const q1 = buildQuincena(1, q1Incap, q1EmployerDays, q1IsssDays, normalQ1Net);
+  const q2 = buildQuincena(2, q2Incap, q2EmployerDays, q2IsssDays, normalQ2Net);
+
+  const totalEmployerGross = round2(q1.totalEmployerGross + q2.totalEmployerGross);
+  const totalEmployerNet = round2(q1.employerNetPay + q2.employerNetPay);
+  const totalIsssSubsidio = round2(q1.isssTotalSubsidio + q2.isssTotalSubsidio);
+  const totalPocketPay = round2(q1.totalPocketPay + q2.totalPocketPay);
+  const normalTwoQuincenasNet = round2(normalQ1Net + normalQ2Net);
+  const totalPocketLoss = round2(Math.max(0, normalTwoQuincenasNet - totalPocketPay));
+
+  return {
+    monthlySalary: safeSalary,
+    dailyRealSalary,
+    dailyCotizableSalary,
+    isSalaryCappedByISSS,
+    type,
+    totalIncapacityDays,
+    q1,
+    q2,
+    totalEmployerGross,
+    totalEmployerNet,
+    totalIsssSubsidio,
+    totalPocketPay,
+    normalTwoQuincenasNet,
+    totalPocketLoss,
+  };
+}
+
 /**
  * Modos de terminación o cálculo de liquidación laboral en El Salvador
  */
