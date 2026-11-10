@@ -778,11 +778,13 @@ function AppShell() {
     const totalMonthlyExpenses = round2(
       userOwnedExpenses.reduce((sum, item) => sum + Math.max(0, item.amount), 0)
     );
-    const netMonthly = monthlyPayroll.netPay;
-    const netBiweekly = biweeklyPayroll.netPay;
-    const remainingMonthly = round2(netMonthly - totalMonthlyExpenses);
-    const remainingQ1 = round2(netBiweekly - q1Total);
-    const remainingQ2 = round2(netBiweekly - q2Total);
+    const baseQ1Net =
+      monthlyBaseOnlyPayroll.quincenaDetails?.q1.netPay ?? round2(monthlyBaseOnlyPayroll.netPay / 2);
+    const baseQ2Net =
+      monthlyBaseOnlyPayroll.quincenaDetails?.q2.netPay ?? round2(monthlyBaseOnlyPayroll.netPay - baseQ1Net);
+    const remainingMonthly = round2(monthlyBaseOnlyPayroll.netPay - totalMonthlyExpenses);
+    const remainingQ1 = round2(baseQ1Net - q1Total);
+    const remainingQ2 = round2(baseQ2Net - q2Total);
     const totalHoursRequired =
       hourlyResult.netHourly > 0 ? round2(totalMonthlyExpenses / hourlyResult.netHourly) : 0;
 
@@ -799,7 +801,7 @@ function AppShell() {
       totalHoursRequired,
       byCategory,
     };
-  }, [userOwnedExpenses, monthlyPayroll.netPay, biweeklyPayroll.netPay, hourlyResult.netHourly]);
+  }, [userOwnedExpenses, monthlyBaseOnlyPayroll, hourlyResult.netHourly]);
 
   const annualBonusesSummary = useMemo(() => {
     const vacNet =
@@ -849,6 +851,7 @@ function AppShell() {
     vacationBonusNet: vacationResult.bonusOnlyMode.netBonusAfterDeductions,
     vacationFullNet: vacationResult.fullAdvanceMode.netTotal,
     vacationWorkedNet: vacationResult.workedVacationMode.netTotal,
+    vacationWorkedExtraNet: vacationResult.workedVacationMode.extraNetOverNormalQuincena,
     vacationBonusGross: vacationResult.bonus30Gross,
     aguinaldoNet: aguinaldoResult.netAguinaldo,
     q25Net: quincena25Result.netQuincena25,
@@ -2387,7 +2390,7 @@ function AppShell() {
               path="/mis-gastos"
               element={
                 <ExpensesView
-                  monthlyNetPay={monthlyPayroll.netPay}
+                  monthlyNetPay={monthlyBaseOnlyPayroll.netPay}
                   netHourly={hourlyResult.netHourly}
                   totalHoursPerMonth={hourlyResult.totalHoursPerMonth}
                   expenseSummary={expenseSummary}
@@ -2433,8 +2436,18 @@ function AppShell() {
                   formatUSD={formatUSD}
                   formatHours={formatHours}
                   currentOwnerId={user?.id || 'usr-sv-01'}
-                  defaultQ1NetPay={biweeklyPayroll.quincenaDetails?.q1.netPay || biweeklyPayroll.netPay}
-                  defaultQ2NetPay={biweeklyPayroll.quincenaDetails?.q2.netPay || biweeklyPayroll.netPay}
+                  defaultQ1NetPay={
+                    monthlyBaseOnlyPayroll.quincenaDetails?.q1.netPay ??
+                    round2(monthlyBaseOnlyPayroll.netPay / 2)
+                  }
+                  defaultQ2NetPay={
+                    monthlyBaseOnlyPayroll.quincenaDetails?.q2.netPay ??
+                    round2(
+                      monthlyBaseOnlyPayroll.netPay -
+                        (monthlyBaseOnlyPayroll.quincenaDetails?.q1.netPay ??
+                          round2(monthlyBaseOnlyPayroll.netPay / 2))
+                    )
+                  }
                   monthLedgers={monthLedgers}
                   onSaveMonthLedger={handleSaveMonthLedger}
                   legalBonuses={legalBonuses}

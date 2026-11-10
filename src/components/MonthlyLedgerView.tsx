@@ -30,10 +30,14 @@ import { round2 } from '../lib/svLaborLaw.ts';
 export interface LegalBonusesPayload {
   vacationBonusNet: number;
   vacationFullNet: number;
+  vacationWorkedNet?: number;
+  vacationWorkedExtraNet?: number;
   vacationBonusGross: number;
   aguinaldoNet: number;
   q25Net: number;
 }
+
+export type LegalBonusType = 'vacation_bonus' | 'vacation_worked' | 'vacation_full' | 'aguinaldo' | 'q25';
 
 interface MonthlyLedgerViewProps {
   currentOwnerId: string;
@@ -367,8 +371,124 @@ export function MonthlyLedgerView({
       (i) => i.desc.toLowerCase().includes('quincena 25') || i.desc.toLowerCase().includes('q25')
     );
 
+  const isBonusInQuincena = (
+    bonusKey: LegalBonusType,
+    quincena: 'q1' | 'q2'
+  ): boolean => {
+    return activeMonthLedger[quincena].items.some((item) => {
+      if (item.type !== 'income') return false;
+      const desc = item.desc.toLowerCase();
+      switch (bonusKey) {
+        case 'vacation_bonus':
+          return (
+            desc.includes('recargo vacacional') ||
+            (desc.includes('vacaci') && desc.includes('30%') && !desc.includes('trabajada') && !desc.includes('completa'))
+          );
+        case 'vacation_worked':
+          return desc.includes('trabajada');
+        case 'vacation_full':
+          return desc.includes('completa');
+        case 'aguinaldo':
+          return desc.includes('aguinaldo');
+        case 'q25':
+          return desc.includes('quincena 25') || desc.includes('q25');
+      }
+    });
+  };
+
+  const handleRemoveLegalBonus = (
+    bonusKey: LegalBonusType,
+    quincena: 'q1' | 'q2'
+  ) => {
+    const updatedItems = activeMonthLedger[quincena].items.filter((item) => {
+      if (item.type !== 'income') return true;
+      const desc = item.desc.toLowerCase();
+      switch (bonusKey) {
+        case 'vacation_bonus':
+          return !(
+            desc.includes('recargo vacacional') ||
+            (desc.includes('vacaci') && desc.includes('30%') && !desc.includes('trabajada') && !desc.includes('completa'))
+          );
+        case 'vacation_worked':
+          return !desc.includes('trabajada');
+        case 'vacation_full':
+          return !desc.includes('completa');
+        case 'aguinaldo':
+          return !desc.includes('aguinaldo');
+        case 'q25':
+          return !(desc.includes('quincena 25') || desc.includes('q25'));
+      }
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      ownerId: currentOwnerId,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
+  const handleMoveLegalBonus = (
+    bonusKey: LegalBonusType,
+    fromQ: 'q1' | 'q2',
+    toQ: 'q1' | 'q2'
+  ) => {
+    const itemToMove = activeMonthLedger[fromQ].items.find((item) => {
+      if (item.type !== 'income') return false;
+      const desc = item.desc.toLowerCase();
+      switch (bonusKey) {
+        case 'vacation_bonus':
+          return (
+            desc.includes('recargo vacacional') ||
+            (desc.includes('vacaci') && desc.includes('30%') && !desc.includes('trabajada') && !desc.includes('completa'))
+          );
+        case 'vacation_worked':
+          return desc.includes('trabajada');
+        case 'vacation_full':
+          return desc.includes('completa');
+        case 'aguinaldo':
+          return desc.includes('aguinaldo');
+        case 'q25':
+          return desc.includes('quincena 25') || desc.includes('q25');
+      }
+    });
+
+    const newFromItems = activeMonthLedger[fromQ].items.filter((i) => i.id !== itemToMove?.id);
+    let newToItems = activeMonthLedger[toQ].items;
+
+    if (itemToMove) {
+      newToItems = [
+        ...newToItems,
+        {
+          ...itemToMove,
+          id: `${toQ}-bonus-${bonusKey}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          day: toQ === 'q1' ? 15 : 30,
+        },
+      ];
+    }
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      ownerId: currentOwnerId,
+      [fromQ]: {
+        ...activeMonthLedger[fromQ],
+        items: newFromItems,
+      },
+      [toQ]: {
+        ...activeMonthLedger[toQ],
+        items: newToItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
   const handleAddLegalBonus = (
-    bonusKey: 'vacation_bonus' | 'vacation_full' | 'aguinaldo' | 'q25',
+    bonusKey: LegalBonusType,
     quincena: 'q1' | 'q2'
   ) => {
     if (!legalBonuses) return;
@@ -380,6 +500,10 @@ export function MonthlyLedgerView({
       case 'vacation_bonus':
         desc = 'Recargo Vacacional 30% (Ley)';
         amount = legalBonuses.vacationBonusNet;
+        break;
+      case 'vacation_worked':
+        desc = 'Vacación Trabajada (15d + 30% Ley)';
+        amount = legalBonuses.vacationWorkedExtraNet ?? legalBonuses.vacationWorkedNet ?? 0;
         break;
       case 'vacation_full':
         desc = 'Vacación Completa 15 días + 30% (Ley)';
@@ -397,8 +521,10 @@ export function MonthlyLedgerView({
 
     if (amount <= 0) return;
 
+    if (isBonusInQuincena(bonusKey, quincena)) return;
+
     const newItem: LedgerItem = {
-      id: `${quincena}-bonus-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      id: `${quincena}-bonus-${bonusKey}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       desc,
       amount,
       type: 'income',
@@ -633,6 +759,174 @@ export function MonthlyLedgerView({
         </button>
       </div>
 
+      {/* Panel de Prestaciones de Ley Opcionales para el Presupuesto */}
+      {legalBonuses && (
+        <div className="card-soft p-3 mb-4 border border-slate-200">
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2.5">
+            <div className="d-flex align-items-center gap-2">
+              <Gift size={16} className="text-emerald shrink-0" />
+              <div>
+                <h6 className="fw-bold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
+                  Prestaciones e Ingresos Extraordinarios (Opcional) — {MONTH_NAMES_ES[selectedMonth - 1]} {selectedYear}
+                </h6>
+                <span className="text-muted small" style={{ fontSize: '11px' }}>
+                  Agrega prestaciones de ley a la quincena que decidas (Pago del 15 o Pago del 30) sin alterar tu salario base ordinario.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTargetBonusQuincena('q1');
+                setShowBonusModal(true);
+              }}
+              className="btn btn-sm btn-outline-dark d-inline-flex align-items-center gap-1.5 py-1 px-2.5 fw-semibold"
+              style={{ fontSize: '11px' }}
+            >
+              <Plus size={13} />
+              <span>Ver todas / Opciones</span>
+            </button>
+          </div>
+
+          <div className="row g-2">
+            {[
+              {
+                key: 'vacation_bonus' as const,
+                title: 'Recargo Vacación (30%)',
+                amount: legalBonuses.vacationBonusNet,
+                badge: '30% prima de ley neta',
+                note: 'Sin interrumpir labores',
+              },
+              {
+                key: 'vacation_worked' as const,
+                title: 'Vacación Trabajada',
+                amount: legalBonuses.vacationWorkedExtraNet ?? legalBonuses.vacationWorkedNet ?? 0,
+                badge: '15d laborados + 30% prima',
+                note: 'Paga doble de descanso',
+              },
+              {
+                key: 'aguinaldo' as const,
+                title: 'Aguinaldo Legal',
+                amount: legalBonuses.aguinaldoNet,
+                badge: 'Gratificación anual',
+                note: 'Exento renta hasta $1,500',
+              },
+              {
+                key: 'q25' as const,
+                title: 'Quincena 25',
+                amount: legalBonuses.q25Net,
+                badge: 'Decreto 499',
+                note: '100% exento de deducciones',
+              },
+            ].map((b) => {
+              const inQ1 = isBonusInQuincena(b.key, 'q1');
+              const inQ2 = isBonusInQuincena(b.key, 'q2');
+
+              return (
+                <div key={b.key} className="col-12 col-sm-6 col-xl-3">
+                  <div
+                    className={`p-2.5 rounded border h-100 d-flex flex-column justify-content-between ${
+                      inQ1 || inQ2 ? 'bg-emerald-subtle border-emerald' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div>
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <strong className="text-slate-dark" style={{ fontSize: '12px' }}>
+                          {b.title}
+                        </strong>
+                        <span className="font-monospace fw-bold text-emerald" style={{ fontSize: '12px' }}>
+                          +{formatUSD(b.amount)}
+                        </span>
+                      </div>
+                      <span className="text-muted d-block small mb-2" style={{ fontSize: '10.5px' }}>
+                        {b.badge} · {b.note}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-top border-slate-100">
+                      {inQ1 ? (
+                        <div className="d-flex align-items-center justify-content-between gap-1">
+                          <span className="badge bg-emerald text-white fw-semibold" style={{ fontSize: '10px' }}>
+                            ✓ En Pago del 15
+                          </span>
+                          <div className="d-flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveLegalBonus(b.key, 'q1', 'q2')}
+                              className="btn btn-xs btn-outline-dark py-0.5 px-1.5"
+                              style={{ fontSize: '10px' }}
+                              title="Mover al Pago del 30"
+                            >
+                              A Pago 30
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLegalBonus(b.key, 'q1')}
+                              className="btn btn-xs btn-outline-danger py-0.5 px-1.5"
+                              style={{ fontSize: '10px' }}
+                              title="Quitar de la quincena"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        </div>
+                      ) : inQ2 ? (
+                        <div className="d-flex align-items-center justify-content-between gap-1">
+                          <span className="badge bg-emerald text-white fw-semibold" style={{ fontSize: '10px' }}>
+                            ✓ En Pago del 30
+                          </span>
+                          <div className="d-flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveLegalBonus(b.key, 'q2', 'q1')}
+                              className="btn btn-xs btn-outline-dark py-0.5 px-1.5"
+                              style={{ fontSize: '10px' }}
+                              title="Mover al Pago del 15"
+                            >
+                              A Pago 15
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLegalBonus(b.key, 'q2')}
+                              className="btn btn-xs btn-outline-danger py-0.5 px-1.5"
+                              style={{ fontSize: '10px' }}
+                              title="Quitar de la quincena"
+                            >
+                              Quitar
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="d-flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleAddLegalBonus(b.key, 'q1')}
+                            className="btn btn-xs btn-dark flex-fill py-1 px-1.5 fw-semibold d-inline-flex justify-content-center align-items-center gap-1"
+                            style={{ fontSize: '11px' }}
+                          >
+                            <Plus size={11} />
+                            <span>Pago del 15</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddLegalBonus(b.key, 'q2')}
+                            className="btn btn-xs btn-outline-dark flex-fill py-1 px-1.5 fw-semibold d-inline-flex justify-content-center align-items-center gap-1"
+                            style={{ fontSize: '11px' }}
+                          >
+                            <Plus size={11} />
+                            <span>Pago del 30</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Doble Columna Quincenal: Pago del 15 y Pago del 30 */}
       <div className="row g-4 align-items-start">
         {/* COLUMNA 1: PAGO DEL 15 */}
@@ -646,6 +940,19 @@ export function MonthlyLedgerView({
                     <Calendar size={15} className="text-secondary" />
                     <span>Pago del 15</span>
                   </h6>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetBonusQuincena('q1');
+                      setShowBonusModal(true);
+                    }}
+                    className="btn btn-xs btn-outline-dark py-0.5 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                    style={{ fontSize: '10.5px' }}
+                    title="Agregar bono de ley a esta quincena"
+                  >
+                    <Plus size={10} />
+                    <span>Bono</span>
+                  </button>
                   <span className={`font-monospace ${q1Sobrante >= 0 ? 'badge-emerald' : 'badge-terracotta'}`} style={{ fontSize: '11px' }}>
                     Sobrante: {formatUSD(q1Sobrante)} ({q1SobrantePct}%)
                   </span>
@@ -1019,6 +1326,19 @@ export function MonthlyLedgerView({
                     <Calendar size={15} className="text-secondary" />
                     <span>Pago del 30</span>
                   </h6>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTargetBonusQuincena('q2');
+                      setShowBonusModal(true);
+                    }}
+                    className="btn btn-xs btn-outline-dark py-0.5 px-2 fw-semibold d-inline-flex align-items-center gap-1"
+                    style={{ fontSize: '10.5px' }}
+                    title="Agregar bono de ley a esta quincena"
+                  >
+                    <Plus size={10} />
+                    <span>Bono</span>
+                  </button>
                   <span className={`font-monospace ${q2Sobrante >= 0 ? 'badge-emerald' : 'badge-terracotta'}`} style={{ fontSize: '11px' }}>
                     Sobrante: {formatUSD(q2Sobrante)} ({q2SobrantePct}%)
                   </span>
@@ -1673,7 +1993,7 @@ export function MonthlyLedgerView({
                         </span>
                       </div>
                       <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
-                        Calculado sumando el 30% vacacional al salario quincenal y deduciendo AFP, ISSS y retención de renta marginal. Se suma a tu quincena ordinaria.
+                        Calculado sumando el 30% vacacional al salario quincenal y deduciendo AFP, ISSS y retención de renta marginal. Se suma a tu quincena ordinaria sin interrumpir labores.
                       </p>
                       <button
                         type="button"
@@ -1686,7 +2006,32 @@ export function MonthlyLedgerView({
                     </div>
                   </div>
 
-                  {/* Tarjeta 2: Vacación Completa 15 días + 30% */}
+                  {/* Tarjeta 2: Vacación Trabajada (Paga Doble + 30%) */}
+                  <div className="col-12 col-md-6">
+                    <div className="card h-100 p-3 border rounded shadow-2xs">
+                      <div className="d-flex justify-content-between align-items-start mb-1">
+                        <span className="badge bg-emerald-subtle text-emerald fw-semibold" style={{ fontSize: '11px' }}>
+                          Vacación Trabajada (15d + 30%)
+                        </span>
+                        <span className="fs-5 fw-bold font-monospace text-emerald">
+                          +{formatUSD(legalBonuses?.vacationWorkedExtraNet ?? legalBonuses?.vacationWorkedNet ?? 0)}
+                        </span>
+                      </div>
+                      <p className="text-muted small mb-3" style={{ fontSize: '12px' }}>
+                        Beneficio neto adicional percibido al laborar el período vacacional (15 días trabajados compensados más la prima legal del 30% con deducciones de ley).
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleAddLegalBonus('vacation_worked', targetBonusQuincena)}
+                        className="btn btn-sm btn-dark mt-auto w-100 fw-semibold d-flex justify-content-center align-items-center gap-1.5"
+                      >
+                        <Plus size={13} />
+                        <span>Insertar a {targetBonusQuincena === 'q1' ? 'Pago del 15' : 'Pago del 30'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta 3: Vacación Completa 15 días + 30% */}
                   <div className="col-12 col-md-6">
                     <div className="card h-100 p-3 border rounded shadow-2xs">
                       <div className="d-flex justify-content-between align-items-start mb-1">
