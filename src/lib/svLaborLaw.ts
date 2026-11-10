@@ -448,6 +448,26 @@ export interface VacationCalculationResult {
     totalDeductions: number;
     netTotal: number;
   };
+  /**
+   * Modalidad 3: Vacación trabajada / compensada (15 días laborados ordinarios + 15 días de vacación + 30% de prima).
+   * Total devengado en la quincena: 230% de la quincena ordinaria (115% de un mes de salario).
+   * Nota legal (Art. 188 Código de Trabajo): La ley prohíbe compensar en dinero el descanso durante la relación
+   * laboral activa. Esta modalidad calcula el escenario real en el que el empleado labora dicho período.
+   */
+  workedVacationMode: {
+    worked15DaysGross: number;
+    vacation15DaysGross: number;
+    bonus30Gross: number;
+    totalGross: number;
+    afp: number;
+    isss: number;
+    taxable: number;
+    isr: number;
+    totalDeductions: number;
+    netTotal: number;
+    normalQuincenaNet: number;
+    extraNetOverNormalQuincena: number;
+  };
   splits: VacationTramo[];
 }
 
@@ -492,6 +512,25 @@ export function calcVacation(
   const totalDeductionsFull = round2(afpFull + isssFull + isrFull);
   const netFull = Math.max(0, round2(completeVacationGross - totalDeductionsFull));
 
+  // Modalidad 3: Vacación trabajada / compensada (15 días trabajados ordinarios + 15 días vacación + 30% prima)
+  const worked15DaysGross = base15DaysGross;
+  const vacation15DaysGross = base15DaysGross;
+  const totalWorkedGross = round2(worked15DaysGross + vacation15DaysGross + bonus30Gross);
+  const afpWorked = round2(totalWorkedGross * RATES.AFP_EE);
+  const isssWorked = round2(Math.min(totalWorkedGross, RATES.ISSS_CAP_BIWEEKLY) * RATES.ISSS_EE);
+  const taxableWorked = Math.max(0, round2(totalWorkedGross - afpWorked - isssWorked));
+  const isrWorked = calcISR(taxableWorked, 'biweekly').isr;
+  const totalDeductionsWorked = round2(afpWorked + isssWorked + isrWorked);
+  const netWorked = Math.max(0, round2(totalWorkedGross - totalDeductionsWorked));
+
+  // Quincena ordinaria sin vacación para determinar beneficio extra neto percibido:
+  const afpNormalQ = round2(base15DaysGross * RATES.AFP_EE);
+  const isssNormalQ = round2(Math.min(base15DaysGross, RATES.ISSS_CAP_BIWEEKLY) * RATES.ISSS_EE);
+  const taxableNormalQ = Math.max(0, round2(base15DaysGross - afpNormalQ - isssNormalQ));
+  const isrNormalQ = calcISR(taxableNormalQ, 'biweekly').isr;
+  const normalQuincenaNet = Math.max(0, round2(base15DaysGross - (afpNormalQ + isssNormalQ + isrNormalQ)));
+  const extraNetOverNormalQuincena = Math.max(0, round2(netWorked - normalQuincenaNet));
+
   const labels = ['Semana Santa', 'Fiestas Agostinas', 'Fin de Año'];
   const splits: VacationTramo[] = splitDays.map((days, idx) => {
     const safeDays = Math.max(0, days);
@@ -530,6 +569,20 @@ export function calcVacation(
       isr: isrFull,
       totalDeductions: totalDeductionsFull,
       netTotal: netFull,
+    },
+    workedVacationMode: {
+      worked15DaysGross,
+      vacation15DaysGross,
+      bonus30Gross,
+      totalGross: totalWorkedGross,
+      afp: afpWorked,
+      isss: isssWorked,
+      taxable: taxableWorked,
+      isr: isrWorked,
+      totalDeductions: totalDeductionsWorked,
+      netTotal: netWorked,
+      normalQuincenaNet,
+      extraNetOverNormalQuincena,
     },
     splits,
   };

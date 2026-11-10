@@ -273,7 +273,7 @@ function AppShell() {
 
   // Vacation state
   const [vacationBonusPct, setVacationBonusPct] = useState<number>(30);
-  const [vacationMode, setVacationMode] = useState<'bonus_only' | 'full_advance'>('bonus_only');
+  const [vacationMode, setVacationMode] = useState<'bonus_only' | 'full_advance' | 'worked_vacation'>('bonus_only');
   const [vacationSector, setVacationSector] = useState<'privado' | 'publico'>('privado');
   const [splitDays, setSplitDays] = useState<[number, number, number]>([5, 5, 5]);
 
@@ -744,8 +744,15 @@ function AppShell() {
         ? 0
         : vacationMode === 'bonus_only'
           ? vacationResult.bonusOnlyMode.netBonusAfterDeductions
-          : round2(vacationResult.fullAdvanceMode.netTotal - biweeklyPayroll.netPay);
-    const vacGross = vacationSector === 'publico' ? 0 : vacationResult.bonus30Gross;
+          : vacationMode === 'full_advance'
+            ? round2(vacationResult.fullAdvanceMode.netTotal - biweeklyPayroll.netPay)
+            : vacationResult.workedVacationMode.extraNetOverNormalQuincena;
+    const vacGross =
+      vacationSector === 'publico'
+        ? 0
+        : vacationMode === 'worked_vacation'
+          ? vacationResult.completeVacationGross
+          : vacationResult.bonus30Gross;
     const agNet = aguinaldoResult.netAguinaldo;
     const q25Net = quincena25Result.netQuincena25;
 
@@ -778,6 +785,7 @@ function AppShell() {
   const legalBonuses = useMemo(() => ({
     vacationBonusNet: vacationResult.bonusOnlyMode.netBonusAfterDeductions,
     vacationFullNet: vacationResult.fullAdvanceMode.netTotal,
+    vacationWorkedNet: vacationResult.workedVacationMode.netTotal,
     vacationBonusGross: vacationResult.bonus30Gross,
     aguinaldoNet: aguinaldoResult.netAguinaldo,
     q25Net: quincena25Result.netQuincena25,

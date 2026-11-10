@@ -11,6 +11,7 @@ import {
   calcIncapacity,
   calcIncapacitySplitQuincenas,
   calcLiquidacion,
+  round2,
   MINIMUM_WAGES_2026,
 } from './svLaborLaw.ts';
 import {
@@ -72,6 +73,21 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(vac.completeVacationGross, 650.0);
     assert.equal(vac.splits.length, 3);
     assert.equal(vac.splits[0].bonus30Part, 50.0);
+
+    // Modalidad 3: Vacación trabajada (15 días laborados + 15 días vacación + 30% prima = 230% quincenal)
+    assert.equal(vac.workedVacationMode.worked15DaysGross, 500.0);
+    assert.equal(vac.workedVacationMode.vacation15DaysGross, 500.0);
+    assert.equal(vac.workedVacationMode.bonus30Gross, 150.0);
+    assert.equal(vac.workedVacationMode.totalGross, 1150.0);
+    assert.equal(vac.workedVacationMode.afp, 83.38);
+    assert.equal(vac.workedVacationMode.isss, 15.0); // Tope $15.00 quincenal
+    assert.equal(vac.workedVacationMode.taxable, 1051.62);
+    assert.ok(vac.workedVacationMode.isr > 0);
+    assert.equal(
+      vac.workedVacationMode.netTotal,
+      round2(vac.workedVacationMode.totalGross - vac.workedVacationMode.totalDeductions)
+    );
+    assert.ok(vac.workedVacationMode.extraNetOverNormalQuincena > 0);
   });
 
   it('calculates Aguinaldo by seniority and proportional days, applying $1,500 ISR exemption', () => {

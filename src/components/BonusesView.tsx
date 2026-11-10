@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Calendar, Gift, Plane, Check } from 'lucide-react';
+import { Calendar, Gift, Plane, Check, AlertTriangle } from 'lucide-react';
 import {
   RATES,
   round2,
@@ -40,8 +40,8 @@ interface BonusesViewProps {
   setVacationSector: (v: 'privado' | 'publico') => void;
   vacationBonusPct: number;
   setVacationBonusPct: (v: number) => void;
-  vacationMode: 'bonus_only' | 'full_advance';
-  setVacationMode: (v: 'bonus_only' | 'full_advance') => void;
+  vacationMode: 'bonus_only' | 'full_advance' | 'worked_vacation';
+  setVacationMode: (v: 'bonus_only' | 'full_advance' | 'worked_vacation') => void;
   splitDays: [number, number, number];
   setSplitDays: (v: [number, number, number]) => void;
   formatUSD: (val: number) => string;
@@ -187,13 +187,29 @@ export function BonusesView({
                   </div>
                   <h6 className="fw-semibold text-slate-dark mb-1">Vacación (15 días + 30% Extra)</h6>
                   <p className="text-muted small mb-2 font-sans" style={{ fontSize: '12px' }}>
-                    15 días continuos de descanso pagado más un <strong>30% de regalo de ley</strong> sobre esa quincena (lleva descuentos normales).
+                    15 días continuos de descanso pagado más un <strong>30% de prima de ley</strong> sobre esa quincena (lleva deducciones de ley).
                   </p>
                 </div>
                 <div className="d-flex justify-content-between align-items-baseline pt-2 border-top">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>Solo el bono 30% neto:</span>
+                  <span className="small text-muted" style={{ fontSize: '12px' }}>
+                    {vacationSector === 'publico'
+                      ? 'Sector público (sin bono):'
+                      : vacationMode === 'bonus_only'
+                        ? 'Solo bono 30% neto:'
+                        : vacationMode === 'full_advance'
+                          ? 'Total adelantado neto:'
+                          : 'Total quincena trabajada:'}
+                  </span>
                   <span className="fs-5 fw-bold font-monospace text-slate-dark">
-                    +{formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
+                    +{formatUSD(
+                      vacationSector === 'publico'
+                        ? 0
+                        : vacationMode === 'bonus_only'
+                          ? vacationResult.bonusOnlyMode.netBonusAfterDeductions
+                          : vacationMode === 'full_advance'
+                            ? vacationResult.fullAdvanceMode.netTotal
+                            : vacationResult.workedVacationMode.netTotal
+                    )}
                   </span>
                 </div>
               </div>
@@ -539,27 +555,28 @@ export function BonusesView({
             </div>
           ) : (
             <div className="row g-4">
-              <div className="col-12 col-lg-7">
+              {/* Selector de Modalidades de Vacación */}
+              <div className="col-12">
                 <div className="row g-3">
                   {/* Modalidad A: Solo Bono 30% */}
-                  <div className="col-12 col-md-6">
+                  <div className="col-12 col-md-4">
                     <div
                       onClick={() => setVacationMode('bonus_only')}
                       className={`p-3 rounded border cursor-pointer h-100 d-flex flex-column justify-content-between ${
-                        vacationMode === 'bonus_only' ? 'bg-slate-50 border-secondary' : 'bg-white'
+                        vacationMode === 'bonus_only' ? 'bg-slate-50 border-secondary shadow-sm' : 'bg-white'
                       }`}
                       style={{ cursor: 'pointer' }}
                     >
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <span className="badge-subtle" style={{ fontSize: '10px' }}>
-                            Práctica A
+                            Práctica Habitual
                           </span>
                           {vacationMode === 'bonus_only' && <Check size={14} className="text-emerald" />}
                         </div>
-                        <h6 className="fw-semibold text-slate-dark mb-1">Depósito solo del Bono 30%</h6>
+                        <h6 className="fw-semibold text-slate-dark mb-1">Solo Bono 30%</h6>
                         <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
-                          La quincena se paga en la fecha habitual y se añade el 30% adicional:
+                          Tomás los 15 días de descanso. La quincena se cobra en fecha regular y se suma el 30%:
                         </p>
                         <ul className="list-unstyled small font-monospace text-muted mb-3" style={{ fontSize: '11px' }}>
                           <li className="d-flex justify-content-between">
@@ -567,7 +584,7 @@ export function BonusesView({
                             <span className="fw-semibold text-slate-dark">{formatUSD(vacationResult.bonus30Gross)}</span>
                           </li>
                           <li className="d-flex justify-content-between">
-                            <span>- Deducciones de ley:</span>
+                            <span>- Deducciones:</span>
                             <span>-{formatUSD(round2(vacationResult.bonusOnlyMode.afp + vacationResult.bonusOnlyMode.isss + vacationResult.bonusOnlyMode.isrEstimated))}</span>
                           </li>
                         </ul>
@@ -575,31 +592,31 @@ export function BonusesView({
                       <div className="pt-2 border-top d-flex justify-content-between align-items-baseline">
                         <span className="small text-muted" style={{ fontSize: '12px' }}>Bono Neto:</span>
                         <span className="fs-5 fw-bold font-monospace text-emerald">
-                          {formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
+                          +{formatUSD(vacationResult.bonusOnlyMode.netBonusAfterDeductions)}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Modalidad B: Anticipo Completo */}
-                  <div className="col-12 col-md-6">
+                  <div className="col-12 col-md-4">
                     <div
                       onClick={() => setVacationMode('full_advance')}
                       className={`p-3 rounded border cursor-pointer h-100 d-flex flex-column justify-content-between ${
-                        vacationMode === 'full_advance' ? 'bg-slate-50 border-secondary' : 'bg-white'
+                        vacationMode === 'full_advance' ? 'bg-slate-50 border-secondary shadow-sm' : 'bg-white'
                       }`}
                       style={{ cursor: 'pointer' }}
                     >
                       <div>
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <span className="badge-subtle" style={{ fontSize: '10px' }}>
-                            Práctica B
+                            Anticipo de Ley (Art. 182)
                           </span>
                           {vacationMode === 'full_advance' && <Check size={14} className="text-emerald" />}
                         </div>
-                        <h6 className="fw-semibold text-slate-dark mb-1">Adelanto 15 días + Bono 30%</h6>
+                        <h6 className="fw-semibold text-slate-dark mb-1">Adelanto 15 días + Bono</h6>
                         <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
-                          Pago adelantado de la quincena completa ({formatUSD(vacationResult.base15DaysGross)}) más el 30%:
+                          Cobrás por adelantado la quincena de vacación ({formatUSD(vacationResult.base15DaysGross)}) más el 30% antes de salir:
                         </p>
                         <ul className="list-unstyled small font-monospace text-muted mb-3" style={{ fontSize: '11px' }}>
                           <li className="d-flex justify-content-between">
@@ -619,6 +636,79 @@ export function BonusesView({
                         </span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Modalidad C: Vacación Trabajada / Compensada */}
+                  <div className="col-12 col-md-4">
+                    <div
+                      onClick={() => setVacationMode('worked_vacation')}
+                      className={`p-3 rounded border cursor-pointer h-100 d-flex flex-column justify-content-between ${
+                        vacationMode === 'worked_vacation' ? 'bg-slate-50 border-secondary shadow-sm' : 'bg-white'
+                      }`}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="badge bg-amber-subtle text-amber-800 border border-amber-subtle font-monospace" style={{ fontSize: '10px' }}>
+                            Vacación Trabajada
+                          </span>
+                          {vacationMode === 'worked_vacation' && <Check size={14} className="text-emerald" />}
+                        </div>
+                        <h6 className="fw-semibold text-slate-dark mb-1">Trabajada (Paga Doble + 30%)</h6>
+                        <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
+                          Laborás durante la vacación: 15 días trabajados + 15 días vacación + 30% prima (230% quincenal):
+                        </p>
+                        <ul className="list-unstyled small font-monospace text-muted mb-3" style={{ fontSize: '11px' }}>
+                          <li className="d-flex justify-content-between">
+                            <span>Total Bruto Quincena:</span>
+                            <span className="fw-semibold text-slate-dark">{formatUSD(vacationResult.workedVacationMode.totalGross)}</span>
+                          </li>
+                          <li className="d-flex justify-content-between">
+                            <span>- Deducciones (ISSS, AFP, Renta):</span>
+                            <span>-{formatUSD(vacationResult.workedVacationMode.totalDeductions)}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="pt-2 border-top d-flex justify-content-between align-items-baseline">
+                        <div className="d-flex flex-column">
+                          <span className="small text-muted" style={{ fontSize: '11px' }}>Neto Quincena:</span>
+                          <span className="text-emerald font-monospace fw-semibold" style={{ fontSize: '10px' }}>
+                            (+{formatUSD(vacationResult.workedVacationMode.extraNetOverNormalQuincena)} extra)
+                          </span>
+                        </div>
+                        <span className="fs-5 fw-bold font-monospace text-slate-dark">
+                          {formatUSD(vacationResult.workedVacationMode.netTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fila Inferior: Advertencia Legal Art. 188 y División de Tramos */}
+              <div className="col-12 col-lg-7">
+                <div className="p-3 rounded border border-warning-subtle bg-amber-subtle text-amber-950 h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <AlertTriangle size={17} className="text-amber-700 flex-shrink-0" />
+                      <strong className="text-slate-dark" style={{ fontSize: '13px' }}>
+                        Art. 188 Código de Trabajo: Prohibición de Compensar en Dinero
+                      </strong>
+                    </div>
+                    <p className="mb-2 small font-sans" style={{ fontSize: '12px', lineHeight: '1.5' }}>
+                      El Art. 188 del Código de Trabajo de El Salvador establece:
+                      <em className="d-block my-1 ps-2 border-start border-2 border-amber-600 text-slate-dark">
+                        «Se prohíbe compensar las vacaciones en dinero o en especie. Asimismo se prohíbe fraccionar o acumular los períodos de vacaciones; y a la obligación del patrono de darlas, corresponde la del trabajador de tomarlas.»
+                      </em>
+                      La vacación es un descanso remunerado obligatorio e irrenunciable. La ley prohíbe renunciar al descanso o venderlo en efectivo mientras el contrato laboral esté vigente.
+                    </p>
+                    <p className="mb-0 small text-muted font-sans" style={{ fontSize: '11.5px' }}>
+                      <strong>¿Cómo se remunera en la práctica si se labora?</strong> Si el empleado trabaja sus 15 días de vacación, percibe el salario por el trabajo desempeñado (100% de la quincena) más la retribución legal del descanso no gozado (100% quincena + 30% prima vacacional = 130%), devengando un total de <strong>230% de la quincena ordinaria</strong> (115% de un mes regular).
+                    </p>
+                  </div>
+                  <div className="pt-2 border-top border-warning-subtle mt-2 d-flex justify-content-between align-items-center font-monospace small">
+                    <span className="text-muted" style={{ fontSize: '11px' }}>Excepción legal de pago en efectivo:</span>
+                    <span className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>Arts. 187 y 189 CT (Finiquito)</span>
                   </div>
                 </div>
               </div>
