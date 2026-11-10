@@ -465,6 +465,76 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     assert.equal(splitAccident.q1.isssTotalSubsidio, 100.0);
     assert.equal(splitAccident.q2.isssTotalSubsidio, 100.0);
   });
+
+  it('calculates payroll with extraordinary additions (vacation bonus, worked vacation, aguinaldo, Q25) respecting tax exemptions', () => {
+    // 1. Quincena normal sin adiciones para $1,000 mensual ($500 quincenal)
+    const basePayroll = calcPayroll(1000, 'biweekly', 0);
+    assert.equal(basePayroll.grossTotal, 500.0);
+    assert.equal(basePayroll.afpEmployee, 36.25);
+    assert.equal(basePayroll.isssEmployee, 15.0); // 3% de 500
+    assert.equal(basePayroll.isr, 30.23); // Tramo III quincenal
+    assert.equal(basePayroll.netPay, 418.52);
+
+    // 2. Con Recargo de Vacación (30% sobre 15 días = $150.00)
+    // Bruto = 500 + 150 = 650.00
+    // Cotiza AFP: 650 * 0.0725 = 47.13
+    // Cotiza ISSS: tope quincenal $15.00
+    // Base renta: 650 - 47.13 - 15.00 = 587.87 -> Tramo III ISR: (587.87 - 447.62) * 0.20 + 30.00 = 58.05
+    // Deducciones = 47.13 + 15.00 + 58.05 = 120.18
+    // Neto = 650 - 120.18 = 529.82
+    const withVacationBonus = calcPayroll(1000, 'biweekly', 0, {
+      includeVacationBonus: true,
+      customVacationGross: 150.0,
+    });
+    assert.equal(withVacationBonus.grossTotal, 650.0);
+    assert.equal(withVacationBonus.afpEmployee, 47.13);
+    assert.equal(withVacationBonus.isssEmployee, 15.0);
+    assert.equal(withVacationBonus.isr, 58.05);
+    assert.equal(withVacationBonus.netPay, 529.82);
+
+    // 3. Con Aguinaldo de Fin de Año ($500.00, <= $1,500 exento de Renta, 100% exento de ISSS y AFP)
+    // Bruto = 500 + 500 = 1000.00
+    // AFP e ISSS se calculan SOLO sobre el salario base ($500) -> AFP = 36.25, ISSS = 15.00
+    // Renta gravable = solo salario base ($448.75) -> ISR = 30.23
+    // Deducciones = 81.48
+    // Neto = 1000.00 - 81.48 = 918.52 (Salario normal neto 418.52 + 500.00 aguinaldo íntegro)
+    const withAguinaldo = calcPayroll(1000, 'biweekly', 0, {
+      includeAguinaldo: true,
+      customAguinaldoGross: 500.0,
+      customAguinaldoTaxableExcess: 0,
+    });
+    assert.equal(withAguinaldo.grossTotal, 1000.0);
+    assert.equal(withAguinaldo.afpEmployee, 36.25);
+    assert.equal(withAguinaldo.isssEmployee, 15.0);
+    assert.equal(withAguinaldo.isr, 30.23);
+    assert.equal(withAguinaldo.netPay, 918.52);
+    assert.equal(withAguinaldo.netPay, round2(basePayroll.netPay + 500.0));
+
+    // 4. Con Quincena 25 (Q25) ($500.00, 100% libre de ISSS, AFP y Renta)
+    const withQ25 = calcPayroll(1000, 'biweekly', 0, {
+      includeQ25: true,
+      customQ25Gross: 500.0,
+    });
+    assert.equal(withQ25.grossTotal, 1000.0);
+    assert.equal(withQ25.afpEmployee, 36.25);
+    assert.equal(withQ25.isssEmployee, 15.0);
+    assert.equal(withQ25.isr, 30.23);
+    assert.equal(withQ25.netPay, 918.52);
+    assert.equal(withQ25.netPay, round2(basePayroll.netPay + 500.0));
+
+    // 5. Con Vacación Trabajada (15 días + 30% = $650.00 adicionales)
+    // Total devengado = 500 + 650 = 1150.00 (230% de la quincena)
+    // AFP = 83.38, ISSS = 15.00, Renta Tramo IV = 154.05, Deducciones = 252.43, Neto = 897.57
+    const withWorkedVacation = calcPayroll(1000, 'biweekly', 0, {
+      includeWorkedVacation: true,
+      customVacationGross: 650.0,
+    });
+    assert.equal(withWorkedVacation.grossTotal, 1150.0);
+    assert.equal(withWorkedVacation.afpEmployee, 83.38);
+    assert.equal(withWorkedVacation.isssEmployee, 15.0);
+    assert.equal(withWorkedVacation.isr, 154.05);
+    assert.equal(withWorkedVacation.netPay, 897.57);
+  });
 });
 
 

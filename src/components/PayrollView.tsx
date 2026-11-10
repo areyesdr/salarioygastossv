@@ -142,6 +142,79 @@ export function PayrollView({
                   </tr>
                 )}
 
+                {/* Recargo Vacacional 30% */}
+                {activePayroll.additions?.includeVacationBonus && (
+                  <tr>
+                    <td className="font-sans">
+                      <span className="fw-semibold text-emerald">+ Recargo Vacacional (30% de ley)</span>
+                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                        Prima del 30% sobre 15 días de salario (Art. 177 CT). Cotiza AFP, ISSS y Renta.
+                      </div>
+                    </td>
+                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationGross)}</td>
+                  </tr>
+                )}
+
+                {/* Vacación Trabajada */}
+                {activePayroll.additions?.includeWorkedVacation && (
+                  <tr>
+                    <td className="font-sans">
+                      <span className="fw-semibold text-emerald">+ Vacación Trabajada (Paga Doble + 30%)</span>
+                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                        15 días compensados + 30% prima vacacional (Art. 188 CT). Cotiza AFP, ISSS y Renta.
+                      </div>
+                    </td>
+                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationGross)}</td>
+                  </tr>
+                )}
+
+                {/* Aguinaldo de Fin de Año */}
+                {activePayroll.additions?.includeAguinaldo && (
+                  <tr>
+                    <td className="font-sans">
+                      <div className="d-flex align-items-center gap-1.5 flex-wrap">
+                        <span className="fw-semibold text-emerald">+ Aguinaldo de Fin de Año</span>
+                        <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
+                          Sin ISSS ni AFP
+                        </span>
+                        {activePayroll.additions.aguinaldoTaxableExcess > 0 ? (
+                          <span className="badge bg-amber-subtle text-amber-800 border border-amber-subtle font-monospace" style={{ fontSize: '10px' }}>
+                            Renta sobre exceso de $1,500
+                          </span>
+                        ) : (
+                          <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
+                            100% Exento de Renta
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                        Prestación legal (Arts. 196–202 CT). Por ley no cotiza AFP ni ISSS.
+                        {activePayroll.additions.aguinaldoTaxableExcess > 0 &&
+                          ` Renta aplicable únicamente al excedente gravado (${formatUSD(activePayroll.additions.aguinaldoTaxableExcess)}).`}
+                      </div>
+                    </td>
+                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.aguinaldoGross)}</td>
+                  </tr>
+                )}
+
+                {/* Quincena 25 */}
+                {activePayroll.additions?.includeQ25 && (
+                  <tr>
+                    <td className="font-sans">
+                      <div className="d-flex align-items-center gap-1.5 flex-wrap">
+                        <span className="fw-semibold text-emerald">+ Quincena 25 (Bono de Enero)</span>
+                        <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
+                          100% Libre de Impuestos
+                        </span>
+                      </div>
+                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                        Compensación económica (Decreto Legislativo 499). Ley prohíbe descontar AFP, ISSS o Renta.
+                      </div>
+                    </td>
+                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.q25Gross)}</td>
+                  </tr>
+                )}
+
                 {/* Total Bruto */}
                 <tr className="bg-light">
                   <td className="font-sans fw-semibold text-slate-dark">
@@ -161,12 +234,17 @@ export function PayrollView({
                     <div>
                       <span className="text-slate-dark fw-medium">Pensión AFP (-7.25%)</span>
                       <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
-                        Tu ahorro para el retiro. Te descuentan el 7.25% de todo lo que ganas, sin límite.
+                        Tu ahorro para el retiro. Te descuentan el 7.25% sobre salario, bonos y vacación.
+                        {(activePayroll.additions?.includeAguinaldo || activePayroll.additions?.includeQ25) && (
+                          <span className="text-emerald d-block mt-0.5">
+                            * Aguinaldo y Q25 están legalmente exentos de AFP (Art. 198 CT y Decreto 499).
+                          </span>
+                        )}
                       </span>
                     </div>
                     {showLegalDetails && (
                       <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                        Cálculo: {formatUSD(activePayroll.grossTotal)} × 7.25% = -{formatUSD(activePayroll.afpEmployee)}
+                        Cálculo: Base cotizable × 7.25% = -{formatUSD(activePayroll.afpEmployee)}
                       </div>
                     )}
                   </td>
@@ -186,10 +264,15 @@ export function PayrollView({
                     </div>
                     <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
                       Tu seguro médico. Te descuentan el 3%, pero tiene un techo: lo máximo que te pueden quitar son {period === 'monthly' ? '$30.00 al mes ($1,000 de sueldo)' : '$15.00 por quincena'}. Si ganas más de $1,000, no te descuentan más de eso.
+                      {(activePayroll.additions?.includeAguinaldo || activePayroll.additions?.includeQ25) && (
+                        <span className="text-emerald d-block mt-0.5">
+                          * Aguinaldo y Q25 están legalmente exentos de ISSS (Art. 198 CT y Decreto 499).
+                        </span>
+                      )}
                     </span>
                     {showLegalDetails && (
                       <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                        Cálculo: 3% sobre tu salario (topado a {period === 'monthly' ? '$1,000.00' : '$500.00'}) = -{formatUSD(activePayroll.isssEmployee)}
+                        Cálculo: 3% sobre base cotizable (topado a {period === 'monthly' ? '$1,000.00' : '$500.00'}) = -{formatUSD(activePayroll.isssEmployee)}
                       </div>
                     )}
                   </td>

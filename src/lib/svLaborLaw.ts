@@ -176,6 +176,30 @@ export function calcExtraISRAnnualized(baseMonthlyTaxable: number, extraTaxableA
   return Math.max(0, round2((newTax - baseTax) * 12));
 }
 
+export interface PayrollAdditionsConfig {
+  includeVacationBonus?: boolean;
+  includeWorkedVacation?: boolean;
+  includeAguinaldo?: boolean;
+  includeQ25?: boolean;
+  customVacationGross?: number;
+  customAguinaldoGross?: number;
+  customAguinaldoTaxableExcess?: number;
+  customQ25Gross?: number;
+}
+
+export interface PayrollAdditionsDetail {
+  includeVacationBonus: boolean;
+  includeWorkedVacation: boolean;
+  includeAguinaldo: boolean;
+  includeQ25: boolean;
+  vacationGross: number;
+  aguinaldoGross: number;
+  aguinaldoTaxableExcess: number;
+  aguinaldoExemptAmount: number;
+  q25Gross: number;
+  totalAdditionsGross: number;
+}
+
 export interface PayrollBreakdown {
   period: PayPeriod;
   grossBase: number;
@@ -195,6 +219,7 @@ export interface PayrollBreakdown {
   insaforpEmployer: number;
   totalEmployerContributions: number;
   totalEmployerCost: number;
+  additions?: PayrollAdditionsDetail;
   quincenaDetails?: {
     q1: QuincenaDetail;
     q2: QuincenaDetail;
@@ -217,6 +242,7 @@ export interface QuincenaDetail {
   insaforpEmployer: number;
   totalEmployerContributions: number;
   totalEmployerCost: number;
+  additions?: PayrollAdditionsDetail;
 }
 
 function calcMonthlyPayrollInternal(
@@ -357,53 +383,206 @@ function computeQuincenaPair(monthly: PayrollBreakdown): {
 /**
  * Calcula el desglose exacto de planilla mensual o quincenal conforme a la
  * práctica laboral y tributaria de El Salvador (liquidación mensual consolidada).
+ * Permite opcionalmente adicionar prestaciones y bonos extraordinarios de ley
+ * (recargo de vacación, vacación trabajada, aguinaldo y Quincena 25) evaluando
+ * su afectación legal a cotizaciones previsionales (AFP), seguridad social (ISSS) e Impuesto sobre la Renta (ISR).
  */
 export function calcPayroll(
   monthlyBaseSalary: number,
   period: PayPeriod = 'monthly',
-  monthlyExtraBonuses: number = 0
+  monthlyExtraBonuses: number = 0,
+  additionsConfig?: PayrollAdditionsConfig
 ): PayrollBreakdown {
   const safeBaseMonthly = Math.max(0, monthlyBaseSalary);
   const safeBonusesMonthly = Math.max(0, monthlyExtraBonuses);
 
-  const monthly = calcMonthlyPayrollInternal(safeBaseMonthly, safeBonusesMonthly);
-  const pair = computeQuincenaPair(monthly);
+  const hasAdditions =
+    Boolean(additionsConfig?.includeVacationBonus) ||
+    Boolean(additionsConfig?.includeWorkedVacation) ||
+    Boolean(additionsConfig?.includeAguinaldo) ||
+    Boolean(additionsConfig?.includeQ25);
 
-  if (period === 'monthly') {
+  if (!hasAdditions) {
+    const monthly = calcMonthlyPayrollInternal(safeBaseMonthly, safeBonusesMonthly);
+    const pair = computeQuincenaPair(monthly);
+
+    if (period === 'monthly') {
+      return {
+        ...monthly,
+        quincenaDetails: pair,
+      };
+    }
+
+    // Si period === 'biweekly', devolvemos la 1.ª quincena (anticipo quincenal oficial)
+    // sincronizado con la liquidación mensual consolidada:
+    const q1 = pair.q1;
+    const isssCapped = q1.grossTotal >= RATES.ISSS_CAP_BIWEEKLY;
+    const isrDetail = calcISR(q1.taxableIncome, 'biweekly');
+    const effectiveDeductionPct =
+      q1.grossTotal > 0 ? round2((q1.totalEmployeeDeductions / q1.grossTotal) * 100) : 0;
+
     return {
-      ...monthly,
+      period: 'biweekly',
+      grossBase: q1.grossBase,
+      bonuses: q1.bonuses,
+      grossTotal: q1.grossTotal,
+      afpEmployee: q1.afpEmployee,
+      isssEmployee: q1.isssEmployee,
+      isssCapped,
+      taxableIncome: q1.taxableIncome,
+      isrDetail,
+      isr: q1.isr,
+      totalEmployeeDeductions: q1.totalEmployeeDeductions,
+      netPay: q1.netPay,
+      effectiveDeductionPct,
+      afpEmployer: q1.afpEmployer,
+      isssEmployer: q1.isssEmployer,
+      insaforpEmployer: q1.insaforpEmployer,
+      totalEmployerContributions: q1.totalEmployerContributions,
+      totalEmployerCost: q1.totalEmployerCost,
       quincenaDetails: pair,
     };
   }
 
-  // Si period === 'biweekly', devolvemos la 1.ª quincena (anticipo quincenal oficial)
-  // sincronizado con la liquidación mensual consolidada:
-  const q1 = pair.q1;
-  const isssCapped = q1.grossTotal >= RATES.ISSS_CAP_BIWEEKLY;
-  const isrDetail = calcISR(q1.taxableIncome, 'biweekly');
-  const effectiveDeductionPct =
-    q1.grossTotal > 0 ? round2((q1.totalEmployeeDeductions / q1.grossTotal) * 100) : 0;
+  // Flujo con prestaciones y bonos extraordinarios activos:
+  const vacation15Days = round2((safeBaseMonthly / 30) * 15);
+  const vacationBonus30 = round2(vacation15Days * 0.30);
+  let vacationGross = 0;
+  if (additionsConfig?.includeWorkedVacation) {
+    // 15 días laborados ordinarios + 15 días compensados + 30% prima
+    vacationGross = additionsConfig.customVacationGross ?? round2(vacation15Days + vacationBonus30);
+  } else if (additionsConfig?.includeVacationBonus) {
+    // Solo prima vacacional del 30%
+    vacationGross = additionsConfig.customVacationGross ?? vacationBonus30;
+  }
+
+  let aguinaldoGross = 0;
+  let aguinaldoTaxableExcess = 0;
+  let aguinaldoExemptAmount = 0;
+  if (additionsConfig?.includeAguinaldo) {
+    aguinaldoGross = additionsConfig.customAguinaldoGross ?? round2((safeBaseMonthly / 30) * 15);
+    aguinaldoTaxableExcess =
+      additionsConfig.customAguinaldoTaxableExcess ?? Math.max(0, round2(aguinaldoGross - 1500));
+    aguinaldoExemptAmount = round2(aguinaldoGross - aguinaldoTaxableExcess);
+  }
+
+  let q25Gross = 0;
+  if (additionsConfig?.includeQ25) {
+    q25Gross =
+      additionsConfig.customQ25Gross ??
+      (safeBaseMonthly <= 1500 ? round2(safeBaseMonthly / 2) : 0);
+  }
+
+  const additionsDetail: PayrollAdditionsDetail = {
+    includeVacationBonus: Boolean(additionsConfig?.includeVacationBonus),
+    includeWorkedVacation: Boolean(additionsConfig?.includeWorkedVacation),
+    includeAguinaldo: Boolean(additionsConfig?.includeAguinaldo),
+    includeQ25: Boolean(additionsConfig?.includeQ25),
+    vacationGross,
+    aguinaldoGross,
+    aguinaldoTaxableExcess,
+    aguinaldoExemptAmount,
+    q25Gross,
+    totalAdditionsGross: round2(vacationGross + aguinaldoGross + q25Gross),
+  };
+
+  if (period === 'monthly') {
+    const grossBase = round2(safeBaseMonthly);
+    const bonuses = round2(safeBonusesMonthly);
+    const grossTotal = round2(grossBase + bonuses + additionsDetail.totalAdditionsGross);
+
+    // AFP e ISSS: Cotizan salario base, bonos y vacación.
+    // Aguinaldo (Art. 198 CT) y Quincena 25 (Art. 7 Decreto 499) están EXENTOS de ISSS y AFP por ley.
+    const afpSubject = round2(grossBase + bonuses + vacationGross);
+    const afpEmployee = round2(afpSubject * RATES.AFP_EE);
+    const isssEmployee = round2(Math.min(afpSubject * RATES.ISSS_EE, RATES.ISSS_MAX_EE_MONTHLY));
+    const isssCapped = afpSubject >= RATES.ISSS_CAP_MONTHLY;
+
+    // Renta (ISR): Sueldo gravable menos deducciones más exceso gravado de aguinaldo (> $1,500).
+    // Q25 está 100% exenta de Renta por Decreto 499.
+    const baseTaxable = Math.max(0, round2(afpSubject - afpEmployee - isssEmployee));
+    const taxableIncome = round2(baseTaxable + aguinaldoTaxableExcess);
+    const isrDetail = calcISR(taxableIncome, 'monthly');
+    const isr = isrDetail.isr;
+
+    const totalEmployeeDeductions = round2(afpEmployee + isssEmployee + isr);
+    const netPay = Math.max(0, round2(grossTotal - totalEmployeeDeductions));
+    const effectiveDeductionPct = grossTotal > 0 ? round2((totalEmployeeDeductions / grossTotal) * 100) : 0;
+
+    const afpEmployer = round2(afpSubject * RATES.AFP_ER);
+    const isssEmployer = round2(Math.min(afpSubject * RATES.ISSS_ER, RATES.ISSS_MAX_ER_MONTHLY));
+    const insaforpEmployer = round2(afpSubject * RATES.INSAFORP_ER);
+    const totalEmployerContributions = round2(afpEmployer + isssEmployer + insaforpEmployer);
+    const totalEmployerCost = round2(grossTotal + totalEmployerContributions);
+
+    return {
+      period: 'monthly',
+      grossBase,
+      bonuses,
+      grossTotal,
+      afpEmployee,
+      isssEmployee,
+      isssCapped,
+      taxableIncome,
+      isrDetail,
+      isr,
+      totalEmployeeDeductions,
+      netPay,
+      effectiveDeductionPct,
+      afpEmployer,
+      isssEmployer,
+      insaforpEmployer,
+      totalEmployerContributions,
+      totalEmployerCost,
+      additions: additionsDetail,
+    };
+  }
+
+  // period === 'biweekly' (En una quincena con prestaciones adicionales percibidas)
+  const qBase = round2(safeBaseMonthly / 2);
+  const qBonuses = round2(safeBonusesMonthly / 2);
+  const grossTotal = round2(qBase + qBonuses + additionsDetail.totalAdditionsGross);
+
+  const afpSubject = round2(qBase + qBonuses + vacationGross);
+  const afpEmployee = round2(afpSubject * RATES.AFP_EE);
+  const isssEmployee = round2(Math.min(afpSubject * RATES.ISSS_EE, RATES.ISSS_MAX_EE_BIWEEKLY));
+  const isssCapped = afpSubject >= RATES.ISSS_CAP_BIWEEKLY;
+
+  const baseTaxable = Math.max(0, round2(afpSubject - afpEmployee - isssEmployee));
+  const taxableIncome = round2(baseTaxable + aguinaldoTaxableExcess);
+  const isrDetail = calcISR(taxableIncome, 'biweekly');
+  const isr = isrDetail.isr;
+
+  const totalEmployeeDeductions = round2(afpEmployee + isssEmployee + isr);
+  const netPay = Math.max(0, round2(grossTotal - totalEmployeeDeductions));
+  const effectiveDeductionPct = grossTotal > 0 ? round2((totalEmployeeDeductions / grossTotal) * 100) : 0;
+
+  const afpEmployer = round2(afpSubject * RATES.AFP_ER);
+  const isssEmployer = round2(Math.min(afpSubject * RATES.ISSS_ER, RATES.ISSS_MAX_ER_BIWEEKLY));
+  const insaforpEmployer = round2(afpSubject * RATES.INSAFORP_ER);
+  const totalEmployerContributions = round2(afpEmployer + isssEmployer + insaforpEmployer);
+  const totalEmployerCost = round2(grossTotal + totalEmployerContributions);
 
   return {
     period: 'biweekly',
-    grossBase: q1.grossBase,
-    bonuses: q1.bonuses,
-    grossTotal: q1.grossTotal,
-    afpEmployee: q1.afpEmployee,
-    isssEmployee: q1.isssEmployee,
+    grossBase: qBase,
+    bonuses: qBonuses,
+    grossTotal,
+    afpEmployee,
+    isssEmployee,
     isssCapped,
-    taxableIncome: q1.taxableIncome,
+    taxableIncome,
     isrDetail,
-    isr: q1.isr,
-    totalEmployeeDeductions: q1.totalEmployeeDeductions,
-    netPay: q1.netPay,
+    isr,
+    totalEmployeeDeductions,
+    netPay,
     effectiveDeductionPct,
-    afpEmployer: q1.afpEmployer,
-    isssEmployer: q1.isssEmployer,
-    insaforpEmployer: q1.insaforpEmployer,
-    totalEmployerContributions: q1.totalEmployerContributions,
-    totalEmployerCost: q1.totalEmployerCost,
-    quincenaDetails: pair,
+    afpEmployer,
+    isssEmployer,
+    insaforpEmployer,
+    totalEmployerContributions,
+    totalEmployerCost,
+    additions: additionsDetail,
   };
 }
 

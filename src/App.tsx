@@ -44,6 +44,7 @@ import {
   type SeniorityBracket,
   type AguinaldoExemptionRule,
   type OvertimeTypeId,
+  type PayrollAdditionsConfig,
 } from './lib/svLaborLaw.ts';
 import {
   canAccessPrivateRoute,
@@ -288,6 +289,43 @@ function AppShell() {
   const [q25DaysWorked, setQ25DaysWorked] = useState<number>(250);
   const [q25HireDate, setQ25HireDate] = useState<string>('2023-01-16');
   const [q25VoluntaryAboveCap, setQ25VoluntaryAboveCap] = useState<boolean>(false);
+
+  // Prestaciones extraordinarias en la calculadora de salario
+  const [includeVacationBonus, setIncludeVacationBonus] = useState<boolean>(false);
+  const [includeWorkedVacation, setIncludeWorkedVacation] = useState<boolean>(false);
+  const [includeAguinaldo, setIncludeAguinaldo] = useState<boolean>(false);
+  const [includeQ25, setIncludeQ25] = useState<boolean>(false);
+
+  const handleToggleVacationBonus = () => {
+    setIncludeVacationBonus((prev) => {
+      const next = !prev;
+      if (next) setIncludeWorkedVacation(false);
+      return next;
+    });
+  };
+
+  const handleToggleWorkedVacation = () => {
+    setIncludeWorkedVacation((prev) => {
+      const next = !prev;
+      if (next) setIncludeVacationBonus(false);
+      return next;
+    });
+  };
+
+  const handleToggleAguinaldo = () => {
+    setIncludeAguinaldo((prev) => !prev);
+  };
+
+  const handleToggleQ25 = () => {
+    setIncludeQ25((prev) => !prev);
+  };
+
+  const handleClearAdditions = () => {
+    setIncludeVacationBonus(false);
+    setIncludeWorkedVacation(false);
+    setIncludeAguinaldo(false);
+    setIncludeQ25(false);
+  };
 
   // Cálculo de antigüedad exacta y sincronización con prestaciones
   const seniorityDetails = useMemo(() => {
@@ -625,17 +663,6 @@ function AppShell() {
     return bonusGoals.filter((g) => g.ownerId === 'usr-sv-01' || g.ownerId === user.id);
   }, [bonusGoals, user]);
 
-  const monthlyPayroll = useMemo(
-    () => calcPayroll(monthlySalary, 'monthly', extraMonthlyBonus),
-    [monthlySalary, extraMonthlyBonus]
-  );
-  const monthlyBaseOnlyPayroll = useMemo(() => calcPayroll(monthlySalary, 'monthly', 0), [monthlySalary]);
-  const biweeklyPayroll = useMemo(
-    () => calcPayroll(monthlySalary, 'biweekly', extraMonthlyBonus),
-    [monthlySalary, extraMonthlyBonus]
-  );
-  const activePayroll = period === 'monthly' ? monthlyPayroll : biweeklyPayroll;
-
   const vacationResult = useMemo(
     () => calcVacation(monthlySalary, vacationBonusPct, splitDays),
     [monthlySalary, vacationBonusPct, splitDays]
@@ -663,9 +690,43 @@ function AppShell() {
     [monthlySalary, q25FullYear, q25DaysWorked, q25VoluntaryAboveCap]
   );
 
+  const payrollAdditionsConfig = useMemo<PayrollAdditionsConfig>(() => ({
+    includeVacationBonus,
+    includeWorkedVacation,
+    includeAguinaldo,
+    includeQ25,
+    customVacationGross: includeWorkedVacation
+      ? vacationResult.completeVacationGross
+      : includeVacationBonus
+        ? vacationResult.bonus30Gross
+        : 0,
+    customAguinaldoGross: aguinaldoResult.grossAguinaldo,
+    customAguinaldoTaxableExcess: aguinaldoResult.taxableExcess,
+    customQ25Gross: quincena25Result.grossQuincena25,
+  }), [
+    includeVacationBonus,
+    includeWorkedVacation,
+    includeAguinaldo,
+    includeQ25,
+    vacationResult,
+    aguinaldoResult,
+    quincena25Result,
+  ]);
+
+  const monthlyPayroll = useMemo(
+    () => calcPayroll(monthlySalary, 'monthly', extraMonthlyBonus, payrollAdditionsConfig),
+    [monthlySalary, extraMonthlyBonus, payrollAdditionsConfig]
+  );
+  const monthlyBaseOnlyPayroll = useMemo(() => calcPayroll(monthlySalary, 'monthly', 0), [monthlySalary]);
+  const biweeklyPayroll = useMemo(
+    () => calcPayroll(monthlySalary, 'biweekly', extraMonthlyBonus, payrollAdditionsConfig),
+    [monthlySalary, extraMonthlyBonus, payrollAdditionsConfig]
+  );
+  const activePayroll = period === 'monthly' ? monthlyPayroll : biweeklyPayroll;
+
   const hourlyResult = useMemo(
-    () => calcHourlyAndOvertime(monthlyPayroll.grossTotal, monthlyPayroll.netPay, daysPerMonth, hoursPerDay),
-    [monthlyPayroll.grossTotal, monthlyPayroll.netPay, daysPerMonth, hoursPerDay]
+    () => calcHourlyAndOvertime(monthlyBaseOnlyPayroll.grossTotal, monthlyBaseOnlyPayroll.netPay, daysPerMonth, hoursPerDay),
+    [monthlyBaseOnlyPayroll.grossTotal, monthlyBaseOnlyPayroll.netPay, daysPerMonth, hoursPerDay]
   );
 
   const totalSimulatedOvertimeUsd = useMemo(() => {
@@ -1456,6 +1517,157 @@ function AppShell() {
                         </div>
                       </div>
                     </div>
+                    {/* Selector de Prestaciones Extraordinarias para el Cálculo */}
+                    <div className="mt-3 p-2.5 rounded bg-slate-50 border border-slate-200">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="d-flex align-items-center gap-1.5">
+                          <Gift size={14} className="text-secondary" />
+                          <span className="fw-semibold text-slate-dark" style={{ fontSize: '11.5px' }}>
+                            Agregar Prestaciones a este Pago ({period === 'monthly' ? 'Mes' : 'Quincena'})
+                          </span>
+                        </div>
+                        {(includeVacationBonus || includeWorkedVacation || includeAguinaldo || includeQ25) && (
+                          <button
+                            type="button"
+                            onClick={handleClearAdditions}
+                            className="btn btn-link btn-xs text-muted text-decoration-none p-0 font-monospace"
+                            style={{ fontSize: '11px' }}
+                          >
+                            Limpiar seleccionados
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="row g-2">
+                        {/* 1. Recargo de Vacación (30%) */}
+                        <div className="col-12 col-sm-6">
+                          <div
+                            onClick={handleToggleVacationBonus}
+                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
+                              includeVacationBonus ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
+                            }`}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={includeVacationBonus}
+                              onChange={handleToggleVacationBonus}
+                              className="form-check-input mt-0.5 shrink-0"
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <div className="w-100" style={{ minWidth: 0 }}>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
+                                  Recargo Vacación (30%)
+                                </span>
+                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
+                                  +{formatUSD(vacationResult.bonus30Gross)}
+                                </span>
+                              </div>
+                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
+                                Prima de ley · Cotiza AFP, ISSS y Renta
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 2. Vacación Trabajada (Paga Doble + 30%) */}
+                        <div className="col-12 col-sm-6">
+                          <div
+                            onClick={handleToggleWorkedVacation}
+                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
+                              includeWorkedVacation ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
+                            }`}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={includeWorkedVacation}
+                              onChange={handleToggleWorkedVacation}
+                              className="form-check-input mt-0.5 shrink-0"
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <div className="w-100" style={{ minWidth: 0 }}>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
+                                  Vacación Trabajada
+                                </span>
+                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
+                                  +{formatUSD(vacationResult.completeVacationGross)}
+                                </span>
+                              </div>
+                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
+                                15d + 30% · Cotiza AFP, ISSS y Renta
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Aguinaldo de Fin de Año */}
+                        <div className="col-12 col-sm-6">
+                          <div
+                            onClick={handleToggleAguinaldo}
+                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
+                              includeAguinaldo ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
+                            }`}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={includeAguinaldo}
+                              onChange={handleToggleAguinaldo}
+                              className="form-check-input mt-0.5 shrink-0"
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <div className="w-100" style={{ minWidth: 0 }}>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
+                                  Pago de Aguinaldo
+                                </span>
+                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
+                                  +{formatUSD(aguinaldoResult.grossAguinaldo)}
+                                </span>
+                              </div>
+                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
+                                Exento ISSS/AFP · Exento Renta ≤ $1,500
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 4. Quincena 25 (Bono de Enero) */}
+                        <div className="col-12 col-sm-6">
+                          <div
+                            onClick={handleToggleQ25}
+                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
+                              includeQ25 ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
+                            }`}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={includeQ25}
+                              onChange={handleToggleQ25}
+                              className="form-check-input mt-0.5 shrink-0"
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <div className="w-100" style={{ minWidth: 0 }}>
+                              <div className="d-flex justify-content-between align-items-center">
+                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
+                                  Pago Quincena 25 (Q25)
+                                </span>
+                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
+                                  +{formatUSD(quincena25Result.grossQuincena25)}
+                                </span>
+                              </div>
+                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
+                                100% Exento de ISSS, AFP y Renta
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Enlace sutil para parámetros de ley */}
@@ -1476,14 +1688,21 @@ function AppShell() {
                 <div className="col-12 col-lg-5">
                   <div className="card-net-hero p-4 h-100 d-flex flex-column justify-content-between">
                     <div>
-                      <span className="small fw-semibold text-emerald text-uppercase d-block" style={{ fontSize: '11px', letterSpacing: '0.04em' }}>
-                        Salario Líquido a Recibir ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
-                      </span>
+                      <div className="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                        <span className="small fw-semibold text-emerald text-uppercase d-block" style={{ fontSize: '11px', letterSpacing: '0.04em' }}>
+                          Salario Líquido a Recibir ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
+                        </span>
+                        {activePayroll.additions && activePayroll.additions.totalAdditionsGross > 0 && (
+                          <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
+                            Con prestaciones (+{formatUSD(activePayroll.additions.totalAdditionsGross)})
+                          </span>
+                        )}
+                      </div>
                       <div className="fs-1 fw-bold font-monospace text-emerald lh-1 my-2">
                         {formatUSD(activePayroll.netPay)}
                       </div>
                       <div className="small text-slate-muted font-monospace" style={{ fontSize: '12px' }}>
-                        <strong>{round2(100 - activePayroll.effectiveDeductionPct)}%</strong> del ingreso bruto
+                        <strong>{round2(100 - activePayroll.effectiveDeductionPct)}%</strong> del ingreso bruto ({formatUSD(activePayroll.grossTotal)})
                         <span> · {period === 'monthly' ? `${formatUSD(biweeklyPayroll.netPay)} por quincena` : `${formatUSD(monthlyPayroll.netPay)} por mes`}</span>
                       </div>
                     </div>
