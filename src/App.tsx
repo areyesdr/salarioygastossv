@@ -695,6 +695,8 @@ function AppShell() {
     includeWorkedVacation,
     includeAguinaldo,
     includeQ25,
+    customVacation15DaysGross: vacationResult.base15DaysGross,
+    customVacationBonus30Gross: vacationResult.bonus30Gross,
     customVacationGross: includeWorkedVacation
       ? vacationResult.completeVacationGross
       : includeVacationBonus
@@ -1597,7 +1599,7 @@ function AppShell() {
                                 </span>
                               </div>
                               <span className="text-muted d-block" style={{ fontSize: '10px' }}>
-                                15d + 30% · Cotiza AFP, ISSS y Renta
+                                15d vacación ({formatUSD(vacationResult.base15DaysGross)}) + 30% prima ({formatUSD(vacationResult.bonus30Gross)}) · Cotiza AFP, ISSS y Renta
                               </span>
                             </div>
                           </div>

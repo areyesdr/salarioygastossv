@@ -527,9 +527,14 @@ describe('El Salvador Labor & Tax Law Calculations (2026-2027)', () => {
     // AFP = 83.38, ISSS = 15.00, Renta Tramo IV = 154.05, Deducciones = 252.43, Neto = 897.57
     const withWorkedVacation = calcPayroll(1000, 'biweekly', 0, {
       includeWorkedVacation: true,
+      customVacation15DaysGross: 500.0,
+      customVacationBonus30Gross: 150.0,
       customVacationGross: 650.0,
     });
     assert.equal(withWorkedVacation.grossTotal, 1150.0);
+    assert.equal(withWorkedVacation.additions?.vacation15DaysGross, 500.0);
+    assert.equal(withWorkedVacation.additions?.vacationBonus30Gross, 150.0);
+    assert.equal(withWorkedVacation.additions?.vacationGross, 650.0);
     assert.equal(withWorkedVacation.afpEmployee, 83.38);
     assert.equal(withWorkedVacation.isssEmployee, 15.0);
     assert.equal(withWorkedVacation.isr, 154.05);

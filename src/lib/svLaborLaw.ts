@@ -181,6 +181,8 @@ export interface PayrollAdditionsConfig {
   includeWorkedVacation?: boolean;
   includeAguinaldo?: boolean;
   includeQ25?: boolean;
+  customVacation15DaysGross?: number;
+  customVacationBonus30Gross?: number;
   customVacationGross?: number;
   customAguinaldoGross?: number;
   customAguinaldoTaxableExcess?: number;
@@ -192,6 +194,8 @@ export interface PayrollAdditionsDetail {
   includeWorkedVacation: boolean;
   includeAguinaldo: boolean;
   includeQ25: boolean;
+  vacation15DaysGross: number;
+  vacationBonus30Gross: number;
   vacationGross: number;
   aguinaldoGross: number;
   aguinaldoTaxableExcess: number;
@@ -447,13 +451,20 @@ export function calcPayroll(
   // Flujo con prestaciones y bonos extraordinarios activos:
   const vacation15Days = round2((safeBaseMonthly / 30) * 15);
   const vacationBonus30 = round2(vacation15Days * 0.30);
+  let vacation15DaysGross = 0;
+  let vacationBonus30Gross = 0;
   let vacationGross = 0;
+
   if (additionsConfig?.includeWorkedVacation) {
     // 15 días laborados ordinarios + 15 días compensados + 30% prima
-    vacationGross = additionsConfig.customVacationGross ?? round2(vacation15Days + vacationBonus30);
+    vacation15DaysGross = additionsConfig.customVacation15DaysGross ?? vacation15Days;
+    vacationBonus30Gross = additionsConfig.customVacationBonus30Gross ?? vacationBonus30;
+    vacationGross = additionsConfig.customVacationGross ?? round2(vacation15DaysGross + vacationBonus30Gross);
   } else if (additionsConfig?.includeVacationBonus) {
     // Solo prima vacacional del 30%
-    vacationGross = additionsConfig.customVacationGross ?? vacationBonus30;
+    vacation15DaysGross = 0;
+    vacationBonus30Gross = additionsConfig.customVacationBonus30Gross ?? additionsConfig.customVacationGross ?? vacationBonus30;
+    vacationGross = vacationBonus30Gross;
   }
 
   let aguinaldoGross = 0;
@@ -478,6 +489,8 @@ export function calcPayroll(
     includeWorkedVacation: Boolean(additionsConfig?.includeWorkedVacation),
     includeAguinaldo: Boolean(additionsConfig?.includeAguinaldo),
     includeQ25: Boolean(additionsConfig?.includeQ25),
+    vacation15DaysGross,
+    vacationBonus30Gross,
     vacationGross,
     aguinaldoGross,
     aguinaldoTaxableExcess,

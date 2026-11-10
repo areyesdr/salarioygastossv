@@ -142,30 +142,41 @@ export function PayrollView({
                   </tr>
                 )}
 
-                {/* Recargo Vacacional 30% */}
+                {/* Recargo Vacacional 30% (Solo bono cuando se descansa la vacación) */}
                 {activePayroll.additions?.includeVacationBonus && (
                   <tr>
                     <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Recargo Vacacional (30% de ley)</span>
+                      <span className="fw-semibold text-emerald">+ Recargo Vacacional Legal (30% de ley)</span>
                       <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                        Prima del 30% sobre 15 días de salario (Art. 177 CT). Cotiza AFP, ISSS y Renta.
+                        Prima del 30% sobre 15 días de salario ordinario (Art. 177 CT). Cotiza AFP, ISSS y Renta.
                       </div>
                     </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationGross)}</td>
+                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationBonus30Gross)}</td>
                   </tr>
                 )}
 
-                {/* Vacación Trabajada */}
+                {/* Vacación Trabajada: Renglón 1 - Vacación Pagada de 15 días */}
                 {activePayroll.additions?.includeWorkedVacation && (
-                  <tr>
-                    <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Vacación Trabajada (Paga Doble + 30%)</span>
-                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                        15 días compensados + 30% prima vacacional (Art. 188 CT). Cotiza AFP, ISSS y Renta.
-                      </div>
-                    </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationGross)}</td>
-                  </tr>
+                  <>
+                    <tr>
+                      <td className="font-sans">
+                        <span className="fw-semibold text-emerald">+ Vacación Pagada Trabajada (15 días de salario)</span>
+                        <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                          Remuneración de 15 días por el descanso vacacional laborado (Art. 188 CT). Cotiza AFP, ISSS y Renta.
+                        </div>
+                      </td>
+                      <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacation15DaysGross)}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-sans">
+                        <span className="fw-semibold text-emerald">+ Recargo Vacacional Legal (30% sobre vacación)</span>
+                        <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
+                          Prima obligatoria del 30% sobre los 15 días de vacación (Art. 177 CT). Cotiza AFP, ISSS y Renta.
+                        </div>
+                      </td>
+                      <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationBonus30Gross)}</td>
+                    </tr>
+                  </>
                 )}
 
                 {/* Aguinaldo de Fin de Año */}
