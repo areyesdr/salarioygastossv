@@ -167,4 +167,28 @@ describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
     assert.equal(res.totalGroupedCount, 5);
     assert.deepEqual(res.monthsRepresented, [10, 11, 12]);
   });
+
+  it('preserves paid flag in computeQuincenaBalance and resets paid to false when copying recurring entries', () => {
+    const oct = createEmptyMonthLedger('usr-test-01', 2026, 10);
+    oct.q1.items = [
+      { id: '1', desc: 'Luz', amount: 30, type: 'expense', day: 15, isRecurring: true, paid: true },
+      { id: '2', desc: 'Agua', amount: 15, type: 'expense', day: 18, isRecurring: false, paid: false },
+    ];
+    oct.q2.items = [
+      { id: '3', desc: 'Internet', amount: 40, type: 'expense', day: 30, isRecurring: true, paid: true },
+    ];
+
+    const bal = computeQuincenaBalance(500, oct.q1);
+    assert.equal(bal.computedItems[0].paid, true);
+    assert.equal(bal.computedItems[1].paid, false);
+
+    const nov = createEmptyMonthLedger('usr-test-01', 2026, 11);
+    const copied = copyRecurringToMonth(oct, nov);
+    assert.equal(copied.q1.items.length, 1);
+    assert.equal(copied.q1.items[0].desc, 'Luz');
+    assert.equal(copied.q1.items[0].paid, false);
+    assert.equal(copied.q2.items.length, 1);
+    assert.equal(copied.q2.items[0].desc, 'Internet');
+    assert.equal(copied.q2.items[0].paid, false);
+  });
 });

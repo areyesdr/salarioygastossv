@@ -133,6 +133,16 @@ export function MonthlyLedgerView({
   const q2Sobrante = q2Balance.endingBalance;
   const q2SobrantePct = q2Available > 0 ? Math.round((q2Sobrante / q2Available) * 100) : 0;
 
+  const q1ExpenseItems = q1Balance.computedItems.filter((i) => i.type === 'expense');
+  const q1PaidCount = q1ExpenseItems.filter((i) => Boolean(i.paid)).length;
+  const q1PaidAmount = round2(q1ExpenseItems.filter((i) => Boolean(i.paid)).reduce((acc, i) => acc + i.amount, 0));
+  const q1PendingAmount = round2(q1Balance.totalExpenses - q1PaidAmount);
+
+  const q2ExpenseItems = q2Balance.computedItems.filter((i) => i.type === 'expense');
+  const q2PaidCount = q2ExpenseItems.filter((i) => Boolean(i.paid)).length;
+  const q2PaidAmount = round2(q2ExpenseItems.filter((i) => Boolean(i.paid)).reduce((acc, i) => acc + i.amount, 0));
+  const q2PendingAmount = round2(q2Balance.totalExpenses - q2PaidAmount);
+
   const totalAvailableMonth = totalStarting + totalExtraIncome;
   const totalSobranteMonthPct =
     totalAvailableMonth > 0 ? Math.round((netRemaining / totalAvailableMonth) * 100) : 0;
@@ -184,6 +194,47 @@ export function MonthlyLedgerView({
     onSaveMonthLedger(updated);
   };
 
+  // Handlers para marcar o desmarcar cada gasto como pagado
+  const handleToggleItemPaid = (itemId: string, quincena: 'q1' | 'q2') => {
+    const updatedItems = activeMonthLedger[quincena].items.map((i) => {
+      if (i.id !== itemId) return i;
+      return {
+        ...i,
+        paid: !i.paid,
+      };
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
+  const handleToggleAllPaid = (quincena: 'q1' | 'q2', markAllPaid: boolean) => {
+    const updatedItems = activeMonthLedger[quincena].items.map((i) => {
+      if (i.type !== 'expense') return i;
+      return {
+        ...i,
+        paid: markAllPaid,
+      };
+    });
+
+    const updated: MonthLedger = {
+      ...activeMonthLedger,
+      [quincena]: {
+        ...activeMonthLedger[quincena],
+        items: updatedItems,
+      },
+    };
+
+    onSaveMonthLedger(updated);
+  };
+
   // Handlers para agregar partidas
   const handleAddQ1Item = (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,6 +249,7 @@ export function MonthlyLedgerView({
       day: parseInt(q1Day, 10) || 15,
       isRecurring: q1Recurring,
       checked: false,
+      paid: false,
     };
 
     const updated: MonthLedger = {
@@ -226,6 +278,7 @@ export function MonthlyLedgerView({
       day: parseInt(q2Day, 10) || 30,
       isRecurring: q2Recurring,
       checked: false,
+      paid: false,
     };
 
     const updated: MonthLedger = {
@@ -1024,16 +1077,33 @@ export function MonthlyLedgerView({
                         title="Marcar o desmarcar todos los gastos de la 1.ª quincena para suma agrupada"
                       />
                     </th>
-                    <th style={{ width: '23%' }}>Saldo</th>
-                    <th style={{ width: '23%' }}>Monto</th>
-                    <th style={{ width: '35%' }}>Descripción</th>
-                    <th className="text-center" style={{ width: '10%' }}>Día</th>
-                    <th style={{ width: '4%' }}></th>
+                    <th style={{ width: '6%' }} className="text-center" title="Marcar o desmarcar todos los gastos como pagados">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleAllPaid(
+                            'q1',
+                            !(q1ExpenseItems.length > 0 && q1PaidCount === q1ExpenseItems.length)
+                          )
+                        }
+                        className="btn btn-link btn-sm p-0 text-muted text-decoration-none font-sans fw-semibold"
+                        style={{ fontSize: '11px' }}
+                        title="Marcar o desmarcar todos los gastos como pagados"
+                      >
+                        Pag.
+                      </button>
+                    </th>
+                    <th style={{ width: '21%' }}>Saldo</th>
+                    <th style={{ width: '21%' }}>Monto</th>
+                    <th style={{ width: '33%' }}>Descripción</th>
+                    <th className="text-center" style={{ width: '8%' }}>Día</th>
+                    <th style={{ width: '6%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Fila Base: Saldo Inicial */}
                   <tr className="bg-slate-50 text-muted">
+                    <td className="text-center text-muted">—</td>
                     <td className="text-center text-muted">—</td>
                     <td className="fw-bold text-slate-dark">{formatUSD(q1Balance.startingBalance)}</td>
                     <td className="text-muted">—</td>
@@ -1046,6 +1116,7 @@ export function MonthlyLedgerView({
                   {q1Balance.computedItems.map((item) => {
                     const isIncome = item.type === 'income';
                     const isEditing = editingEntry?.id === item.id;
+                    const isPaid = !isIncome && Boolean(item.paid);
 
                     if (isEditing) {
                       return (
@@ -1065,6 +1136,7 @@ export function MonthlyLedgerView({
                               <span className="text-muted small">—</span>
                             )}
                           </td>
+                          <td className="text-center align-middle text-muted small">—</td>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">
@@ -1159,7 +1231,7 @@ export function MonthlyLedgerView({
                     }
 
                     return (
-                      <tr key={item.id}>
+                      <tr key={item.id} className={isPaid ? 'bg-slate-50 text-muted' : ''}>
                         <td className="text-center align-middle">
                           {!isIncome ? (
                             <input
@@ -1177,15 +1249,42 @@ export function MonthlyLedgerView({
                             <span className="text-muted small">—</span>
                           )}
                         </td>
-                        <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
-                        <td className={`fw-semibold ${isIncome ? 'text-emerald' : 'text-slate-dark'}`}>
+                        <td className="text-center align-middle">
+                          {!isIncome ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleItemPaid(item.id, 'q1')}
+                              className={`btn btn-sm p-0 rounded-circle border d-inline-flex align-items-center justify-content-center ${
+                                isPaid ? 'btn-success border-success text-white' : 'btn-outline-secondary'
+                              }`}
+                              style={{ width: '20px', height: '20px' }}
+                              title={isPaid ? 'Pagado (clic para marcar pendiente)' : 'Pendiente (clic para marcar pagado)'}
+                              aria-label={isPaid ? 'Marcar pendiente' : 'Marcar pagado'}
+                            >
+                              {isPaid && <Check size={11} />}
+                            </button>
+                          ) : (
+                            <span className="text-muted small">—</span>
+                          )}
+                        </td>
+                        <td className={`fw-semibold ${isPaid ? 'text-muted' : 'text-slate-dark'}`}>
+                          {formatUSD(item.runningBalance)}
+                        </td>
+                        <td className={`fw-semibold ${isIncome ? 'text-emerald' : isPaid ? 'text-muted' : 'text-slate-dark'}`}>
                           {isIncome ? `+${formatUSD(item.amount)}` : `-${formatUSD(item.amount)}`}
                         </td>
                         <td className="font-sans">
-                          <span>{item.desc}</span>
+                          <span className={isPaid ? 'text-decoration-line-through text-muted' : ''}>
+                            {item.desc}
+                          </span>
                           {item.isRecurring && (
                             <span className="badge-subtle ms-1" style={{ fontSize: '9px' }}>
                               Fijo
+                            </span>
+                          )}
+                          {isPaid && (
+                            <span className="badge bg-emerald-subtle text-emerald border ms-1" style={{ fontSize: '9px' }}>
+                              Pagado
                             </span>
                           )}
                         </td>
@@ -1214,7 +1313,7 @@ export function MonthlyLedgerView({
 
                   {q1Balance.computedItems.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center text-muted py-3 font-sans small">
+                      <td colSpan={7} className="text-center text-muted py-3 font-sans small">
                         Sin gastos registrados en la 1.ª quincena. Agrega uno abajo.
                       </td>
                     </tr>
@@ -1304,9 +1403,14 @@ export function MonthlyLedgerView({
                 <span className="fw-bold font-sans d-block surplus-title" style={{ fontSize: '13px' }}>
                   Sobrante de la 1.ª Quincena (Pago del 15)
                 </span>
-                <span className="small font-sans surplus-subtitle" style={{ fontSize: '11px', opacity: 0.9 }}>
+                <span className="small font-sans surplus-subtitle d-block" style={{ fontSize: '11px', opacity: 0.9 }}>
                   Te sobran {formatUSD(q1Sobrante)} de {formatUSD(q1Available)} disponibles ({q1SobrantePct}% libre)
                 </span>
+                {q1ExpenseItems.length > 0 && (
+                  <span className="small font-monospace surplus-subtitle d-block mt-0.5" style={{ fontSize: '10.5px', opacity: 0.9 }}>
+                    Pagados: {q1PaidCount}/{q1ExpenseItems.length} ({formatUSD(q1PaidAmount)}) · Pendiente: {formatUSD(q1PendingAmount)}
+                  </span>
+                )}
               </div>
               <span className="fs-3 fw-bold font-monospace surplus-amount">
                 {formatUSD(q1Sobrante)}
@@ -1410,16 +1514,33 @@ export function MonthlyLedgerView({
                         title="Marcar o desmarcar todos los gastos de la 2.ª quincena para suma agrupada"
                       />
                     </th>
-                    <th style={{ width: '23%' }}>Saldo</th>
-                    <th style={{ width: '23%' }}>Monto</th>
-                    <th style={{ width: '35%' }}>Descripción</th>
-                    <th className="text-center" style={{ width: '10%' }}>Día</th>
-                    <th style={{ width: '4%' }}></th>
+                    <th style={{ width: '6%' }} className="text-center" title="Marcar o desmarcar todos los gastos como pagados">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleToggleAllPaid(
+                            'q2',
+                            !(q2ExpenseItems.length > 0 && q2PaidCount === q2ExpenseItems.length)
+                          )
+                        }
+                        className="btn btn-link btn-sm p-0 text-muted text-decoration-none font-sans fw-semibold"
+                        style={{ fontSize: '11px' }}
+                        title="Marcar o desmarcar todos los gastos como pagados"
+                      >
+                        Pag.
+                      </button>
+                    </th>
+                    <th style={{ width: '21%' }}>Saldo</th>
+                    <th style={{ width: '21%' }}>Monto</th>
+                    <th style={{ width: '33%' }}>Descripción</th>
+                    <th className="text-center" style={{ width: '8%' }}>Día</th>
+                    <th style={{ width: '6%' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {/* Fila Base: Saldo Inicial */}
                   <tr className="bg-slate-50 text-muted">
+                    <td className="text-center text-muted">—</td>
                     <td className="text-center text-muted">—</td>
                     <td className="fw-bold text-slate-dark">{formatUSD(q2Balance.startingBalance)}</td>
                     <td className="text-muted">—</td>
@@ -1432,6 +1553,7 @@ export function MonthlyLedgerView({
                   {q2Balance.computedItems.map((item) => {
                     const isIncome = item.type === 'income';
                     const isEditing = editingEntry?.id === item.id;
+                    const isPaid = !isIncome && Boolean(item.paid);
 
                     if (isEditing) {
                       return (
@@ -1451,6 +1573,7 @@ export function MonthlyLedgerView({
                               <span className="text-muted small">—</span>
                             )}
                           </td>
+                          <td className="text-center align-middle text-muted small">—</td>
                           <td className="align-middle text-muted small font-sans">—</td>
                           <td className="align-middle">
                             <div className="input-group input-group-sm">
@@ -1545,7 +1668,7 @@ export function MonthlyLedgerView({
                     }
 
                     return (
-                      <tr key={item.id}>
+                      <tr key={item.id} className={isPaid ? 'bg-slate-50 text-muted' : ''}>
                         <td className="text-center align-middle">
                           {!isIncome ? (
                             <input
@@ -1563,15 +1686,42 @@ export function MonthlyLedgerView({
                             <span className="text-muted small">—</span>
                           )}
                         </td>
-                        <td className="fw-semibold text-slate-dark">{formatUSD(item.runningBalance)}</td>
-                        <td className={`fw-semibold ${isIncome ? 'text-emerald' : 'text-slate-dark'}`}>
+                        <td className="text-center align-middle">
+                          {!isIncome ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleItemPaid(item.id, 'q2')}
+                              className={`btn btn-sm p-0 rounded-circle border d-inline-flex align-items-center justify-content-center ${
+                                isPaid ? 'btn-success border-success text-white' : 'btn-outline-secondary'
+                              }`}
+                              style={{ width: '20px', height: '20px' }}
+                              title={isPaid ? 'Pagado (clic para marcar pendiente)' : 'Pendiente (clic para marcar pagado)'}
+                              aria-label={isPaid ? 'Marcar pendiente' : 'Marcar pagado'}
+                            >
+                              {isPaid && <Check size={11} />}
+                            </button>
+                          ) : (
+                            <span className="text-muted small">—</span>
+                          )}
+                        </td>
+                        <td className={`fw-semibold ${isPaid ? 'text-muted' : 'text-slate-dark'}`}>
+                          {formatUSD(item.runningBalance)}
+                        </td>
+                        <td className={`fw-semibold ${isIncome ? 'text-emerald' : isPaid ? 'text-muted' : 'text-slate-dark'}`}>
                           {isIncome ? `+${formatUSD(item.amount)}` : `-${formatUSD(item.amount)}`}
                         </td>
                         <td className="font-sans">
-                          <span>{item.desc}</span>
+                          <span className={isPaid ? 'text-decoration-line-through text-muted' : ''}>
+                            {item.desc}
+                          </span>
                           {item.isRecurring && (
                             <span className="badge-subtle ms-1" style={{ fontSize: '9px' }}>
                               Fijo
+                            </span>
+                          )}
+                          {isPaid && (
+                            <span className="badge bg-emerald-subtle text-emerald border ms-1" style={{ fontSize: '9px' }}>
+                              Pagado
                             </span>
                           )}
                         </td>
@@ -1600,7 +1750,7 @@ export function MonthlyLedgerView({
 
                   {q2Balance.computedItems.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center text-muted py-3 font-sans small">
+                      <td colSpan={7} className="text-center text-muted py-3 font-sans small">
                         Sin gastos registrados en la 2.ª quincena. Agrega uno abajo.
                       </td>
                     </tr>
@@ -1690,9 +1840,14 @@ export function MonthlyLedgerView({
                 <span className="fw-bold font-sans d-block surplus-title" style={{ fontSize: '13px' }}>
                   Sobrante de la 2.ª Quincena (Pago del 30)
                 </span>
-                <span className="small font-sans surplus-subtitle" style={{ fontSize: '11px', opacity: 0.9 }}>
+                <span className="small font-sans surplus-subtitle d-block" style={{ fontSize: '11px', opacity: 0.9 }}>
                   Te sobran {formatUSD(q2Sobrante)} de {formatUSD(q2Available)} disponibles ({q2SobrantePct}% libre)
                 </span>
+                {q2ExpenseItems.length > 0 && (
+                  <span className="small font-monospace surplus-subtitle d-block mt-0.5" style={{ fontSize: '10.5px', opacity: 0.9 }}>
+                    Pagados: {q2PaidCount}/{q2ExpenseItems.length} ({formatUSD(q2PaidAmount)}) · Pendiente: {formatUSD(q2PendingAmount)}
+                  </span>
+                )}
               </div>
               <span className="fs-3 fw-bold font-monospace surplus-amount">
                 {formatUSD(q2Sobrante)}

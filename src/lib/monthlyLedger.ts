@@ -10,6 +10,7 @@ export interface LedgerItem {
   day: number;
   isRecurring?: boolean;
   checked?: boolean;
+  paid?: boolean;
 }
 
 export interface QuincenaLedger {
@@ -136,6 +137,7 @@ export function copyRecurringToMonth(
       .map((i) => ({
         ...i,
         id: `entry-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        paid: false,
       })),
   ];
 
@@ -146,6 +148,7 @@ export function copyRecurringToMonth(
       .map((i) => ({
         ...i,
         id: `entry-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        paid: false,
       })),
   ];
 
