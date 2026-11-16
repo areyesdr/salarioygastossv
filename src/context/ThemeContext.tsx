@@ -54,9 +54,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const resolvedTheme: ResolvedTheme = themeMode === 'system' ? systemTheme : themeMode;
 
-  // Aplicar atributo a <html> para Bootstrap 5.3 y reglas CSS
+  // Aplicar clase .dark y atributo data-theme a <html> para Tailwind v4 y tokens CSS
   useEffect(() => {
-    document.documentElement.setAttribute('data-bs-theme', resolvedTheme);
+    const root = document.documentElement;
+    root.classList.toggle('dark', resolvedTheme === 'dark');
+    root.setAttribute('data-theme', resolvedTheme);
     try {
       localStorage.setItem(THEME_STORAGE_KEY, themeMode);
     } catch {

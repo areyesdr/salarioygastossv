@@ -1,40 +1,34 @@
 import { useNavigate } from 'react-router-dom';
 import { ServerCrash, RefreshCw } from 'lucide-react';
+import { PrimeButton, PrimeCard, PrimeTag } from '../../components/ui/PrimeUI.tsx';
 
 export default function Error503() {
   const navigate = useNavigate();
 
   return (
-    <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
-      <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
-        <div
-          className="rounded-circle d-flex align-items-center justify-content-center bg-slate-100 text-slate-dark mx-auto mb-3"
-          style={{ width: '48px', height: '48px' }}
-        >
-          <ServerCrash size={22} className="text-secondary" />
+    <div className="container-app py-12 flex justify-center items-center flex-1 min-h-[65vh]">
+      <PrimeCard padded className="max-w-[440px] w-full text-center">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--color-surface)] border border-[var(--color-rule)] mx-auto mb-3">
+          <ServerCrash size={22} className="text-[var(--color-muted)]" />
         </div>
 
-        <span className="badge bg-light text-secondary border font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
-          Estado HTTP 502 / 503 · Mantenimiento
-        </span>
+        <PrimeTag severity="neutral" className="mb-2">
+          HTTP 502 / 503 · Mantenimiento
+        </PrimeTag>
 
-        <h5 className="fw-semibold text-slate-dark mb-2">
-          Mantenimiento de Plataforma
+        <h5 className="text-lg font-semibold text-[var(--color-ink)] mb-2">
+          Mantenimiento de plataforma
         </h5>
 
-        <p className="text-muted small mb-4" style={{ fontSize: '13px' }}>
-          El servicio se encuentra en mantenimiento programado o bajo una ventana de actualización. Por favor reintenta en breve.
+        <p className="text-[var(--color-muted)] text-xs leading-relaxed mb-5">
+          El servicio se encuentra en mantenimiento programado o bajo una ventana de actualización. Reintenta en breve.
         </p>
 
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-4 fw-semibold"
-        >
+        <PrimeButton variant="secondary" size="sm" onClick={() => navigate('/')}>
           <RefreshCw size={14} />
-          <span>Volver a la Calculadora</span>
-        </button>
-      </div>
+          <span>Volver a la calculadora</span>
+        </PrimeButton>
+      </PrimeCard>
     </div>
   );
 }

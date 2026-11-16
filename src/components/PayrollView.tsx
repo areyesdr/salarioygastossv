@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Calculator,
@@ -8,6 +8,7 @@ import {
   ChevronUp,
   Info,
   ChevronRight,
+  PieChart,
 } from 'lucide-react';
 import {
   PayrollBreakdown,
@@ -15,6 +16,14 @@ import {
   ISR_TABLES,
   round2,
 } from '../lib/svLaborLaw';
+import {
+  PrimeButton,
+  PrimeCard,
+  PrimeChart,
+  PrimeProgressBar,
+  PrimeSelectButton,
+  PrimeTag,
+} from './ui/PrimeUI.tsx';
 
 interface PayrollViewProps {
   period: PayPeriod;
@@ -39,453 +48,507 @@ export function PayrollView({
   const [showLegalDetails, setShowLegalDetails] = useState<boolean>(false);
   const [showAllBrackets, setShowAllBrackets] = useState<boolean>(false);
 
+  const payrollChartData = useMemo(
+    () => ({
+      labels: ['Salario neto', 'AFP (7.25%)', 'ISSS (3.00%)', 'Renta (ISR)'],
+      datasets: [
+        {
+          data: [
+            activePayroll.netPay,
+            activePayroll.afpEmployee,
+            activePayroll.isssEmployee,
+            activePayroll.isr,
+          ],
+          backgroundColor: ['#059669', '#2563eb', '#d97706', '#dc2626'],
+          borderWidth: 0,
+        },
+      ],
+    }),
+    [activePayroll.netPay, activePayroll.afpEmployee, activePayroll.isssEmployee, activePayroll.isr]
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -4 }}
       transition={{ duration: 0.15 }}
-      className="w-100"
+      className="w-full space-y-4"
     >
-      {/* Pestañas de detalle analítico sobrias */}
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div className="segmented-control">
-          <button
-            type="button"
-            onClick={() => setActiveDetailTab('boleta')}
-            className={activeDetailTab === 'boleta' ? 'active' : ''}
-          >
-            Boleta de Pago
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveDetailTab('renta')}
-            className={activeDetailTab === 'renta' ? 'active' : ''}
-          >
-            Retención de Renta (ISR)
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveDetailTab('patronal')}
-            className={activeDetailTab === 'patronal' ? 'active' : ''}
-          >
-            Costo Patronal (Empresa)
-          </button>
-        </div>
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <PrimeSelectButton
+          value={activeDetailTab}
+          onChange={setActiveDetailTab}
+          options={[
+            { value: 'boleta', label: 'Boleta de Pago' },
+            { value: 'renta', label: 'Retención de Renta (ISR)' },
+            { value: 'patronal', label: 'Costo Patronal (Empresa)' },
+          ]}
+        />
 
         {activeDetailTab === 'boleta' && (
-          <button
-            type="button"
+          <PrimeButton
+            variant="ghost"
+            size="xs"
             onClick={() => setShowLegalDetails((prev) => !prev)}
-            className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
-            style={{ fontSize: '13px' }}
           >
-            <Info size={14} className="text-secondary" />
+            <Info size={14} />
             <span>{showLegalDetails ? 'Ocultar bases legales' : 'Ver bases legales de cálculo'}</span>
-          </button>
+          </PrimeButton>
         )}
       </div>
 
-      {/* PESTAÑA 1: Boleta de Pago */}
+      {/* PESTAÑA 1: Boleta de Pago + Gráfico */}
       {activeDetailTab === 'boleta' && (
-        <div className="card-soft mb-4">
-          <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
-            <div>
-              <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                <Calculator size={17} className="text-secondary" />
-                <span>Boleta Oficial de Pago ({period === 'monthly' ? 'Mensual' : 'Quincenal'})</span>
-              </h6>
-              <span className="small text-muted" style={{ fontSize: '12px' }}>
-                Conforme al Código de Trabajo y Ley de Impuesto sobre la Renta de El Salvador
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <PrimeCard className="lg:col-span-8">
+            <div className="px-4 py-3.5 border-b border-[var(--color-rule)] flex justify-between items-center gap-2">
+              <div>
+                <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                  <Calculator size={16} className="text-[var(--color-muted)]" />
+                  <span>Boleta Oficial de Pago ({period === 'monthly' ? 'Mensual' : 'Quincenal'})</span>
+                </h6>
+                <span className="text-xs text-[var(--color-muted)]">
+                  Conforme al Código de Trabajo y Ley de Impuesto sobre la Renta de El Salvador
+                </span>
+              </div>
+              <PrimeTag severity="neutral" className="font-mono">
+                Decreto 254
+              </PrimeTag>
             </div>
-            <span className="badge bg-light text-secondary border font-monospace" style={{ fontSize: '11px' }}>
-              Decreto 254
-            </span>
-          </div>
 
-          {/* Tabla de 2 columnas estrictas para evitar desbordamiento horizontal */}
-          <div className="table-responsive">
-            <table className="table table-minimal align-middle" style={{ width: '100%', tableLayout: 'fixed' }}>
-              <thead>
-                <tr>
-                  <th style={{ width: '68%' }}>Concepto / Deducción</th>
-                  <th className="text-end" style={{ width: '32%' }}>Monto (USD)</th>
-                </tr>
-              </thead>
-              <tbody className="font-monospace small">
-                {/* Salario Base */}
-                <tr>
-                  <td className="font-sans">
-                    <span className="fw-semibold text-slate-dark">Salario Base Pactado</span>
-                    {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                        El sueldo acordado en tu contrato antes de cualquier descuento o bono.
-                      </div>
-                    )}
-                  </td>
-                  <td className="text-end fw-semibold text-slate-dark">{formatUSD(activePayroll.grossBase)}</td>
-                </tr>
-
-                {/* Bonos si aplican */}
-                {activePayroll.bonuses > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse table-fixed">
+                <thead>
+                  <tr className="border-b border-[var(--color-rule)] bg-[var(--color-surface)] text-xs text-[var(--color-muted)] font-medium">
+                    <th className="py-2.5 px-4 w-[68%]">Concepto / Deducción</th>
+                    <th className="py-2.5 px-4 w-[32%] text-right">Monto (USD)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-rule)] text-xs">
                   <tr>
-                    <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Bono o Comisión Adicional</span>
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-[var(--color-ink)]">Salario Base Pactado</span>
                       {showLegalDetails && (
-                        <div className="text-muted small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                          Dinero extra ganado. Se suma al salario y también paga AFP, ISSS y Renta.
+                        <div className="text-[var(--color-muted)] text-[11px] mt-1">
+                          El sueldo acordado en tu contrato antes de cualquier descuento o bono.
                         </div>
                       )}
                     </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.bonuses)}</td>
-                  </tr>
-                )}
-
-                {/* Recargo Vacacional 30% (Solo bono cuando se descansa la vacación) */}
-                {activePayroll.additions?.includeVacationBonus && (
-                  <tr>
-                    <td className="font-sans">
-                      <span className="fw-semibold text-emerald">+ Recargo Vacacional Legal (30% de ley)</span>
-                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                        Prima del 30% sobre 15 días de salario ordinario (Art. 177 CT). Cotiza AFP, ISSS y Renta.
-                      </div>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-ink)]">
+                      {formatUSD(activePayroll.grossBase)}
                     </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationBonus30Gross)}</td>
                   </tr>
-                )}
 
-                {/* Vacación Trabajada: Renglón 1 - Vacación Pagada de 15 días */}
-                {activePayroll.additions?.includeWorkedVacation && (
-                  <>
+                  {activePayroll.bonuses > 0 && (
                     <tr>
-                      <td className="font-sans">
-                        <span className="fw-semibold text-emerald">+ Vacación Pagada Trabajada (15 días de salario)</span>
-                        <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                          Remuneración de 15 días por el descanso vacacional laborado (Art. 188 CT). Cotiza AFP, ISSS y Renta.
-                        </div>
-                      </td>
-                      <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacation15DaysGross)}</td>
-                    </tr>
-                    <tr>
-                      <td className="font-sans">
-                        <span className="fw-semibold text-emerald">+ Recargo Vacacional Legal (30% sobre vacación)</span>
-                        <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                          Prima obligatoria del 30% sobre los 15 días de vacación (Art. 177 CT). Cotiza AFP, ISSS y Renta.
-                        </div>
-                      </td>
-                      <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.vacationBonus30Gross)}</td>
-                    </tr>
-                  </>
-                )}
-
-                {/* Aguinaldo de Fin de Año */}
-                {activePayroll.additions?.includeAguinaldo && (
-                  <tr>
-                    <td className="font-sans">
-                      <div className="d-flex align-items-center gap-1.5 flex-wrap">
-                        <span className="fw-semibold text-emerald">+ Aguinaldo de Fin de Año</span>
-                        <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
-                          Sin ISSS ni AFP
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-[var(--color-emerald)]">
+                          + Bono o Comisión Adicional
                         </span>
-                        {activePayroll.additions.aguinaldoTaxableExcess > 0 ? (
-                          <span className="badge bg-amber-subtle text-amber-800 border border-amber-subtle font-monospace" style={{ fontSize: '10px' }}>
-                            Renta sobre exceso de $1,500
-                          </span>
-                        ) : (
-                          <span className="badge bg-light text-muted border font-monospace" style={{ fontSize: '10px' }}>
-                            100% Exento de Renta
-                          </span>
+                        {showLegalDetails && (
+                          <div className="text-[var(--color-muted)] text-[11px] mt-1">
+                            Dinero extra ganado. Se suma al salario y también paga AFP, ISSS y Renta.
+                          </div>
                         )}
-                      </div>
-                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                        Prestación legal (Arts. 196–202 CT). Por ley no cotiza AFP ni ISSS.
-                        {activePayroll.additions.aguinaldoTaxableExcess > 0 &&
-                          ` Renta aplicable únicamente al excedente gravado (${formatUSD(activePayroll.additions.aguinaldoTaxableExcess)}).`}
-                      </div>
-                    </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.aguinaldoGross)}</td>
-                  </tr>
-                )}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                        +{formatUSD(activePayroll.bonuses)}
+                      </td>
+                    </tr>
+                  )}
 
-                {/* Quincena 25 */}
-                {activePayroll.additions?.includeQ25 && (
-                  <tr>
-                    <td className="font-sans">
-                      <div className="d-flex align-items-center gap-1.5 flex-wrap">
-                        <span className="fw-semibold text-emerald">+ Quincena 25 (Bono de Enero)</span>
-                        <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
-                          100% Libre de Impuestos
+                  {activePayroll.additions?.includeVacationBonus && (
+                    <tr>
+                      <td className="py-3 px-4">
+                        <span className="font-semibold text-[var(--color-emerald)]">
+                          + Recargo Vacacional Legal (30% de ley)
                         </span>
-                      </div>
-                      <div className="text-muted small mt-0.5 font-sans" style={{ fontSize: '11px' }}>
-                        Compensación económica (Decreto Legislativo 499). Ley prohíbe descontar AFP, ISSS o Renta.
-                      </div>
+                        <div className="text-[var(--color-muted)] text-[11px] mt-0.5">
+                          Prima del 30% sobre 15 días de salario ordinario (Art. 177 CT). Cotiza AFP, ISSS y Renta.
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                        +{formatUSD(activePayroll.additions.vacationBonus30Gross)}
+                      </td>
+                    </tr>
+                  )}
+
+                  {activePayroll.additions?.includeWorkedVacation && (
+                    <>
+                      <tr>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold text-[var(--color-emerald)]">
+                            + Vacación Pagada Trabajada (15 días de salario)
+                          </span>
+                          <div className="text-[var(--color-muted)] text-[11px] mt-0.5">
+                            Remuneración de 15 días por el descanso vacacional laborado (Art. 188 CT). Cotiza AFP, ISSS y Renta.
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                          +{formatUSD(activePayroll.additions.vacation15DaysGross)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold text-[var(--color-emerald)]">
+                            + Recargo Vacacional Legal (30% sobre vacación)
+                          </span>
+                          <div className="text-[var(--color-muted)] text-[11px] mt-0.5">
+                            Prima obligatoria del 30% sobre los 15 días de vacación (Art. 177 CT). Cotiza AFP, ISSS y Renta.
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                          +{formatUSD(activePayroll.additions.vacationBonus30Gross)}
+                        </td>
+                      </tr>
+                    </>
+                  )}
+
+                  {activePayroll.additions?.includeAguinaldo && (
+                    <tr>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[var(--color-emerald)]">
+                            + Aguinaldo de Fin de Año
+                          </span>
+                          <PrimeTag severity="success">Sin ISSS ni AFP</PrimeTag>
+                          {activePayroll.additions.aguinaldoTaxableExcess > 0 ? (
+                            <PrimeTag severity="warning">Renta sobre exceso de $1,500</PrimeTag>
+                          ) : (
+                            <PrimeTag severity="neutral">100% Exento de Renta</PrimeTag>
+                          )}
+                        </div>
+                        <div className="text-[var(--color-muted)] text-[11px] mt-0.5">
+                          Prestación legal (Arts. 196–202 CT). Por ley no cotiza AFP ni ISSS.
+                          {activePayroll.additions.aguinaldoTaxableExcess > 0 &&
+                            ` Renta aplicable únicamente al excedente gravado (${formatUSD(activePayroll.additions.aguinaldoTaxableExcess)}).`}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                        +{formatUSD(activePayroll.additions.aguinaldoGross)}
+                      </td>
+                    </tr>
+                  )}
+
+                  {activePayroll.additions?.includeQ25 && (
+                    <tr>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[var(--color-emerald)]">
+                            + Quincena 25 (Bono de Enero)
+                          </span>
+                          <PrimeTag severity="success">100% Libre de Impuestos</PrimeTag>
+                        </div>
+                        <div className="text-[var(--color-muted)] text-[11px] mt-0.5">
+                          Compensación económica (Decreto Legislativo 499). Ley prohíbe descontar AFP, ISSS o Renta.
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-emerald)]">
+                        +{formatUSD(activePayroll.additions.q25Gross)}
+                      </td>
+                    </tr>
+                  )}
+
+                  <tr className="bg-[var(--color-surface)]">
+                    <td className="py-3 px-4 font-semibold text-[var(--color-ink)]">
+                      <span>Total Ingreso Bruto</span>
+                      {showLegalDetails && (
+                        <div className="text-[var(--color-muted)] text-[11px] mt-1 font-normal">
+                          Todo lo que generaste en el período, antes de descuentos.
+                        </div>
+                      )}
                     </td>
-                    <td className="text-end fw-semibold text-emerald">+{formatUSD(activePayroll.additions.q25Gross)}</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-sm text-[var(--color-ink)]">
+                      {formatUSD(activePayroll.grossTotal)}
+                    </td>
                   </tr>
-                )}
 
-                {/* Total Bruto */}
-                <tr className="bg-light">
-                  <td className="font-sans fw-semibold text-slate-dark">
-                    <span>Total Ingreso Bruto</span>
-                    {showLegalDetails && (
-                      <div className="text-muted small mt-1 font-sans fw-normal" style={{ fontSize: '11px' }}>
-                        Todo lo que generaste en el período, antes de que te descuenten nada.
-                      </div>
-                    )}
-                  </td>
-                  <td className="text-end fw-bold text-slate-dark fs-6">{formatUSD(activePayroll.grossTotal)}</td>
-                </tr>
-
-                {/* AFP */}
-                <tr>
-                  <td className="font-sans">
-                    <div>
-                      <span className="text-slate-dark fw-medium">Pensión AFP (-7.25%)</span>
-                      <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
-                        Tu ahorro para el retiro. Te descuentan el 7.25% sobre salario, bonos y vacación.
+                  <tr>
+                    <td className="py-3 px-4">
+                      <span className="text-[var(--color-ink)] font-medium">Pensión AFP (-7.25%)</span>
+                      <span className="text-[var(--color-muted)] block text-[11px] mt-0.5">
+                        Ahorro para el retiro sobre salario, bonos y vacación.
                         {(activePayroll.additions?.includeAguinaldo || activePayroll.additions?.includeQ25) && (
-                          <span className="text-emerald d-block mt-0.5">
+                          <span className="text-[var(--color-emerald)] block mt-0.5">
                             * Aguinaldo y Q25 están legalmente exentos de AFP (Art. 198 CT y Decreto 499).
                           </span>
                         )}
                       </span>
-                    </div>
-                    {showLegalDetails && (
-                      <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                        Cálculo: Base cotizable × 7.25% = -{formatUSD(activePayroll.afpEmployee)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="text-end text-muted font-monospace">-{formatUSD(activePayroll.afpEmployee)}</td>
-                </tr>
-
-                {/* ISSS */}
-                <tr>
-                  <td className="font-sans">
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="text-slate-dark fw-medium">Seguro Social ISSS (-3.00%)</span>
-                      {activePayroll.isssCapped && (
-                        <span className="badge bg-light text-secondary border font-sans" style={{ fontSize: '10px' }}>
-                          Tope máximo alcanzado
-                        </span>
+                      {showLegalDetails && (
+                        <div className="text-[var(--color-ink-2)] text-[11px] mt-1">
+                          Cálculo: Base cotizable × 7.25% = -{formatUSD(activePayroll.afpEmployee)}
+                        </div>
                       )}
-                    </div>
-                    <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
-                      Tu seguro médico. Te descuentan el 3%, pero tiene un techo: lo máximo que te pueden quitar son {period === 'monthly' ? '$30.00 al mes ($1,000 de sueldo)' : '$15.00 por quincena'}. Si ganas más de $1,000, no te descuentan más de eso.
-                      {(activePayroll.additions?.includeAguinaldo || activePayroll.additions?.includeQ25) && (
-                        <span className="text-emerald d-block mt-0.5">
-                          * Aguinaldo y Q25 están legalmente exentos de ISSS (Art. 198 CT y Decreto 499).
-                        </span>
-                      )}
-                    </span>
-                    {showLegalDetails && (
-                      <div className="text-secondary small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                        Cálculo: 3% sobre base cotizable (topado a {period === 'monthly' ? '$1,000.00' : '$500.00'}) = -{formatUSD(activePayroll.isssEmployee)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-[var(--color-muted)]">
+                      -{formatUSD(activePayroll.afpEmployee)}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[var(--color-ink)] font-medium">Seguro Social ISSS (-3.00%)</span>
+                        {activePayroll.isssCapped && (
+                          <PrimeTag severity="neutral">Tope máximo alcanzado</PrimeTag>
+                        )}
                       </div>
-                    )}
-                  </td>
-                  <td className="text-end text-muted font-monospace">-{formatUSD(activePayroll.isssEmployee)}</td>
-                </tr>
-
-                {/* Renta Gravada Imponible */}
-                <tr className="bg-light">
-                  <td className="font-sans">
-                    <span className="fw-semibold text-slate-dark">Sueldo Imponible (Base de Renta)</span>
-                    <span className="text-muted d-block small font-sans fw-normal" style={{ fontSize: '11px' }}>
-                      El dinero sobre el que Hacienda te cobra impuesto: es tu sueldo bruto menos lo que ya te quitaron de AFP e ISSS.
-                    </span>
-                  </td>
-                  <td className="text-end fw-semibold text-slate-dark">{formatUSD(activePayroll.taxableIncome)}</td>
-                </tr>
-
-                {/* Retención Renta ISR */}
-                <tr>
-                  <td className="font-sans">
-                    <div className="d-flex align-items-center gap-2">
-                      <span className="text-slate-dark fw-medium">Impuesto sobre la Renta (ISR)</span>
-                      <span className="badge bg-light text-secondary border font-sans" style={{ fontSize: '10px' }}>
-                        {activePayroll.isrDetail.bracketId === 'I' ? 'Exento de Renta' : `Tramo ${activePayroll.isrDetail.bracketId}`}
+                      <span className="text-[var(--color-muted)] block text-[11px] mt-0.5">
+                        Seguro médico del 3% con techo de{' '}
+                        {period === 'monthly' ? '$30.00 al mes ($1,000 de sueldo)' : '$15.00 por quincena'}.
+                        {(activePayroll.additions?.includeAguinaldo || activePayroll.additions?.includeQ25) && (
+                          <span className="text-[var(--color-emerald)] block mt-0.5">
+                            * Aguinaldo y Q25 están legalmente exentos de ISSS (Art. 198 CT y Decreto 499).
+                          </span>
+                        )}
                       </span>
-                    </div>
-                    <span className="text-muted d-block small font-sans" style={{ fontSize: '11px' }}>
-                      {activePayroll.isrDetail.bracketId === 'I' ? (
-                        <span className="text-emerald">No te quitan nada de impuesto porque tu sueldo imponible no pasa de {period === 'monthly' ? '$550.00' : '$275.00'}.</span>
-                      ) : (
-                        <span>
-                          Impuesto al Estado: cuota fija de {formatUSD(activePayroll.isrDetail.fixedFee)} más el {Math.round(activePayroll.isrDetail.rate * 100)}% solo sobre la parte que pasa de {formatUSD(activePayroll.isrDetail.excessOver)}.
-                        </span>
+                      {showLegalDetails && (
+                        <div className="text-[var(--color-ink-2)] text-[11px] mt-1">
+                          Cálculo: 3% sobre base cotizable (topado a {period === 'monthly' ? '$1,000.00' : '$500.00'}) = -{formatUSD(activePayroll.isssEmployee)}
+                        </div>
                       )}
-                    </span>
-                  </td>
-                  <td className="text-end font-monospace text-terracotta">
-                    -{formatUSD(activePayroll.isr)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-[var(--color-muted)]">
+                      -{formatUSD(activePayroll.isssEmployee)}
+                    </td>
+                  </tr>
 
-          {/* Pie de boleta con el líquido neto */}
-          <div className="p-3 bg-slate-50 border-top d-flex justify-content-between align-items-center">
-            <div>
-              <span className="fw-semibold text-slate-dark d-block" style={{ fontSize: '13px' }}>
-                Salario Neto a Recibir
-              </span>
-              <span className="text-muted small">
-                Retención de ley efectiva: {activePayroll.effectiveDeductionPct}%
-              </span>
+                  <tr className="bg-[var(--color-surface)]">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-[var(--color-ink)]">
+                        Sueldo Imponible (Base de Renta)
+                      </span>
+                      <span className="text-[var(--color-muted)] block text-[11px] mt-0.5">
+                        Sueldo bruto menos AFP e ISSS.
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-ink)]">
+                      {formatUSD(activePayroll.taxableIncome)}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[var(--color-ink)] font-medium">
+                          Impuesto sobre la Renta (ISR)
+                        </span>
+                        <PrimeTag severity={activePayroll.isrDetail.bracketId === 'I' ? 'success' : 'neutral'}>
+                          {activePayroll.isrDetail.bracketId === 'I'
+                            ? 'Exento de Renta'
+                            : `Tramo ${activePayroll.isrDetail.bracketId}`}
+                        </PrimeTag>
+                      </div>
+                      <span className="text-[var(--color-muted)] block text-[11px] mt-0.5">
+                        {activePayroll.isrDetail.bracketId === 'I' ? (
+                          <span className="text-[var(--color-emerald)]">
+                            Sin retención: tu sueldo imponible no supera{' '}
+                            {period === 'monthly' ? '$550.00' : '$275.00'}.
+                          </span>
+                        ) : (
+                          <span>
+                            Cuota fija de {formatUSD(activePayroll.isrDetail.fixedFee)} más el{' '}
+                            {Math.round(activePayroll.isrDetail.rate * 100)}% sobre el exceso de{' '}
+                            {formatUSD(activePayroll.isrDetail.excessOver)}.
+                          </span>
+                        )}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold text-[var(--color-danger)]">
+                      -{formatUSD(activePayroll.isr)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <span className="fs-4 fw-bold font-monospace text-emerald">
-              {formatUSD(activePayroll.netPay)}
-            </span>
-          </div>
 
-          {/* Desglose Quincenal Consolidado (Cuadre de Cierre de Mes) */}
-          {period === 'biweekly' && activePayroll.quincenaDetails && (
-            <div className="p-3 bg-light border-top">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="small text-slate-dark fw-semibold" style={{ fontSize: '12px' }}>
-                  Desglose Quincenal Consolidado (Liquidación de Mes)
+            <div className="p-4 bg-[var(--color-surface)] border-t border-[var(--color-rule)] flex justify-between items-center gap-3">
+              <div>
+                <span className="text-sm font-semibold text-[var(--color-ink)] block">
+                  Salario Neto a Recibir
                 </span>
-                <span className="badge-subtle font-monospace" style={{ fontSize: '11px' }}>
-                  Total Mensual: {formatUSD(monthlyPayroll.netPay)}
+                <span className="text-xs text-[var(--color-muted)]">
+                  Retención de ley efectiva: {activePayroll.effectiveDeductionPct}%
                 </span>
               </div>
-              <div className="row g-2 font-monospace small">
-                <div className="col-12 col-sm-6">
-                  <div className="p-2.5 rounded bg-white border border-slate-200">
-                    <span className="text-muted d-block font-sans" style={{ fontSize: '11px' }}>
+              <span className="text-2xl font-bold font-mono text-[var(--color-emerald)]">
+                {formatUSD(activePayroll.netPay)}
+              </span>
+            </div>
+
+            {period === 'biweekly' && activePayroll.quincenaDetails && (
+              <div className="p-4 border-t border-[var(--color-rule)] space-y-2.5">
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-xs font-semibold text-[var(--color-ink)]">
+                    Desglose Quincenal Consolidado (Liquidación de Mes)
+                  </span>
+                  <PrimeTag severity="neutral" className="font-mono">
+                    Total Mensual: {formatUSD(monthlyPayroll.netPay)}
+                  </PrimeTag>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-mono text-xs">
+                  <div className="surface-well p-3">
+                    <span className="text-[var(--color-muted)] block font-sans text-[11px]">
                       1.ª Quincena (Día 1 al 15):
                     </span>
-                    <strong className="text-slate-dark">{formatUSD(activePayroll.quincenaDetails.q1.netPay)} neto</strong>
-                    <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>
-                      Bruto: {formatUSD(activePayroll.quincenaDetails.q1.grossTotal)} · Deds: -{formatUSD(activePayroll.quincenaDetails.q1.totalEmployeeDeductions)}
+                    <strong className="text-[var(--color-ink)] text-sm">
+                      {formatUSD(activePayroll.quincenaDetails.q1.netPay)} neto
+                    </strong>
+                    <span className="text-[var(--color-muted)] block font-sans text-[10px] mt-0.5">
+                      Bruto: {formatUSD(activePayroll.quincenaDetails.q1.grossTotal)} · Deds: -
+                      {formatUSD(activePayroll.quincenaDetails.q1.totalEmployeeDeductions)}
                     </span>
                   </div>
-                </div>
-                <div className="col-12 col-sm-6">
-                  <div className="p-2.5 rounded bg-white border border-slate-200">
-                    <span className="text-muted d-block font-sans" style={{ fontSize: '11px' }}>
+                  <div className="surface-well p-3">
+                    <span className="text-[var(--color-muted)] block font-sans text-[11px]">
                       2.ª Quincena (Ajuste de Cierre):
                     </span>
-                    <strong className="text-slate-dark">{formatUSD(activePayroll.quincenaDetails.q2.netPay)} neto</strong>
-                    <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>
-                      Bruto: {formatUSD(activePayroll.quincenaDetails.q2.grossTotal)} · Deds: -{formatUSD(activePayroll.quincenaDetails.q2.totalEmployeeDeductions)}
+                    <strong className="text-[var(--color-ink)] text-sm">
+                      {formatUSD(activePayroll.quincenaDetails.q2.netPay)} neto
+                    </strong>
+                    <span className="text-[var(--color-muted)] block font-sans text-[10px] mt-0.5">
+                      Bruto: {formatUSD(activePayroll.quincenaDetails.q2.grossTotal)} · Deds: -
+                      {formatUSD(activePayroll.quincenaDetails.q2.totalEmployeeDeductions)}
                     </span>
                   </div>
                 </div>
+                {activePayroll.quincenaDetails.hasOddCentAdjustment && (
+                  <div className="text-[var(--color-muted)] text-[11px] flex items-center gap-1.5">
+                    <Info size={12} className="shrink-0" />
+                    <span>
+                      El centavo diferencial se ajusta en la 2.ª quincena conforme a la declaración mensual ante ISSS, AFP y Hacienda.
+                    </span>
+                  </div>
+                )}
               </div>
-              {activePayroll.quincenaDetails.hasOddCentAdjustment && (
-                <div className="text-muted mt-2 font-sans d-flex align-items-center gap-1.5" style={{ fontSize: '11px' }}>
-                  <Info size={12} className="text-secondary shrink-0" />
-                  <span>El centavo diferencial se ajusta en la 2.ª quincena conforme a la declaración mensual ante ISSS, AFP y Hacienda.</span>
-                </div>
-              )}
+            )}
+          </PrimeCard>
+
+          {/* Columna Derecha: Gráfico PrimeUI (Chart.js) */}
+          <PrimeCard padded className="lg:col-span-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                <PieChart size={16} className="text-[var(--color-accent)]" />
+                <span>Distribución del Ingreso</span>
+              </h6>
+              <span className="text-xs font-mono text-[var(--color-muted)]">
+                {formatUSD(activePayroll.grossTotal)}
+              </span>
             </div>
-          )}
+            <PrimeChart type="doughnut" data={payrollChartData} height={220} />
+            <div className="space-y-1.5 pt-2 border-t border-[var(--color-rule)] text-xs font-mono">
+              <div className="flex justify-between">
+                <span className="text-[var(--color-muted)] font-sans">Salario Neto:</span>
+                <span className="font-semibold text-[var(--color-emerald)]">{formatUSD(activePayroll.netPay)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-muted)] font-sans">Total Deducciones:</span>
+                <span className="font-semibold text-[var(--color-danger)]">
+                  -{formatUSD(activePayroll.totalEmployeeDeductions)}
+                </span>
+              </div>
+            </div>
+          </PrimeCard>
         </div>
       )}
 
       {/* PESTAÑA 2: Tabla de Renta ISR */}
       {activeDetailTab === 'renta' && (
-        <div className="card-soft mb-4">
-          <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
+        <PrimeCard>
+          <div className="px-4 py-3.5 border-b border-[var(--color-rule)] flex flex-wrap justify-between items-center gap-2">
             <div>
-              <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                <ShieldCheck size={17} className="text-secondary" />
+              <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                <ShieldCheck size={16} className="text-[var(--color-muted)]" />
                 <span>Tabla de Retención de Renta (Decreto 254)</span>
               </h6>
-              <span className="small text-muted" style={{ fontSize: '12px' }}>
-                Tu base imponible calculada es{' '}
-                <strong className="text-slate-dark font-monospace">{formatUSD(activePayroll.taxableIncome)}</strong>
+              <span className="text-xs text-[var(--color-muted)]">
+                Base imponible calculada:{' '}
+                <strong className="text-[var(--color-ink)] font-mono">
+                  {formatUSD(activePayroll.taxableIncome)}
+                </strong>
               </span>
             </div>
 
-            <button
-              type="button"
+            <PrimeButton
+              variant="outline"
+              size="xs"
               onClick={() => setShowAllBrackets((prev) => !prev)}
-              className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-2"
-              style={{ fontSize: '12px' }}
             >
               <span>{showAllBrackets ? 'Ocultar escala' : 'Ver los 4 tramos'}</span>
               {showAllBrackets ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
+            </PrimeButton>
           </div>
 
-          <div className="p-3">
-            {/* Tramo Activo Destacado Sobrio */}
-            <div className="p-3 rounded border bg-light mb-3">
-              <div className="d-flex justify-content-between align-items-center mb-1">
-                <div className="d-flex align-items-center gap-2">
-                  <span className="badge bg-secondary font-monospace">Tramo {activePayroll.isrDetail.bracketId}</span>
-                  <strong className="text-slate-dark">{activePayroll.isrDetail.bracketLabel}</strong>
+          <div className="p-4 space-y-4">
+            <div className="surface-well p-3.5">
+              <div className="flex justify-between items-center mb-1.5">
+                <div className="flex items-center gap-2">
+                  <PrimeTag severity="info" className="font-mono">
+                    Tramo {activePayroll.isrDetail.bracketId}
+                  </PrimeTag>
+                  <strong className="text-sm text-[var(--color-ink)]">
+                    {activePayroll.isrDetail.bracketLabel}
+                  </strong>
                 </div>
-                <span className="font-monospace fw-bold text-terracotta">
+                <span className="font-mono font-bold text-[var(--color-danger)]">
                   -{formatUSD(activePayroll.isr)}
                 </span>
               </div>
-              <p className="text-muted small mb-0 font-monospace">
+              <p className="text-[var(--color-muted)] text-xs font-mono m-0">
                 {activePayroll.isrDetail.bracketId === 'I' ? (
-                  <span>Tu base gravada no supera el límite exento ({period === 'monthly' ? '$550.00' : '$275.00'}). No aplica retención de ISR.</span>
+                  <span>
+                    Tu base gravada no supera el límite exento ({period === 'monthly' ? '$550.00' : '$275.00'}). No aplica retención de ISR.
+                  </span>
                 ) : (
                   <span>
-                    Cuota fija de {formatUSD(activePayroll.isrDetail.fixedFee)} más el {Math.round(activePayroll.isrDetail.rate * 100)}% sobre el exceso de {formatUSD(activePayroll.isrDetail.excessOver)}.
+                    Cuota fija de {formatUSD(activePayroll.isrDetail.fixedFee)} más el{' '}
+                    {Math.round(activePayroll.isrDetail.rate * 100)}% sobre el exceso de{' '}
+                    {formatUSD(activePayroll.isrDetail.excessOver)}.
                   </span>
                 )}
               </p>
             </div>
 
-            {/* Escala Visual Discreta en tonos neutros */}
-            <div className="mb-3">
-              <div className="d-flex justify-content-between small text-muted font-monospace mb-1" style={{ fontSize: '11px' }}>
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[11px] text-[var(--color-muted)] font-mono mb-1.5">
                 <span>Exento ($0 - {period === 'monthly' ? '$550.00' : '$275.00'})</span>
-                <span>10% ({period === 'monthly' ? '$550.00 - $895.24' : '$275.00 - $447.62'})</span>
+                <span>10% ({period === 'monthly' ? '$550 - $895.24' : '$275 - $447.62'})</span>
                 <span>20% ({period === 'monthly' ? '$895.24 - $2,038.10' : '$447.62 - $1,019.05'})</span>
-                <span>30% (&gt; {period === 'monthly' ? '$2,038.10' : '$1,019.05'})</span>
+                <span className="sm:text-right">30% (&gt; {period === 'monthly' ? '$2,038.10' : '$1,019.05'})</span>
               </div>
-              <div className="progress" style={{ height: '7px' }}>
-                <div
-                  className="progress-bar"
-                  role="progressbar"
-                  style={{
-                    width: `${isrMarkerPercent}%`,
-                    transition: 'width 0.2s ease',
-                  }}
-                />
-              </div>
+              <PrimeProgressBar value={isrMarkerPercent} />
             </div>
 
-            {/* Tabla Completa de Tramos */}
             {showAllBrackets && (
-              <div className="table-responsive border rounded mt-3">
-                <table className="table table-minimal align-middle small font-monospace mb-0" style={{ minWidth: '480px' }}>
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-rule)]">
+                <table className="w-full text-left border-collapse font-mono text-xs min-w-[480px]">
                   <thead>
-                    <tr>
-                      <th>Tramo</th>
-                      <th>Desde</th>
-                      <th>Hasta</th>
-                      <th>Porcentaje</th>
-                      <th>Cuota fija</th>
-                      <th className="text-end">Sobre exceso</th>
+                    <tr className="bg-[var(--color-surface)] border-b border-[var(--color-rule)] text-[var(--color-muted)]">
+                      <th className="py-2.5 px-3">Tramo</th>
+                      <th className="py-2.5 px-3">Desde</th>
+                      <th className="py-2.5 px-3">Hasta</th>
+                      <th className="py-2.5 px-3">Porcentaje</th>
+                      <th className="py-2.5 px-3">Cuota fija</th>
+                      <th className="py-2.5 px-3 text-right">Sobre exceso</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-[var(--color-rule)]">
                     {ISR_TABLES[period].map((rule) => {
                       const isCurrent = activePayroll.isrDetail.bracketId === rule.id;
                       return (
-                        <tr key={rule.id} className={isCurrent ? 'bg-light fw-bold' : ''}>
-                          <td>
-                            {isCurrent && <span className="badge bg-secondary me-1.5">Actual</span>}
-                            Tramo {rule.id}
+                        <tr key={rule.id} className={isCurrent ? 'bg-[var(--color-accent-soft)] font-semibold' : ''}>
+                          <td className="py-2.5 px-3">
+                            <span className="inline-flex items-center gap-1.5">
+                              {isCurrent && <PrimeTag severity="info">Actual</PrimeTag>}
+                              <span>Tramo {rule.id}</span>
+                            </span>
                           </td>
-                          <td>{formatUSD(rule.from)}</td>
-                          <td>{rule.to ? formatUSD(rule.to) : 'En adelante'}</td>
-                          <td>{Math.round(rule.rate * 100)}%</td>
-                          <td>{formatUSD(rule.fixedFee)}</td>
-                          <td className="text-end">{formatUSD(rule.excessOver)}</td>
+                          <td className="py-2.5 px-3">{formatUSD(rule.from)}</td>
+                          <td className="py-2.5 px-3">{rule.to ? formatUSD(rule.to) : 'En adelante'}</td>
+                          <td className="py-2.5 px-3">{Math.round(rule.rate * 100)}%</td>
+                          <td className="py-2.5 px-3">{formatUSD(rule.fixedFee)}</td>
+                          <td className="py-2.5 px-3 text-right">{formatUSD(rule.excessOver)}</td>
                         </tr>
                       );
                     })}
@@ -494,89 +557,88 @@ export function PayrollView({
               </div>
             )}
           </div>
-        </div>
+        </PrimeCard>
       )}
 
       {/* PESTAÑA 3: Costo Patronal */}
       {activeDetailTab === 'patronal' && (
-        <div className="card-soft mb-4">
-          <div className="p-3 border-bottom d-flex justify-content-between align-items-center">
-            <div>
-              <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                <Building size={17} className="text-secondary" />
-                <span>Costo Patronal y Aportes de la Empresa ({period === 'monthly' ? 'Mensual' : 'Quincenal'})</span>
-              </h6>
-              <span className="small text-muted" style={{ fontSize: '12px' }}>
-                Cargas sociales obligatorias que la empresa paga además de tu salario bruto
-              </span>
-            </div>
+        <PrimeCard>
+          <div className="px-4 py-3.5 border-b border-[var(--color-rule)]">
+            <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+              <Building size={16} className="text-[var(--color-muted)]" />
+              <span>Costo Patronal y Aportes de la Empresa ({period === 'monthly' ? 'Mensual' : 'Quincenal'})</span>
+            </h6>
+            <span className="text-xs text-[var(--color-muted)]">
+              Cargas sociales obligatorias que la empresa paga además de tu salario bruto
+            </span>
           </div>
 
-          <div className="p-3">
-            <div className="row g-3 mb-3 text-center">
-              <div className="col-12 col-sm-4">
-                <div className="p-3 border rounded bg-light">
-                  <span className="text-muted small d-block">AFP Patronal (8.75%)</span>
-                  <span className="fs-5 fw-bold font-monospace text-slate-dark">
-                    {formatUSD(activePayroll.afpEmployer)}
-                  </span>
-                </div>
+          <div className="p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+              <div className="surface-well p-3.5">
+                <span className="text-xs text-[var(--color-muted)] block mb-1">AFP Patronal (8.75%)</span>
+                <span className="text-lg font-bold font-mono text-[var(--color-ink)]">
+                  {formatUSD(activePayroll.afpEmployer)}
+                </span>
               </div>
-              <div className="col-12 col-sm-4">
-                <div className="p-3 border rounded bg-light">
-                  <span className="text-muted small d-block">
-                    ISSS Patronal (7.5% máx {period === 'monthly' ? '$75.00' : '$37.50'})
-                  </span>
-                  <span className="fs-5 fw-bold font-monospace text-slate-dark">
-                    {formatUSD(activePayroll.isssEmployer)}
-                  </span>
-                </div>
+              <div className="surface-well p-3.5">
+                <span className="text-xs text-[var(--color-muted)] block mb-1">
+                  ISSS Patronal (7.5% máx {period === 'monthly' ? '$75.00' : '$37.50'})
+                </span>
+                <span className="text-lg font-bold font-mono text-[var(--color-ink)]">
+                  {formatUSD(activePayroll.isssEmployer)}
+                </span>
               </div>
-              <div className="col-12 col-sm-4">
-                <div className="p-3 border rounded bg-light">
-                  <span className="text-muted small d-block">INSAFORP/INCAF (1%)</span>
-                  <span className="fs-5 fw-bold font-monospace text-slate-dark">
-                    {formatUSD(activePayroll.insaforpEmployer)}
-                  </span>
-                </div>
+              <div className="surface-well p-3.5">
+                <span className="text-xs text-[var(--color-muted)] block mb-1">INSAFORP/INCAF (1%)</span>
+                <span className="text-lg font-bold font-mono text-[var(--color-ink)]">
+                  {formatUSD(activePayroll.insaforpEmployer)}
+                </span>
               </div>
             </div>
 
-            <div className="p-3 border rounded bg-slate-50 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div className="surface-well p-4 flex flex-wrap justify-between items-center gap-2">
               <div>
-                <span className="small fw-semibold text-slate-dark d-block">
+                <span className="text-xs font-semibold text-[var(--color-ink)] block">
                   Costo Total Empresa:
                 </span>
-                <span className="text-muted small" style={{ fontSize: '12px' }}>
+                <span className="text-xs text-[var(--color-muted)]">
                   Salario Bruto ({formatUSD(activePayroll.grossTotal)}) + Cargas patronales ({formatUSD(round2(activePayroll.totalEmployerCost - activePayroll.grossTotal))})
                 </span>
               </div>
-              <span className="fs-4 fw-bold font-monospace text-slate-dark">
+              <span className="text-2xl font-bold font-mono text-[var(--color-ink)]">
                 {formatUSD(activePayroll.totalEmployerCost)}
               </span>
             </div>
           </div>
-        </div>
+        </PrimeCard>
       )}
 
-      {/* Impacto Marginal de Bonos */}
       {extraMonthlyBonus > 0 && (
-        <div className="card-soft p-3 mb-4 border-start border-3 border-secondary">
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <PrimeCard padded className="border-l-4 border-l-[var(--color-accent)]">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-2">
             <div>
-              <span className="small text-muted d-block">Impacto de Bono Mensual (+{formatUSD(extraMonthlyBonus)})</span>
-              <strong className="text-slate-dark small">¿Cuánto de tu bono adicional llega efectivamente a tu bolsillo?</strong>
-            </div>
-            <div className="d-flex flex-wrap align-items-center gap-2 font-monospace small">
-              <span className="text-muted">Sin bono: {formatUSD(monthlyBaseOnlyPayroll.netPay)}</span>
-              <ChevronRight size={14} className="text-muted" />
-              <span className="text-emerald fw-semibold">Con bono: {formatUSD(monthlyPayroll.netPay)}</span>
-              <span className="badge bg-light text-dark border ms-1">
-                Neto real: +{formatUSD(round2(monthlyPayroll.netPay - monthlyBaseOnlyPayroll.netPay))}
+              <span className="text-xs text-[var(--color-muted)] block">
+                Impacto de Bono Mensual (+{formatUSD(extraMonthlyBonus)})
               </span>
+              <strong className="text-xs text-[var(--color-ink)]">
+                ¿Cuánto de tu bono adicional llega efectivamente a tu bolsillo?
+              </strong>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+              <span className="text-[var(--color-muted)]">
+                Sin bono: {formatUSD(monthlyBaseOnlyPayroll.netPay)}
+              </span>
+              <ChevronRight size={14} className="text-[var(--color-muted)]" />
+              <span className="text-[var(--color-emerald)] font-semibold">
+                Con bono: {formatUSD(monthlyPayroll.netPay)}
+              </span>
+              <PrimeTag severity="success">
+                Neto real: +{formatUSD(round2(monthlyPayroll.netPay - monthlyBaseOnlyPayroll.netPay))}
+              </PrimeTag>
             </div>
           </div>
-        </div>
+        </PrimeCard>
       )}
     </motion.div>
   );

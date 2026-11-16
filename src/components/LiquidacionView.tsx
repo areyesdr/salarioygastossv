@@ -17,6 +17,9 @@ import {
   AlertTriangle,
   XCircle,
   Info,
+  Gift,
+  Palmtree,
+  Star,
 } from 'lucide-react';
 import {
   calcLiquidacion,
@@ -24,6 +27,15 @@ import {
   MINIMUM_WAGES_2026,
   type MinimumWageSector,
 } from '../lib/svLaborLaw';
+import {
+  PrimeButton,
+  PrimeCard,
+  PrimeCheckbox,
+  PrimeInput,
+  PrimeMessage,
+  PrimeSelect,
+  PrimeTag,
+} from './ui/PrimeUI.tsx';
 
 interface LiquidacionViewProps {
   monthlySalary: number;
@@ -36,7 +48,6 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
     (initialSalary > 0 ? initialSalary : 944.19).toFixed(2)
   );
 
-  // Fechas por defecto: 2 años atrás hasta hoy
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultHireDate = new Date(Date.now() - 2 * 365 * 86_400_000).toISOString().split('T')[0];
 
@@ -158,777 +169,695 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="container-fluid px-0"
+      className="space-y-5"
     >
-      {/* Encabezado Principal */}
-      <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom pb-3">
-        <div>
-          <div className="d-flex align-items-center gap-2">
-            <Scale className="text-primary" size={24} />
-            <h5 className="fw-bold mb-0 text-slate-dark">
-              Calculadora de Liquidación y Finiquito Laboral
-            </h5>
-          </div>
-          <p className="text-muted small mb-0 mt-1">
-            Conoce exactamente cuánto dinero te corresponde recibir en El Salvador y de dónde sale cada centavo.
-          </p>
+      <div className="border-b border-[var(--color-rule)] pb-3">
+        <div className="flex items-center gap-2">
+          <Scale className="text-[var(--color-accent)]" size={22} />
+          <h5 className="text-lg font-bold text-[var(--color-ink)] m-0">
+            Calculadora de Liquidación y Finiquito Laboral
+          </h5>
         </div>
+        <p className="text-[var(--color-muted)] text-xs mt-1 mb-0">
+          Conoce exactamente cuánto dinero te corresponde recibir en El Salvador y el origen de cada monto.
+        </p>
       </div>
 
-      <div className="row g-4">
-        {/* Panel Izquierdo: Entradas Simples y Guiadas */}
-        <div className="col-12 col-lg-5">
-          <div className="card shadow-xs border-slate-200">
-            <div className="card-header bg-slate-50 border-bottom border-slate-200 py-3">
-              <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
-                <Briefcase size={16} className="text-primary" />
-                <span>Paso 1: Tus Datos de Salario y Fechas</span>
-              </h6>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Panel Izquierdo */}
+        <PrimeCard className="lg:col-span-5">
+          <div className="px-4 py-3 border-b border-[var(--color-rule)] bg-[var(--color-surface)]">
+            <h6 className="text-sm font-bold text-[var(--color-ink)] flex items-center gap-2 m-0">
+              <Briefcase size={15} className="text-[var(--color-accent)]" />
+              <span>Paso 1: Tus datos de salario y fechas</span>
+            </h6>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* 1. Salario Mensual */}
+            <div>
+              <div className="flex justify-between items-center mb-1.5 text-xs">
+                <span className="font-semibold text-[var(--color-ink)]">
+                  1. ¿Cuánto ganas al mes? (Salario nominal)
+                </span>
+                <span className="text-[var(--color-muted)] font-mono text-[11px]">
+                  Diario: {formatUSD(result.dailyRealSalary)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="px-2.5 py-1.5 rounded-lg border border-[var(--color-rule)] bg-[var(--color-surface)] text-xs font-bold text-[var(--color-muted)]">
+                  $
+                </span>
+                <PrimeInput
+                  type="number"
+                  inputSize="sm"
+                  mono
+                  step="0.01"
+                  min="0"
+                  className="font-semibold"
+                  value={salaryInput}
+                  onChange={(e) => handleSalaryChange(e.target.value)}
+                  placeholder="944.19"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {presetSalaries.map((preset) => (
+                  <PrimeButton
+                    key={preset.label}
+                    size="xs"
+                    variant={Math.abs(salary - preset.amount) < 0.01 ? 'primary' : 'outline'}
+                    onClick={() => {
+                      setSalary(preset.amount);
+                      setSalaryInput(preset.amount.toFixed(2));
+                    }}
+                  >
+                    {preset.label}
+                  </PrimeButton>
+                ))}
+              </div>
             </div>
 
-            <div className="card-body p-3 p-md-4">
-              {/* 1. Salario Mensual */}
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-slate-dark d-flex justify-content-between align-items-center">
-                  <span>1. ¿Cuánto ganas al mes? (Salario nominal)</span>
-                  <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
-                    Diario: {formatUSD(result.dailyRealSalary)}
-                  </span>
-                </label>
-                <div className="input-group input-group-sm mb-2">
-                  <span className="input-group-text bg-light text-muted fw-bold">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="form-control font-monospace fw-semibold"
-                    value={salaryInput}
-                    onChange={(e) => handleSalaryChange(e.target.value)}
-                    placeholder="944.19"
+            {/* 2. Días adeudados */}
+            <div className="surface-well p-3 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-[var(--color-ink)] flex items-center gap-1.5">
+                  <DollarSign size={14} className="text-[var(--color-emerald)]" />
+                  <span>2. ¿Cuántos días te deben de la quincena?</span>
+                </span>
+                <span className="font-bold font-mono text-[var(--color-emerald)]">
+                  {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--color-muted)] m-0">
+                Si trabajaste días que aún no te han pagado, márcalos aquí para sumarlos:
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {presetDiasAdeudados.map((item) => (
+                  <PrimeButton
+                    key={item.label}
+                    size="xs"
+                    variant={salarioPendienteDias === item.days ? 'success' : 'outline'}
+                    onClick={() => setSalarioPendienteDias(item.days)}
+                  >
+                    {item.label}
+                  </PrimeButton>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <span className="text-[11px] text-[var(--color-muted)] shrink-0">Otro número de días:</span>
+                <PrimeInput
+                  type="number"
+                  inputSize="sm"
+                  mono
+                  min="0"
+                  max="31"
+                  className="text-center w-[76px]"
+                  value={salarioPendienteDias}
+                  onChange={(e) => setSalarioPendienteDias(Number.parseInt(e.target.value || '0', 10))}
+                />
+                <span className="text-[11px] text-[var(--color-muted)]">días</span>
+              </div>
+            </div>
+
+            {/* 3. Fechas y Antigüedad */}
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5">
+                <Calendar size={13} className="text-[var(--color-accent)]" />
+                <span>3. Fechas de tu empleo</span>
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[11px] text-[var(--color-muted)] block mb-1">Fecha de Ingreso:</span>
+                  <PrimeInput
+                    type="date"
+                    inputSize="sm"
+                    mono
+                    value={hireDate}
+                    onChange={(e) => setHireDate(e.target.value)}
                   />
                 </div>
-                <div className="d-flex flex-wrap gap-1.5">
-                  {presetSalaries.map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      className={`btn btn-xs py-1 px-2 ${
-                        Math.abs(salary - preset.amount) < 0.01
-                          ? 'btn-primary'
-                          : 'btn-outline-secondary'
-                      }`}
-                      style={{ fontSize: '11px' }}
-                      onClick={() => {
-                        setSalary(preset.amount);
-                        setSalaryInput(preset.amount.toFixed(2));
-                      }}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. DÍAS DE SALARIO TRABAJADOS QUE TE DEBEN (UBICADO ARRIBA PARA VISIBILIDAD) */}
-              <div className="p-3 rounded bg-light border border-slate-200 mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-1.5">
-                  <label className="form-label small fw-bold text-slate-dark mb-0 d-flex align-items-center gap-1.5">
-                    <DollarSign size={14} className="text-success" />
-                    <span>2. ¿Cuántos días te deben de la quincena actual?</span>
-                  </label>
-                  <span className="fw-bold font-monospace text-success small">
-                    {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
-                  </span>
-                </div>
-                <p className="text-muted small mb-2" style={{ fontSize: '11px' }}>
-                  Si trabajaste días que aún no te han pagado, márcalos aquí para sumarlos a tu cheque:
-                </p>
-                <div className="d-flex flex-wrap gap-1.5 mb-2">
-                  {presetDiasAdeudados.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className={`btn btn-xs py-1 px-2 ${
-                        salarioPendienteDias === item.days
-                          ? 'btn-success text-white'
-                          : 'btn-outline-secondary'
-                      }`}
-                      style={{ fontSize: '11px' }}
-                      onClick={() => setSalarioPendienteDias(item.days)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-white text-muted">Otro número de días:</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="31"
-                    className="form-control font-monospace text-center"
-                    value={salarioPendienteDias}
-                    onChange={(e) => setSalarioPendienteDias(Number.parseInt(e.target.value || '0', 10))}
+                <div>
+                  <span className="text-[11px] text-[var(--color-muted)] block mb-1">Fecha de Salida / Fin:</span>
+                  <PrimeInput
+                    type="date"
+                    inputSize="sm"
+                    mono
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                   />
-                  <span className="input-group-text bg-white text-muted">días</span>
                 </div>
               </div>
-
-              {/* 3. Fechas y Antigüedad */}
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1 mb-1.5">
-                  <Calendar size={13} className="text-primary" />
-                  <span>3. Fechas de tu empleo (Para calcular tu tiempo trabajado)</span>
-                </label>
-                <div className="row g-2 mb-2">
-                  <div className="col-12 col-sm-6">
-                    <span className="text-muted d-block small" style={{ fontSize: '11px' }}>Fecha de Ingreso:</span>
-                    <input
-                      type="date"
-                      className="form-control form-control-sm font-monospace"
-                      value={hireDate}
-                      onChange={(e) => setHireDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-12 col-sm-6">
-                    <span className="text-muted d-block small" style={{ fontSize: '11px' }}>Fecha de Salida / Fin:</span>
-                    <input
-                      type="date"
-                      className="form-control form-control-sm font-monospace"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="p-2.5 rounded bg-body-tertiary border border-slate-200 d-flex align-items-center justify-content-between">
-                  <span className="small text-muted" style={{ fontSize: '12px' }}>
-                    Tu tiempo en la empresa:
-                  </span>
-                  <span className="fw-bold text-slate-dark font-monospace small" style={{ fontSize: '12px' }}>
-                    {result.seniority.formattedSeniority}
-                  </span>
-                </div>
+              <div className="surface-well px-3 py-2 flex justify-between items-center text-xs">
+                <span className="text-[var(--color-muted)]">Tu tiempo en la empresa:</span>
+                <span className="font-bold font-mono text-[var(--color-ink)]">
+                  {result.seniority.formattedSeniority}
+                </span>
               </div>
+            </div>
 
-              {/* 4. Selector de Motivo */}
-              <div className="mb-3">
-                <label className="form-label small fw-semibold text-slate-dark mb-1.5">
-                  4. ¿Por qué motivo termina la relación de trabajo?
-                </label>
-                <div className="space-y-2">
-                  {motivosList.map((m) => (
-                    <div
+            {/* 4. Motivo */}
+            <div className="space-y-2">
+              <span className="text-xs font-semibold text-[var(--color-ink)] block">
+                4. ¿Por qué motivo termina la relación de trabajo?
+              </span>
+              <div className="space-y-1.5">
+                {motivosList.map((m) => {
+                  const active = motivo === m.id;
+                  return (
+                    <button
                       key={m.id}
+                      type="button"
                       onClick={() => setMotivo(m.id)}
-                      className={`p-2.5 rounded border transition-all cursor-pointer ${
-                        motivo === m.id
-                          ? 'border-primary bg-primary-subtle bg-opacity-15 shadow-xs'
-                          : 'border-slate-200 hover-bg-light'
+                      className={`w-full text-left p-2.5 rounded-xl border cursor-pointer transition-colors duration-150 ${
+                        active
+                          ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]'
+                          : 'border-[var(--color-rule)] bg-[var(--color-card)] hover:bg-[var(--color-surface)]'
                       }`}
-                      style={{ cursor: 'pointer' }}
                     >
-                      <div className="d-flex align-items-start gap-2">
-                        <input
-                          type="radio"
-                          name="motivo_radio"
-                          className="form-check-input mt-1 shrink-0"
-                          checked={motivo === m.id}
-                          onChange={() => setMotivo(m.id)}
-                        />
-                        <div className="flex-grow-1">
-                          <div className="d-flex flex-wrap align-items-center justify-content-between gap-1">
-                            <span className="small fw-bold text-slate-dark" style={{ fontSize: '13px' }}>
-                              {m.title}
-                            </span>
-                            <span className="badge bg-secondary-subtle text-secondary border font-monospace" style={{ fontSize: '10px' }}>
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`mt-1 w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                            active ? 'border-[var(--color-accent)]' : 'border-[var(--color-muted)]'
+                          }`}
+                        >
+                          {active && <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center justify-between gap-1">
+                            <span className="text-xs font-semibold text-[var(--color-ink)]">{m.title}</span>
+                            <PrimeTag severity={active ? 'info' : 'neutral'} className="font-mono text-[10px]">
                               {m.badge}
-                            </span>
+                            </PrimeTag>
                           </div>
-                          <p className="text-muted small mb-0 mt-0.5" style={{ fontSize: '11px' }}>
-                            {m.sub}
-                          </p>
+                          <p className="text-[11px] text-[var(--color-muted)] m-0 mt-0.5">{m.sub}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* 5. Ajustes de Pagos Previos y Quincena 25 */}
-              <div className="p-3 rounded bg-light border border-slate-200 mb-3">
-                <label className="form-label small fw-bold text-slate-dark mb-2 d-flex align-items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-primary" />
-                  <span>5. ¿Ya te pagaron alguna prestación o deseas incluir Quincena 25?</span>
+            {/* 5. Ajustes */}
+            <div className="surface-well p-3 space-y-2.5">
+              <span className="text-xs font-bold text-[var(--color-ink)] flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-[var(--color-accent)]" />
+                <span>5. ¿Ya te pagaron alguna prestación o incluyes Quincena 25?</span>
+              </span>
+
+              <label htmlFor="check_ya_vacacion" className="flex items-start gap-2 cursor-pointer text-xs">
+                <PrimeCheckbox
+                  id="check_ya_vacacion"
+                  checked={yaCobroVacacion}
+                  onChange={setYaCobroVacacion}
+                  className="mt-0.5"
+                />
+                <span>
+                  <strong className="text-[var(--color-ink)] block">
+                    Ya me pagaron o ya gocé las vacaciones
+                  </strong>
+                  <span className="text-[11px] text-[var(--color-muted)]">
+                    Márcalo si tu empresa ya canceló tus vacaciones ($0.00).
+                  </span>
+                </span>
+              </label>
+
+              <label htmlFor="check_ya_aguinaldo" className="flex items-start gap-2 cursor-pointer text-xs">
+                <PrimeCheckbox
+                  id="check_ya_aguinaldo"
+                  checked={yaCobroAguinaldo}
+                  onChange={setYaCobroAguinaldo}
+                  className="mt-0.5"
+                />
+                <span>
+                  <strong className="text-[var(--color-ink)] block">
+                    Ya me pagaron el aguinaldo de este periodo
+                  </strong>
+                  <span className="text-[11px] text-[var(--color-muted)]">
+                    Márcalo si ya recibiste el aguinaldo de estas fechas.
+                  </span>
+                </span>
+              </label>
+
+              <div className="pt-2 border-t border-[var(--color-rule)]">
+                <label htmlFor="check_q25" className="flex items-start gap-2 cursor-pointer text-xs">
+                  <PrimeCheckbox
+                    id="check_q25"
+                    checked={incluirQuincena25}
+                    onChange={setIncluirQuincena25}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <strong className="text-[var(--color-accent)] flex items-center gap-1">
+                      <Star size={12} />
+                      <span>Incluir pago de Quincena 25 (Decreto 499)</span>
+                    </strong>
+                    <span className="text-[11px] text-[var(--color-muted)]">
+                      Suma 1 quincena completa ({formatUSD(salary / 2)}) 100% exenta (sueldo ≤ $1,500).
+                    </span>
+                  </span>
                 </label>
-                <div className="space-y-2">
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      id="check_ya_vacacion"
-                      className="form-check-input"
-                      checked={yaCobroVacacion}
-                      onChange={(e) => setYaCobroVacacion(e.target.checked)}
-                    />
-                    <label htmlFor="check_ya_vacacion" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
-                      <strong>Ya me pagaron o ya gocé las vacaciones</strong>
-                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
-                        Márcalo si tu empresa ya te canceló las vacaciones y no te deben este concepto.
-                      </span>
-                    </label>
-                  </div>
+              </div>
+            </div>
 
-                  <div className="form-check">
-                    <input
-                      type="checkbox"
-                      id="check_ya_aguinaldo"
-                      className="form-check-input"
-                      checked={yaCobroAguinaldo}
-                      onChange={(e) => setYaCobroAguinaldo(e.target.checked)}
-                    />
-                    <label htmlFor="check_ya_aguinaldo" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
-                      <strong>Ya me pagaron el aguinaldo de este periodo</strong>
-                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
-                        Márcalo si ya recibiste tu aguinaldo correspondiente a estas fechas.
-                      </span>
-                    </label>
-                  </div>
+            {/* Opciones avanzadas */}
+            <div className="pt-2 border-t border-[var(--color-rule)]">
+              <PrimeButton
+                variant="ghost"
+                size="xs"
+                className="px-0"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+              >
+                {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                <span>Opciones avanzadas (Sector y mutuo acuerdo)</span>
+              </PrimeButton>
 
-                  <div className="form-check pt-2 border-top border-slate-300">
-                    <input
-                      type="checkbox"
-                      id="check_q25"
-                      className="form-check-input"
-                      checked={incluirQuincena25}
-                      onChange={(e) => setIncluirQuincena25(e.target.checked)}
-                    />
-                    <label htmlFor="check_q25" className="form-check-label small text-slate-dark cursor-pointer" style={{ fontSize: '12px', cursor: 'pointer' }}>
-                      <strong className="text-primary">⭐ Incluir pago de Quincena 25 (Decreto 499)</strong>
-                      <span className="d-block text-muted" style={{ fontSize: '11px' }}>
-                        Suma 1 quincena completa ({formatUSD(salary / 2)}) 100% exenta de renta, ISSS y AFP (para salidas en enero o finiquito anual pactado con sueldo ≤ $1,500).
-                      </span>
+              {showAdvanced && (
+                <div className="surface-well p-3 mt-2 space-y-3">
+                  {motivo === 'mutuo_acuerdo' && (
+                    <div>
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="font-semibold text-[var(--color-ink)] flex items-center gap-1">
+                          <Percent size={13} />
+                          <span>Porcentaje de Indemnización Pactado</span>
+                        </span>
+                        <PrimeTag severity="info" className="font-mono">{pactoPorcentaje}%</PrimeTag>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        className="w-full accent-[var(--color-accent)]"
+                        value={pactoPorcentaje}
+                        onChange={(e) => setPactoPorcentaje(Number.parseInt(e.target.value, 10))}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1 mb-1">
+                      <Building size={13} className="text-[var(--color-muted)]" />
+                      <span>Sector para Salario Mínimo Legal</span>
                     </label>
+                    <PrimeSelect
+                      selectSize="sm"
+                      value={sectorId}
+                      onChange={(e) => setSectorId(e.target.value as MinimumWageSector['id'])}
+                    >
+                      {Object.values(MINIMUM_WAGES_2026).map((sec) => (
+                        <option key={sec.id} value={sec.id}>
+                          {sec.name} (${sec.monthly.toFixed(2)}/mes)
+                        </option>
+                      ))}
+                    </PrimeSelect>
+                    <small className="text-[var(--color-muted)] block mt-1 text-[11px]">
+                      Define el tope de 4 salarios mínimos mensuales en despido o 2 diarios en renuncia.
+                    </small>
                   </div>
                 </div>
-              </div>
-
-              {/* Opciones avanzadas (Colapsadas para no saturar) */}
-              <div className="border-top pt-2">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1 small"
-                  style={{ fontSize: '12px' }}
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                >
-                  {showAdvanced ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                  <span>Opciones avanzadas (Sector de salario mínimo y mutuo acuerdo)</span>
-                </button>
-
-                {showAdvanced && (
-                  <div className="p-3 rounded bg-light border border-slate-200 mt-2">
-                    {motivo === 'mutuo_acuerdo' && (
-                      <div className="mb-3">
-                        <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1">
-                          <Percent size={13} className="text-purple" />
-                          <span>Porcentaje de Indemnización Pactado</span>
-                        </label>
-                        <div className="d-flex align-items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            step="5"
-                            className="form-range"
-                            value={pactoPorcentaje}
-                            onChange={(e) => setPactoPorcentaje(Number.parseInt(e.target.value, 10))}
-                          />
-                          <span className="badge bg-purple font-monospace text-white py-1 px-2">
-                            {pactoPorcentaje}%
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="form-label small fw-semibold text-slate-dark d-flex align-items-center gap-1 mb-1">
-                        <Building size={13} className="text-secondary" />
-                        <span>Sector para Salario Mínimo Legal</span>
-                      </label>
-                      <select
-                        className="form-select form-select-sm"
-                        value={sectorId}
-                        onChange={(e) => setSectorId(e.target.value as MinimumWageSector['id'])}
-                      >
-                        {Object.values(MINIMUM_WAGES_2026).map((sec) => (
-                          <option key={sec.id} value={sec.id}>
-                            {sec.name} (${sec.monthly.toFixed(2)}/mes)
-                          </option>
-                        ))}
-                      </select>
-                      <small className="text-muted d-block mt-1" style={{ fontSize: '11px' }}>
-                        Define el tope de 4 salarios mínimos mensuales en despido o 2 diarios en renuncia.
-                      </small>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
-        </div>
+        </PrimeCard>
 
-        {/* Panel Derecho: Explicación Visual Clara y Simple de ¿De Dónde Sale el Dinero? */}
-        <div className="col-12 col-lg-7">
-          <div className="card shadow-xs border-slate-200">
-            {/* Header con Ecuación Visual Clara */}
-            <div className="card-header bg-primary text-white p-3 p-md-4 border-0">
-              <span className="text-white-50 text-uppercase fw-semibold tracking-wider d-block mb-1" style={{ fontSize: '11px' }}>
-                Total a Recibir en tu Finiquito
-              </span>
-              <h1 className="display-5 fw-bold font-monospace mb-2 text-white">
+        {/* Panel Derecho */}
+        <PrimeCard className="lg:col-span-7">
+          <div className="p-4 sm:p-5 bg-[var(--color-ink)] text-[var(--color-card)] space-y-3">
+            <div>
+              <span className="text-xs opacity-75 block mb-1">Total a recibir en tu finiquito</span>
+              <div className="text-3xl sm:text-4xl font-bold font-mono tracking-tight">
                 {formatUSD(result.totalLiquidacion)}
-              </h1>
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <span className="badge bg-white text-primary fw-bold shadow-xs" style={{ fontSize: '11px' }}>
-                  {result.motivoLabel}
-                </span>
-                <span className="badge bg-white text-slate-dark fw-semibold shadow-xs" style={{ fontSize: '11px' }}>
-                  Antigüedad: {result.seniority.formattedSeniority}
-                </span>
-              </div>
-
-              {/* Ecuación Visual: Indemnización + Prestaciones = Total */}
-              <div
-                className="p-3 rounded"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.22)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)'
-                }}
-              >
-                <span className="text-white fw-bold d-block mb-2 small" style={{ fontSize: '12px' }}>
-                  ¿De dónde sale este total de {formatUSD(result.totalLiquidacion)}?
-                </span>
-                <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-white-50">
-                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>
-                      1. INDEMNIZACIÓN
-                    </span>
-                    <strong className="font-monospace text-slate-dark fs-6">
-                      {formatUSD(result.indemnizacion.amount)}
-                    </strong>
-                  </div>
-
-                  <Plus size={18} className="text-white fw-bold shrink-0" />
-
-                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-white-50">
-                    <span className="d-block text-muted small fw-semibold" style={{ fontSize: '10px' }}>
-                      2. PRESTACIONES DE LEY
-                    </span>
-                    <strong className="font-monospace text-slate-dark fs-6">
-                      {formatUSD(result.derechosAdquiridos.total)}
-                    </strong>
-                  </div>
-
-                  <Equal size={18} className="text-white fw-bold shrink-0" />
-
-                  <div className="p-2 rounded bg-white text-center flex-grow-1 shadow-xs border border-primary border-opacity-50">
-                    <span className="d-block text-primary small fw-bold" style={{ fontSize: '10px' }}>
-                      TOTAL CHEQUE
-                    </span>
-                    <strong className="font-monospace text-primary fs-6">
-                      {formatUSD(result.totalLiquidacion)}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Exento de Impuestos */}
-                <div
-                  className="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2.5 pt-2 border-top border-white border-opacity-25 small"
-                  style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.9)' }}
-                >
-                  <span>
-                    🛡️ Libre de Renta / ISSS / AFP: <strong className="text-white font-monospace">{formatUSD(result.totalExentoISR)}</strong>
-                  </span>
-                  <span>
-                    Sujeto a deducciones ordinarias: <strong className="text-white font-monospace">{formatUSD(result.totalGravadoISR)}</strong>
-                  </span>
-                </div>
               </div>
             </div>
 
-            <div className="card-body p-3 p-md-4">
-              {/* Cuadro de Aclaración Jurídica Dinámica: ¿Qué aplica y qué no aplica? */}
-              <div className="p-3 rounded bg-body-tertiary border border-slate-200 mb-4">
-                <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <Scale size={16} className="text-primary shrink-0" />
-                    <h6 className="fw-bold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
-                      ¿Qué conceptos aplican por ley y cuáles no en tu caso?
-                    </h6>
-                  </div>
-                  <span className="badge bg-primary-subtle text-primary border font-sans" style={{ fontSize: '11px' }}>
-                    {result.motivoLabel}
+            <div className="flex flex-wrap items-center gap-2">
+              <PrimeTag severity="info">{result.motivoLabel}</PrimeTag>
+              <PrimeTag severity="neutral">Antigüedad: {result.seniority.formattedSeniority}</PrimeTag>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white/10 border border-white/15 space-y-2.5">
+              <span className="text-xs font-semibold block">
+                Desglose del total ({formatUSD(result.totalLiquidacion)}):
+              </span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-ink)] text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] text-[var(--color-muted)] font-medium">
+                    1. Indemnización
                   </span>
+                  <strong className="font-mono text-sm">{formatUSD(result.indemnizacion.amount)}</strong>
                 </div>
 
-                {motivo === 'renuncia_voluntaria' && (
-                  <div className="space-y-2">
-                    {result.seniority.years < 2 ? (
-                      <>
-                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-danger-subtle bg-opacity-20 border border-danger-subtle">
-                          <XCircle size={15} className="text-danger shrink-0 mt-0.5" />
-                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                            <strong>NO aplica indemnización por renuncia ($0.00):</strong> La Ley D.L. 592 exige al menos 2 años cumplidos de servicio continuo en la empresa. Con {result.seniority.formattedSeniority}, la indemnización de renuncia es de $0.00.
-                          </div>
-                        </div>
+                <Plus size={16} className="shrink-0 opacity-80" />
 
-                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                          <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                            <strong>SÍ aplican obligatoriamente tus prestaciones acumuladas (Art. 52 Constitución):</strong>
-                            <ul className="mb-0 ps-3 mt-1 space-y-1">
-                              <li>
-                                <strong>Aguinaldo proporcional (Art. 202 Código de Trabajo):</strong> Por los {result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados desde el 12 de diciembre. <em>¡No requiere 2 años de servicio!</em>
-                              </li>
-                              <li>
-                                <strong>Vacación proporcional (Art. 187 Código de Trabajo):</strong> Por los {result.derechosAdquiridos.vacacionDaysInPeriod} días laborados desde tu último aniversario (cumples el requisito de más de 200 días en el año laboral). <em>¡Tampoco requiere 2 años de servicio total!</em>
-                              </li>
-                              <li>
-                                <strong>Días de salario trabajados:</strong> Todo día laborado que no te hayan pagado en la quincena.
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-
-                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-warning-subtle bg-opacity-20 border border-warning-subtle">
-                          <AlertTriangle size={15} className="text-warning shrink-0 mt-0.5" />
-                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                            <strong>Ojo con la mala información:</strong> Si en recursos humanos o en llamadas te dicen <em>"si renuncia antes de 2 años no le dan nada"</em>, se refieren únicamente a la indemnización. Tus vacaciones y aguinaldo proporcionales son derechos irrenunciables garantizados por la Constitución.
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                          <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                            <strong>SÍ aplica prestación por renuncia (D.L. 592):</strong> Al tener 2 o más años cumplidos ({result.seniority.formattedSeniority}), te corresponden 15 días de salario por año laborado ({result.indemnizacion.daysComputed} días computados) con tope de 2 salarios mínimos diarios del sector.
-                          </div>
-                        </div>
-                        <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-info-subtle bg-opacity-20 border border-info-subtle">
-                          <Info size={15} className="text-info shrink-0 mt-0.5" />
-                          <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                            <strong>Requisito de preaviso de ley:</strong> Para que sea válida, debes presentar tu carta de renuncia con 15 días de anticipación (operativos) o 30 días (cargos de jefatura o técnicos especializados).
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {motivo === 'despido_injustificado' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplica indemnización completa (Art. 58 Código de Trabajo):</strong> 30 días de salario básico (1 mes) por cada año de servicio y proporcional por meses/días. Garantía mínima de 15 días de salario. Tope legal de 4 salarios mínimos mensuales.
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-info-subtle bg-opacity-20 border border-info-subtle">
-                      <CheckCircle2 size={15} className="text-info shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplican todas tus prestaciones acumuladas:</strong> Vacación proporcional (+30%), aguinaldo proporcional y salarios adeudados. La indemnización está 100% exenta de retenciones de ISR, ISSS y AFP.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {motivo === 'despido_justificado' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-danger-subtle bg-opacity-20 border border-danger-subtle">
-                      <XCircle size={15} className="text-danger shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>NO aplica indemnización por despido ($0.00):</strong> Al existir causal grave según el Art. 50 del Código de Trabajo.
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplican obligatoriamente tus prestaciones acumuladas:</strong> Vacación proporcional, aguinaldo proporcional y días trabajados pendientes. La empresa no puede retenerte estos derechos.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {motivo === 'liquidacion_anual' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplica 1 mes completo de salario pactado ({formatUSD(salary)}):</strong> Pago convenido para saldar el pasivo laboral de 1 año de trabajo.
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplica vacación anual completa (15 días + 30% bono) y aguinaldo completo de diciembre:</strong> Totalmente garantizados en el cheque de fin de año.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {motivo === 'despido_indirecto' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplica indemnización completa de 30 días/año (Art. 53 y 58 CT):</strong> Si te viste forzado a retirarte por falta de pago, acoso o rebaja salarial del patrono, la ley te otorga el 100% de la indemnización por despido injustificado más tus prestaciones acumuladas.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {motivo === 'mutuo_acuerdo' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-purple-subtle bg-opacity-20 border border-purple-subtle">
-                      <CheckCircle2 size={15} className="text-purple shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplica la indemnización convenida ({pactoPorcentaje}%):</strong> Más el 100% de tus prestaciones acumuladas de ley. Debe formalizarse ante el MTPS o en acta notarial para plena validez.
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {motivo === 'fin_contrato' && (
-                  <div className="space-y-2">
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-secondary-subtle border">
-                      <XCircle size={15} className="text-secondary shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>NO aplica indemnización por despido ($0.00):</strong> Al finalizar el plazo pactado en contratos por tiempo determinado.
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-start gap-2 p-2.5 rounded bg-success-subtle bg-opacity-20 border border-success-subtle">
-                      <CheckCircle2 size={15} className="text-success shrink-0 mt-0.5" />
-                      <div className="small text-slate-dark" style={{ fontSize: '11px' }}>
-                        <strong>SÍ aplican las prestaciones de ley proporcionales:</strong> Calculadas sobre los meses y días laborados durante la vigencia del contrato.
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Bloque 1: Indemnización o Compensación */}
-              <div className="mb-4">
-                <div className="d-flex align-items-center justify-content-between mb-2">
-                  <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
-                    <ShieldCheck size={16} className="text-primary" />
-                    <span>1. Compensación o Indemnización por Tiempo Laborado</span>
-                  </h6>
-                  <span className="fw-bold font-monospace text-primary fs-6">
-                    {formatUSD(result.indemnizacion.amount)}
+                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-ink)] text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] text-[var(--color-muted)] font-medium">
+                    2. Prestaciones de ley
                   </span>
-                </div>
-
-                <div className="p-3 rounded bg-body-tertiary border border-slate-200">
-                  <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 pb-2 border-bottom">
-                    <span className="small text-muted" style={{ fontSize: '12px' }}>
-                      ¿Aplica indemnización en este caso?
-                    </span>
-                    <span
-                      className={`badge ${
-                        result.indemnizacion.applies
-                          ? 'bg-success-subtle text-success border border-success-subtle'
-                          : 'bg-secondary-subtle text-secondary border border-secondary-subtle'
-                      }`}
-                    >
-                      {result.indemnizacion.applies ? 'Sí aplica por ley' : 'No aplica indemnización'}
-                    </span>
-                  </div>
-
-                  <p className="text-slate-dark small mb-2" style={{ fontSize: '12px' }}>
-                    {result.indemnizacion.explanation}
-                  </p>
-
-                  {result.indemnizacion.applies && (
-                    <div className="row g-2 small text-muted pt-2 border-top" style={{ fontSize: '11px' }}>
-                      <div className="col-6 col-sm-3">
-                        <span>Días computados:</span>
-                        <strong className="d-block text-slate-dark font-monospace">
-                          {result.indemnizacion.daysComputed} días
-                        </strong>
-                      </div>
-                      <div className="col-6 col-sm-3">
-                        <span>Salario base usado:</span>
-                        <strong className="d-block text-slate-dark font-monospace">
-                          {formatUSD(result.indemnizacion.baseMonthlySalary)}
-                        </strong>
-                      </div>
-                      <div className="col-6 col-sm-3">
-                        <span>Tope legal sector:</span>
-                        <strong className="d-block text-slate-dark font-monospace">
-                          {result.indemnizacion.monthlyCap > 0 ? formatUSD(result.indemnizacion.monthlyCap) : 'Sin tope'}
-                        </strong>
-                      </div>
-                      <div className="col-6 col-sm-3">
-                        <span>¿Aplica tope legal?</span>
-                        <strong className={`d-block ${result.indemnizacion.isCapped ? 'text-warning fw-bold' : 'text-slate-dark'}`}>
-                          {result.indemnizacion.isCapped ? 'Sí (Topado)' : 'No (Salario Real)'}
-                        </strong>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Bloque 2: Prestaciones de Ley Acumuladas */}
-              <div className="mb-4">
-                <div className="d-flex align-items-center justify-content-between mb-1">
-                  <h6 className="fw-bold text-slate-dark mb-0 d-flex align-items-center gap-2" style={{ fontSize: '14px' }}>
-                    <DollarSign size={16} className="text-success" />
-                    <span>2. Prestaciones Acumuladas de Ley (Las que te tocan sí o sí)</span>
-                  </h6>
-                  <span className="fw-bold font-monospace text-success fs-6">
-                    {formatUSD(result.derechosAdquiridos.total)}
-                  </span>
-                </div>
-                <p className="text-muted small mb-3" style={{ fontSize: '11px' }}>
-                  Por ley laboral en El Salvador, el empleador está obligado a pagarte estos 3 conceptos sin importar si renuncias o te despiden:
-                </p>
-
-                {/* Lista de Prestaciones sin tablas rotas en modo oscuro */}
-                <div className="space-y-2.5">
-                  {/* Vacación */}
-                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
-                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-                      <div>
-                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
-                          🌴 Vacación {yaCobroVacacion ? '(Ya gozada o pagada)' : motivo === 'liquidacion_anual' ? 'Anual completa de 15 días (+30% bono)' : `${result.derechosAdquiridos.vacacionDays} días proporcionales (+30% bono)`}
-                        </strong>
-                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                          {yaCobroVacacion
-                            ? 'Marcaste este concepto como ya cancelado o gozado previamente ($0.00).'
-                            : motivo === 'liquidacion_anual'
-                            ? `15 días de salario ($${(salary / 2).toFixed(2)}) + 30% de bono obligatorio ($${(salary * 0.15).toFixed(2)})`
-                            : `Acumulada desde tu último aniversario laboral (${result.derechosAdquiridos.vacacionDaysInPeriod} días trabajados en el periodo).`}
-                        </p>
-                      </div>
-                      <span className={`fw-bold font-monospace fs-6 shrink-0 ${yaCobroVacacion ? 'text-muted' : 'text-slate-dark'}`}>
-                        {formatUSD(result.derechosAdquiridos.vacacionTotal)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Aguinaldo */}
-                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
-                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-                      <div>
-                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
-                          🎁 Aguinaldo de ley {yaCobroAguinaldo ? '(Ya pagado)' : `(${result.derechosAdquiridos.aguinaldoSeniorityDays} días de base por tu antigüedad)`}
-                        </strong>
-                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                          {yaCobroAguinaldo
-                            ? 'Marcaste este concepto como ya cancelado previamente ($0.00).'
-                            : motivo === 'liquidacion_anual'
-                            ? `Aguinaldo completo de fin de año (${result.derechosAdquiridos.aguinaldoSeniorityDays} días de salario).`
-                            : `Proporcional desde el 12 de diciembre anterior (${result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados en el periodo).`}
-                        </p>
-                      </div>
-                      <span className={`fw-bold font-monospace fs-6 shrink-0 ${yaCobroAguinaldo ? 'text-muted' : 'text-slate-dark'}`}>
-                        {formatUSD(result.derechosAdquiridos.aguinaldoAmount)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Quincena 25 si está activa */}
-                  {result.derechosAdquiridos.quincena25Applies && (
-                    <div className="p-3 rounded bg-primary-subtle bg-opacity-20 border border-primary-subtle">
-                      <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-                        <div>
-                          <strong className="text-primary small d-block" style={{ fontSize: '13px' }}>
-                            ⭐ Quincena 25 (Decreto Legislativo N.º 499)
-                          </strong>
-                          <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                            1 quincena completa de salario ({formatUSD(salary / 2)}), 100% libre de retención de renta, ISSS y AFP.
-                          </p>
-                        </div>
-                        <span className="fw-bold font-monospace text-primary fs-6 shrink-0">
-                          {formatUSD(result.derechosAdquiridos.quincena25Amount)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Salarios pendientes */}
-                  <div className="p-3 rounded bg-body-tertiary border border-slate-200">
-                    <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
-                      <div>
-                        <strong className="text-slate-dark small d-block" style={{ fontSize: '13px' }}>
-                          💼 Días de salario trabajados pendientes de cobro
-                        </strong>
-                        <p className="text-muted small mb-0" style={{ fontSize: '11px' }}>
-                          {result.derechosAdquiridos.salarioPendienteDias > 0
-                            ? `${result.derechosAdquiridos.salarioPendienteDias} días trabajados en la quincena actual que aún no te han pagado.`
-                            : 'Estás al día con tus pagos ordinarios (0 días adeudados).'}
-                        </p>
-                      </div>
-                      <span className="fw-bold font-monospace text-slate-dark fs-6 shrink-0">
-                        {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Barra de Subtotal compatible con temas claro y oscuro */}
-                <div className="p-3 rounded bg-success-subtle bg-opacity-20 border border-success-subtle mt-3 d-flex justify-content-between align-items-center">
-                  <span className="small fw-semibold text-slate-dark" style={{ fontSize: '12px' }}>
-                    Subtotal Prestaciones de Ley:
-                  </span>
-                  <strong className="font-monospace text-success fs-6">
+                  <strong className="font-mono text-sm">
                     {formatUSD(result.derechosAdquiridos.total)}
                   </strong>
                 </div>
+
+                <Equal size={16} className="shrink-0 opacity-80" />
+
+                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-emerald)] text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] font-semibold">Total cheque</span>
+                  <strong className="font-mono text-sm">{formatUSD(result.totalLiquidacion)}</strong>
+                </div>
               </div>
 
-              {/* Fundamentos Legales Oficiales (Colapsables para lectura limpia) */}
-              <div className="border-top pt-3">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-1.5 small"
-                  style={{ fontSize: '12px' }}
-                  onClick={() => setShowLegalDetails(!showLegalDetails)}
-                >
-                  <FileText size={13} className="text-primary" />
-                  <span>{showLegalDetails ? 'Ocultar base jurídica y artículos de ley' : 'Ver base jurídica oficial del Ministerio de Trabajo y Código'}</span>
-                  {showLegalDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                </button>
+              <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-white/15 text-[11px] opacity-90">
+                <span className="inline-flex items-center gap-1">
+                  <ShieldCheck size={12} />
+                  <span>Libre de Renta / ISSS / AFP:</span>
+                  <strong className="font-mono">{formatUSD(result.totalExentoISR)}</strong>
+                </span>
+                <span>
+                  Sujeto a deducciones ordinarias:{' '}
+                  <strong className="font-mono">{formatUSD(result.totalGravadoISR)}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
 
-                {showLegalDetails && (
-                  <div className="p-3 rounded bg-body-tertiary border border-slate-200 mt-2">
-                    <h6 className="fw-bold text-slate-dark mb-2" style={{ fontSize: '12px' }}>
-                      Artículos y Decretos Oficiales Aplicados
-                    </h6>
-                    <div className="d-flex flex-wrap gap-1.5 mb-2.5">
-                      {result.legalArticles.map((art) => (
-                        <span key={art} className="badge bg-light text-slate-dark border border-slate-300 font-sans" style={{ fontSize: '11px' }}>
-                          {art}
-                        </span>
-                      ))}
+          <div className="p-4 sm:p-5 space-y-5">
+            {/* Aclaración Jurídica Dinámica */}
+            <div className="surface-well p-3.5 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h6 className="text-xs font-bold text-[var(--color-ink)] flex items-center gap-1.5 m-0">
+                  <Scale size={15} className="text-[var(--color-accent)] shrink-0" />
+                  <span>¿Qué conceptos aplican por ley y cuáles no en tu caso?</span>
+                </h6>
+                <PrimeTag severity="info">{result.motivoLabel}</PrimeTag>
+              </div>
+
+              {motivo === 'renuncia_voluntaria' && (
+                <div className="space-y-2">
+                  {result.seniority.years < 2 ? (
+                    <>
+                      <PrimeMessage severity="danger" icon={<XCircle size={15} />}>
+                        <strong>NO aplica indemnización por renuncia ($0.00):</strong> La Ley D.L. 592 exige al menos 2 años cumplidos de servicio continuo. Con {result.seniority.formattedSeniority}, la indemnización es $0.00.
+                      </PrimeMessage>
+                      <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                        <strong>SÍ aplican obligatoriamente tus prestaciones acumuladas (Art. 52 Constitución):</strong>
+                        <ul className="pl-4 mt-1 mb-0 space-y-1 list-disc">
+                          <li>
+                            <strong>Aguinaldo proporcional (Art. 202 CT):</strong> Por los {result.derechosAdquiridos.aguinaldoDaysInPeriod} días laborados desde el 12 de diciembre. No requiere 2 años.
+                          </li>
+                          <li>
+                            <strong>Vacación proporcional (Art. 187 CT):</strong> Por los {result.derechosAdquiridos.vacacionDaysInPeriod} días laborados desde tu último aniversario.
+                          </li>
+                          <li>
+                            <strong>Días de salario trabajados:</strong> Todo día laborado pendiente de pago.
+                          </li>
+                        </ul>
+                      </PrimeMessage>
+                      <PrimeMessage severity="warning" icon={<AlertTriangle size={15} />}>
+                        <strong>Aclaración importante:</strong> Cuando indican que «si renuncias antes de 2 años no te corresponde», se refieren únicamente a la indemnización. Tus vacaciones y aguinaldo proporcionales son irrenunciables.
+                      </PrimeMessage>
+                    </>
+                  ) : (
+                    <>
+                      <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                        <strong>SÍ aplica prestación por renuncia (D.L. 592):</strong> Al tener 2 o más años ({result.seniority.formattedSeniority}), corresponden 15 días de salario por año laborado ({result.indemnizacion.daysComputed} días) con tope de 2 salarios mínimos diarios del sector.
+                      </PrimeMessage>
+                      <PrimeMessage severity="info" icon={<Info size={15} />}>
+                        <strong>Requisito de preaviso:</strong> Presentar carta de renuncia con 15 días de anticipación (operativos) o 30 días (jefaturas o técnicos especializados).
+                      </PrimeMessage>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {motivo === 'despido_injustificado' && (
+                <div className="space-y-2">
+                  <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                    <strong>SÍ aplica indemnización completa (Art. 58 CT):</strong> 30 días de salario básico por año de servicio y proporcional, con garantía mínima de 15 días y tope de 4 salarios mínimos mensuales.
+                  </PrimeMessage>
+                  <PrimeMessage severity="info" icon={<Info size={15} />}>
+                    <strong>SÍ aplican prestaciones acumuladas:</strong> Vacación y aguinaldo proporcionales más días adeudados. La indemnización está exenta de ISR, ISSS y AFP.
+                  </PrimeMessage>
+                </div>
+              )}
+
+              {motivo === 'despido_justificado' && (
+                <div className="space-y-2">
+                  <PrimeMessage severity="danger" icon={<XCircle size={15} />}>
+                    <strong>NO aplica indemnización por despido ($0.00):</strong> Al existir causal grave según el Art. 50 del Código de Trabajo.
+                  </PrimeMessage>
+                  <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                    <strong>SÍ aplican prestaciones acumuladas:</strong> Vacación proporcional, aguinaldo proporcional y días trabajados pendientes.
+                  </PrimeMessage>
+                </div>
+              )}
+
+              {motivo === 'liquidacion_anual' && (
+                <div className="space-y-2">
+                  <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                    <strong>SÍ aplica 1 mes completo de salario ({formatUSD(salary)}):</strong> Pago convenido para saldar el pasivo laboral anual, junto con vacación anual (15d + 30%) y aguinaldo completo.
+                  </PrimeMessage>
+                </div>
+              )}
+
+              {motivo === 'despido_indirecto' && (
+                <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                  <strong>SÍ aplica indemnización de 30 días/año (Art. 53 y 58 CT):</strong> Por falta patronal grave (impago, acoso o rebaja salarial) más el 100% de prestaciones acumuladas.
+                </PrimeMessage>
+              )}
+
+              {motivo === 'mutuo_acuerdo' && (
+                <PrimeMessage severity="info" icon={<CheckCircle2 size={15} />}>
+                  <strong>SÍ aplica la indemnización convenida ({pactoPorcentaje}%):</strong> Más el 100% de prestaciones acumuladas. Debe formalizarse ante el MTPS o acta notarial.
+                </PrimeMessage>
+              )}
+
+              {motivo === 'fin_contrato' && (
+                <div className="space-y-2">
+                  <PrimeMessage severity="warning" icon={<XCircle size={15} />}>
+                    <strong>NO aplica indemnización ($0.00):</strong> Al finalizar el plazo pactado en contrato por tiempo determinado.
+                  </PrimeMessage>
+                  <PrimeMessage severity="success" icon={<CheckCircle2 size={15} />}>
+                    <strong>SÍ aplican las prestaciones proporcionales:</strong> Calculadas sobre el tiempo laborado durante el contrato.
+                  </PrimeMessage>
+                </div>
+              )}
+            </div>
+
+            {/* Bloque 1: Indemnización */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h6 className="text-sm font-bold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                  <ShieldCheck size={16} className="text-[var(--color-accent)]" />
+                  <span>1. Compensación o Indemnización</span>
+                </h6>
+                <span className="font-bold font-mono text-[var(--color-accent)] text-sm">
+                  {formatUSD(result.indemnizacion.amount)}
+                </span>
+              </div>
+
+              <div className="surface-well p-3.5 space-y-2.5">
+                <div className="flex flex-wrap justify-between items-center gap-2 pb-2 border-b border-[var(--color-rule)]">
+                  <span className="text-xs text-[var(--color-muted)]">
+                    ¿Aplica indemnización en este caso?
+                  </span>
+                  <PrimeTag severity={result.indemnizacion.applies ? 'success' : 'neutral'}>
+                    {result.indemnizacion.applies ? 'Sí aplica por ley' : 'No aplica indemnización'}
+                  </PrimeTag>
+                </div>
+
+                <p className="text-xs text-[var(--color-ink)] m-0">{result.indemnizacion.explanation}</p>
+
+                {result.indemnizacion.applies && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[var(--color-rule)] text-[11px]">
+                    <div>
+                      <span className="text-[var(--color-muted)] block">Días computados</span>
+                      <strong className="font-mono text-[var(--color-ink)]">
+                        {result.indemnizacion.daysComputed} días
+                      </strong>
                     </div>
-                    <ul className="text-muted small ps-3 mb-0 space-y-1" style={{ fontSize: '11px' }}>
-                      {result.notes.map((note) => (
-                        <li key={note}>{note}</li>
-                      ))}
-                      <li>
-                        Este cálculo sigue las tablas y procedimientos que utiliza la Dirección General de Inspección de Trabajo del MTPS para emitir la Hoja Oficial de Liquidación en El Salvador.
-                      </li>
-                    </ul>
+                    <div>
+                      <span className="text-[var(--color-muted)] block">Salario base usado</span>
+                      <strong className="font-mono text-[var(--color-ink)]">
+                        {formatUSD(result.indemnizacion.baseMonthlySalary)}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-[var(--color-muted)] block">Tope legal sector</span>
+                      <strong className="font-mono text-[var(--color-ink)]">
+                        {result.indemnizacion.monthlyCap > 0 ? formatUSD(result.indemnizacion.monthlyCap) : 'Sin tope'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-[var(--color-muted)] block">¿Aplica tope?</span>
+                      <strong className={result.indemnizacion.isCapped ? 'text-[var(--color-amber)]' : 'text-[var(--color-ink)]'}>
+                        {result.indemnizacion.isCapped ? 'Sí (Topado)' : 'No (Real)'}
+                      </strong>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Bloque 2: Prestaciones */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h6 className="text-sm font-bold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                  <DollarSign size={16} className="text-[var(--color-emerald)]" />
+                  <span>2. Prestaciones Acumuladas de Ley</span>
+                </h6>
+                <span className="font-bold font-mono text-[var(--color-emerald)] text-sm">
+                  {formatUSD(result.derechosAdquiridos.total)}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="surface-well p-3 flex justify-between items-start gap-2">
+                  <div>
+                    <strong className="text-xs text-[var(--color-ink)] flex items-center gap-1.5">
+                      <Palmtree size={13} className="text-[var(--color-emerald)]" />
+                      <span>
+                        Vacación{' '}
+                        {yaCobroVacacion
+                          ? '(Ya gozada o pagada)'
+                          : motivo === 'liquidacion_anual'
+                            ? 'Anual completa de 15 días (+30% bono)'
+                            : `${result.derechosAdquiridos.vacacionDays} días proporcionales (+30% bono)`}
+                      </span>
+                    </strong>
+                    <p className="text-[11px] text-[var(--color-muted)] m-0 mt-0.5">
+                      {yaCobroVacacion
+                        ? 'Marcado como ya cancelado o gozado ($0.00).'
+                        : motivo === 'liquidacion_anual'
+                          ? `15 días de salario ($${(salary / 2).toFixed(2)}) + 30% bono ($${(salary * 0.15).toFixed(2)})`
+                          : `Acumulada desde tu último aniversario (${result.derechosAdquiridos.vacacionDaysInPeriod} días).`}
+                    </p>
+                  </div>
+                  <span
+                    className={`font-bold font-mono text-sm shrink-0 ${
+                      yaCobroVacacion ? 'text-[var(--color-muted)]' : 'text-[var(--color-ink)]'
+                    }`}
+                  >
+                    {formatUSD(result.derechosAdquiridos.vacacionTotal)}
+                  </span>
+                </div>
+
+                <div className="surface-well p-3 flex justify-between items-start gap-2">
+                  <div>
+                    <strong className="text-xs text-[var(--color-ink)] flex items-center gap-1.5">
+                      <Gift size={13} className="text-[var(--color-amber)]" />
+                      <span>
+                        Aguinaldo de ley{' '}
+                        {yaCobroAguinaldo
+                          ? '(Ya pagado)'
+                          : `(${result.derechosAdquiridos.aguinaldoSeniorityDays} días de base por antigüedad)`}
+                      </span>
+                    </strong>
+                    <p className="text-[11px] text-[var(--color-muted)] m-0 mt-0.5">
+                      {yaCobroAguinaldo
+                        ? 'Marcado como ya cancelado ($0.00).'
+                        : motivo === 'liquidacion_anual'
+                          ? `Aguinaldo completo de fin de año (${result.derechosAdquiridos.aguinaldoSeniorityDays} días).`
+                          : `Proporcional desde el 12 de diciembre (${result.derechosAdquiridos.aguinaldoDaysInPeriod} días).`}
+                    </p>
+                  </div>
+                  <span
+                    className={`font-bold font-mono text-sm shrink-0 ${
+                      yaCobroAguinaldo ? 'text-[var(--color-muted)]' : 'text-[var(--color-ink)]'
+                    }`}
+                  >
+                    {formatUSD(result.derechosAdquiridos.aguinaldoAmount)}
+                  </span>
+                </div>
+
+                {result.derechosAdquiridos.quincena25Applies && (
+                  <div className="p-3 rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 flex justify-between items-start gap-2">
+                    <div>
+                      <strong className="text-xs text-[var(--color-accent)] flex items-center gap-1.5">
+                        <Star size={13} />
+                        <span>Quincena 25 (Decreto Legislativo N.º 499)</span>
+                      </strong>
+                      <p className="text-[11px] text-[var(--color-muted)] m-0 mt-0.5">
+                        1 quincena completa ({formatUSD(salary / 2)}), 100% libre de Renta, ISSS y AFP.
+                      </p>
+                    </div>
+                    <span className="font-bold font-mono text-sm text-[var(--color-accent)] shrink-0">
+                      {formatUSD(result.derechosAdquiridos.quincena25Amount)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="surface-well p-3 flex justify-between items-start gap-2">
+                  <div>
+                    <strong className="text-xs text-[var(--color-ink)] flex items-center gap-1.5">
+                      <Briefcase size={13} className="text-[var(--color-muted)]" />
+                      <span>Días de salario trabajados pendientes de cobro</span>
+                    </strong>
+                    <p className="text-[11px] text-[var(--color-muted)] m-0 mt-0.5">
+                      {result.derechosAdquiridos.salarioPendienteDias > 0
+                        ? `${result.derechosAdquiridos.salarioPendienteDias} días trabajados pendientes en la quincena actual.`
+                        : 'Al día con pagos ordinarios (0 días adeudados).'}
+                    </p>
+                  </div>
+                  <span className="font-bold font-mono text-sm text-[var(--color-ink)] shrink-0">
+                    {formatUSD(result.derechosAdquiridos.salarioPendienteAmount)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[var(--color-emerald-soft)] border border-[var(--color-emerald)]/30 flex justify-between items-center">
+                <span className="text-xs font-semibold text-[var(--color-ink)]">
+                  Subtotal Prestaciones de Ley:
+                </span>
+                <strong className="font-mono text-[var(--color-emerald)] text-sm">
+                  {formatUSD(result.derechosAdquiridos.total)}
+                </strong>
+              </div>
+            </div>
+
+            {/* Fundamentos Legales */}
+            <div className="pt-3 border-t border-[var(--color-rule)]">
+              <PrimeButton
+                variant="ghost"
+                size="xs"
+                className="px-0"
+                onClick={() => setShowLegalDetails(!showLegalDetails)}
+              >
+                <FileText size={13} className="text-[var(--color-accent)]" />
+                <span>
+                  {showLegalDetails
+                    ? 'Ocultar base jurídica y artículos de ley'
+                    : 'Ver base jurídica oficial del MTPS y Código de Trabajo'}
+                </span>
+                {showLegalDetails ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </PrimeButton>
+
+              {showLegalDetails && (
+                <div className="surface-well p-3.5 mt-2 space-y-2.5">
+                  <h6 className="text-xs font-bold text-[var(--color-ink)] m-0">
+                    Artículos y Decretos Oficiales Aplicados
+                  </h6>
+                  <div className="flex flex-wrap gap-1.5">
+                    {result.legalArticles.map((art) => (
+                      <PrimeTag key={art} severity="neutral">{art}</PrimeTag>
+                    ))}
+                  </div>
+                  <ul className="text-[11px] text-[var(--color-muted)] pl-4 m-0 space-y-1 list-disc">
+                    {result.notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                    <li>
+                      Cálculo alineado con los procedimientos de la Dirección General de Inspección de Trabajo del MTPS en El Salvador.
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </PrimeCard>
       </div>
     </motion.div>
   );
 }
+
 export default LiquidacionView;

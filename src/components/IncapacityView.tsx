@@ -21,8 +21,16 @@ import {
   calcIncapacitySplitQuincenas,
   type IncapacityType,
   RATES,
-  round2,
 } from '../lib/svLaborLaw';
+import {
+  PrimeButton,
+  PrimeCard,
+  PrimeInput,
+  PrimeMessage,
+  PrimeSelectButton,
+  PrimeSwitch,
+  PrimeTag,
+} from './ui/PrimeUI.tsx';
 
 interface IncapacityViewProps {
   monthlySalary: number;
@@ -37,7 +45,6 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
   const [q2Days, setQ2Days] = useState<number>(6);
   const [employerPays100FirstDays, setEmployerPays100FirstDays] = useState<boolean>(true);
 
-  // Asistente de Fechas
   const [useDateHelper, setUseDateHelper] = useState<boolean>(false);
   const [startDate, setStartDate] = useState<string>(() => {
     const today = new Date();
@@ -92,6 +99,81 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
     { label: '30 días', days: 30 },
   ];
 
+  const renderSplitCard = (
+    title: string,
+    qData: typeof splitResult.q1,
+    emptySubsidioText: string
+  ) => (
+    <div className="p-4 rounded-xl border border-[var(--color-rule)] bg-[var(--color-card)] flex flex-col justify-between gap-3">
+      <div>
+        <div className="flex justify-between items-center pb-2.5 mb-3 border-b border-[var(--color-rule)]">
+          <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5">
+            <Building2 size={15} className="text-[var(--color-accent)]" />
+            <span>{title}</span>
+          </span>
+          <PrimeTag severity="info" className="font-mono">
+            {qData.workedDays}d trab · {qData.incapacityDays}d reposo
+          </PrimeTag>
+        </div>
+
+        <div className="surface-well p-3 mb-3">
+          <span className="text-[11px] text-[var(--color-muted)] block">Total en tu bolsillo:</span>
+          <span className="text-lg font-bold font-mono text-[var(--color-emerald)]">
+            {formatUSD(qData.totalPocketPay)}
+          </span>
+          <span className="text-[11px] text-[var(--color-muted)] block mt-0.5">
+            Normal: {formatUSD(qData.normalBiweeklyNetPay)} (
+            {qData.pocketDifference > 0 ? `-${formatUSD(qData.pocketDifference)}` : '$0.00'})
+          </span>
+        </div>
+
+        <div className="space-y-2 text-[11px]">
+          <div className="surface-well p-2.5">
+            <div className="flex justify-between items-baseline mb-1">
+              <strong className="text-[var(--color-ink)]">1. Pago de Empresa (Planilla):</strong>
+              <span className="font-mono font-bold text-[var(--color-ink)]">
+                {formatUSD(qData.employerNetPay)}
+              </span>
+            </div>
+            <ul className="list-none p-0 m-0 text-[var(--color-muted)] space-y-0.5 font-mono">
+              <li className="flex justify-between">
+                <span>• Días trabajados ({qData.workedDays}d):</span>
+                <span>{formatUSD(qData.workedGrossPay)}</span>
+              </li>
+              <li className="flex justify-between">
+                <span>• Carencia empresa ({qData.employerIncapacityDays}d):</span>
+                <span>{formatUSD(qData.employerIncapacityGrossPay)}</span>
+              </li>
+              <li className="flex justify-between text-[var(--color-danger)]">
+                <span>• Descuentos ley (AFP/ISSS/Renta):</span>
+                <span>-{formatUSD(qData.totalEmployeeDeductions)}</span>
+              </li>
+            </ul>
+            {qData.employerDiscountAmount > 0 && (
+              <div className="mt-1.5 pt-1.5 border-t border-[var(--color-rule)] text-[var(--color-muted)] text-[10.5px]">
+                Descuento en colilla: <strong>-{formatUSD(qData.employerDiscountAmount)}</strong> ({qData.isssIncapacityDays}d no pagados por empresa).
+              </div>
+            )}
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-[var(--color-emerald-soft)] border border-[var(--color-emerald)]/25">
+            <div className="flex justify-between items-baseline mb-0.5">
+              <strong className="text-[var(--color-emerald)]">2. Subsidio del ISSS:</strong>
+              <span className="font-mono font-bold text-[var(--color-emerald)]">
+                {formatUSD(qData.isssTotalSubsidio)}
+              </span>
+            </div>
+            <span className="text-[var(--color-ink-2)] block text-[10.5px]">
+              {qData.isssIncapacityDays > 0
+                ? `${qData.isssIncapacityDays} día(s) al 75% (${formatUSD(qData.isssDailySubsidio)}/d). 0% retenciones.`
+                : emptySubsidioText}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       key="tab-incapacity"
@@ -99,872 +181,654 @@ export function IncapacityView({ monthlySalary, formatUSD }: IncapacityViewProps
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className="container-fluid px-0"
+      className="space-y-5"
     >
       {/* Encabezado Principal */}
-      <div className="card-soft p-3 p-md-4 mb-4">
-        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <PrimeCard padded>
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <div>
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-              <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace px-2 py-1">
-                ISSS & Código de Trabajo
-              </span>
-              <span className="badge bg-light text-muted border font-monospace">
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <PrimeTag severity="info" className="font-mono">ISSS y Código de Trabajo</PrimeTag>
+              <PrimeTag severity="neutral" className="font-mono">
                 Tope ISSS: {formatUSD(RATES.ISSS_CAP_MONTHLY)}/mes
-              </span>
+              </PrimeTag>
             </div>
-            <h5 className="fw-bold text-slate-dark mb-1">
+            <h5 className="text-base font-bold text-[var(--color-ink)] mb-1">
               Guía y Calculadora de Incapacidades Médicas
             </h5>
-            <p className="text-muted small mb-0 font-sans" style={{ maxWidth: '680px' }}>
-              Conoce quién asume el pago de tu salario (patrono o seguro social), los porcentajes de subsidio
-              y el monto exacto que recibirás en una sola quincena o dividido entre dos quincenas consecutivas.
+            <p className="text-[var(--color-muted)] text-xs m-0 max-w-[680px]">
+              Conoce quién asume el pago de tu salario (patrono o seguro social), los porcentajes de subsidio y el monto exacto en una sola quincena o dividido entre dos quincenas consecutivas.
             </p>
           </div>
 
-          <div className="bg-light p-2.5 rounded border w-100 w-sm-auto text-start text-sm-end">
-            <span className="text-muted small d-block font-sans" style={{ fontSize: '11px' }}>
-              Salario Base de Referencia
+          <div className="surface-well px-3.5 py-2.5 w-full sm:w-auto text-left sm:text-right">
+            <span className="text-[11px] text-[var(--color-muted)] block">
+              Salario base de referencia
             </span>
-            <span className="fw-bold font-monospace fs-5 text-slate-dark">
+            <span className="font-bold font-mono text-lg text-[var(--color-ink)]">
               {formatUSD(monthlySalary)}
             </span>
-            <span className="text-secondary small d-block font-monospace" style={{ fontSize: '11px' }}>
+            <span className="text-[11px] text-[var(--color-muted)] block font-mono">
               Diario: {formatUSD(result.dailyRealSalary)} / día
             </span>
           </div>
         </div>
-      </div>
+      </PrimeCard>
 
-      <div className="row g-4 mb-4">
-        {/* Panel Izquierdo: Configuración de la Incapacidad */}
-        <div className="col-12 col-lg-5">
-          <div className="card-soft p-3 p-md-4 h-100">
-            <h6 className="fw-semibold text-slate-dark mb-3 d-flex align-items-center gap-2">
-              <Activity size={16} className="text-primary shrink-0" />
-              <span>Detalles de la Incapacidad</span>
-            </h6>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        {/* Panel Izquierdo */}
+        <PrimeCard padded className="lg:col-span-5 space-y-4">
+          <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+            <Activity size={16} className="text-[var(--color-accent)] shrink-0" />
+            <span>Detalles de la Incapacidad</span>
+          </h6>
 
-            {/* Selector de Modo: Período Único vs Dividir entre 2 Quincenas */}
-            <div className="mb-3">
-              <label className="form-label small fw-semibold text-slate-muted text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                Período Afectado
-              </label>
-              <div className="btn-group w-100 p-0.5 rounded border bg-light">
-                <button
-                  type="button"
-                  onClick={() => setCalculationMode('single')}
-                  className={`btn btn-sm py-1.5 font-sans ${
-                    calculationMode === 'single'
-                      ? 'btn-primary shadow-xs fw-semibold'
-                      : 'btn-light border-0 text-secondary'
-                  }`}
-                  style={{ fontSize: '12px' }}
-                >
-                  Una sola quincena
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCalculationMode('split')}
-                  className={`btn btn-sm py-1.5 font-sans d-flex align-items-center justify-content-center gap-1 ${
-                    calculationMode === 'split'
-                      ? 'btn-primary shadow-xs fw-semibold'
-                      : 'btn-light border-0 text-secondary'
-                  }`}
-                  style={{ fontSize: '12px' }}
-                >
-                  <ArrowRightLeft size={13} />
-                  <span>Cruza 2 quincenas (Q1 y Q2)</span>
-                </button>
-              </div>
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-2)] mb-1.5">
+              Período afectado
+            </label>
+            <PrimeSelectButton
+              fullWidth
+              value={calculationMode}
+              onChange={setCalculationMode}
+              options={[
+                { value: 'single', label: 'Una sola quincena' },
+                {
+                  value: 'split',
+                  label: (
+                    <span className="inline-flex items-center gap-1">
+                      <ArrowRightLeft size={12} />
+                      <span>Cruza 2 quincenas</span>
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </div>
 
-            {/* Selector de Tipo */}
-            <div className="mb-3">
-              <label className="form-label small fw-semibold text-slate-muted text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                Tipo de Incapacidad
-              </label>
-              <div className="d-flex flex-column gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-2)] mb-1.5">
+              Tipo de incapacidad
+            </label>
+            <div className="flex flex-col gap-2">
+              {[
+                {
+                  id: 'common_illness' as const,
+                  icon: Activity,
+                  title: 'Enfermedad o Accidente Común',
+                  desc: 'Días 1 a 3 a cargo del patrono (75%). Día 4 en adelante subsidiado por el ISSS (75%).',
+                  onSelect: () => {
                     setIncapacityType('common_illness');
                     if (daysInput > 60) setDaysInput(5);
-                  }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
-                    incapacityType === 'common_illness'
-                      ? 'border-primary bg-primary-subtle text-slate-dark'
-                      : 'bg-white text-muted'
-                  }`}
-                >
-                  <Activity size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'common_illness' ? 'text-primary' : ''}`} />
-                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                    <span className="fw-semibold d-block small text-wrap">Enfermedad o Accidente Común</span>
-                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
-                      Días 1 a 3 a cargo del patrono (75%). Día 4 en adelante subsidiado por el ISSS (75%).
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'work_accident' as const,
+                  icon: ShieldAlert,
+                  title: 'Accidente de Trabajo / Riesgo Profesional',
+                  desc: 'Cubierto por el ISSS desde el 1.er día al 75% sin período de espera ni carencia.',
+                  onSelect: () => {
                     setIncapacityType('work_accident');
                     if (daysInput > 60) setDaysInput(5);
-                  }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
-                    incapacityType === 'work_accident'
-                      ? 'border-primary bg-primary-subtle text-slate-dark'
-                      : 'bg-white text-muted'
-                  }`}
-                >
-                  <ShieldAlert size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'work_accident' ? 'text-primary' : ''}`} />
-                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                    <span className="fw-semibold d-block small text-wrap">Accidente de Trabajo / Riesgo Profesional</span>
-                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
-                      Cubierto por el ISSS desde el 1.er día al 75% sin período de espera ni carencia de meses.
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
+                  },
+                },
+                {
+                  id: 'maternity' as const,
+                  icon: Calendar,
+                  title: 'Maternidad (Pre y Post Natal)',
+                  desc: '16 semanas (112 días continuos) cubiertas al 100% por el ISSS (tope $1,000/mes).',
+                  onSelect: () => {
                     setIncapacityType('maternity');
                     setDaysInput(112);
-                  }}
-                  className={`btn btn-sm text-start p-2.5 rounded border d-flex align-items-start gap-2.5 w-100 ${
-                    incapacityType === 'maternity'
-                      ? 'border-primary bg-primary-subtle text-slate-dark'
-                      : 'bg-white text-muted'
-                  }`}
-                >
-                  <Calendar size={16} className={`shrink-0 mt-0.5 ${incapacityType === 'maternity' ? 'text-primary' : ''}`} />
-                  <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                    <span className="fw-semibold d-block small text-wrap">Maternidad (Pre y Post Natal)</span>
-                    <span className="small text-muted font-sans d-block text-wrap" style={{ fontSize: '11px' }}>
-                      16 semanas (112 días continuos) cubiertas al 100% por el ISSS (tope $1,000/mes).
-                    </span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Duración en Días (Modo Único) */}
-            {calculationMode === 'single' ? (
-              <div className="mb-3">
-                <label htmlFor="incapacity-days-input" className="form-label small fw-semibold text-slate-muted text-uppercase mb-1 d-flex justify-content-between" style={{ fontSize: '11px' }}>
-                  <span>Días de Reposo Prescritos</span>
-                  <span className="font-monospace text-slate-dark fw-bold">{daysInput} día(s)</span>
-                </label>
-                <div className="input-group mb-2">
-                  <input
-                    id="incapacity-days-input"
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={daysInput}
-                    onChange={(e) => setDaysInput(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="form-control font-monospace fw-bold"
-                  />
-                  <span className="input-group-text bg-light text-muted small">días</span>
-                </div>
-
-                {incapacityType !== 'maternity' ? (
-                  <div className="d-flex flex-wrap gap-1">
-                    {presetDays.map((p) => (
-                      <button
-                        key={p.days}
-                        type="button"
-                        onClick={() => setDaysInput(p.days)}
-                        className={`btn btn-xs px-2 py-1 rounded border font-monospace ${
-                          daysInput === p.days ? 'btn-primary' : 'btn-light text-secondary'
-                        }`}
-                        style={{ fontSize: '11px' }}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="d-flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setDaysInput(112)}
-                      className="btn btn-xs btn-outline-primary px-2 py-1 font-monospace"
-                      style={{ fontSize: '11px' }}
-                    >
-                      112 días (16 semanas de Ley)
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Duración dividida entre dos quincenas */
-              <div className="mb-3 p-3 rounded bg-light border">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="small fw-bold text-slate-dark d-flex align-items-center gap-1.5" style={{ fontSize: '12px' }}>
-                    <CalendarDays size={14} className="text-primary" />
-                    <span>Días por Quincena</span>
-                  </span>
-                  <span className="badge bg-primary-subtle text-primary border font-monospace" style={{ fontSize: '11px' }}>
-                    Total: {q1Days + q2Days} días
-                  </span>
-                </div>
-
-                {/* 1.a Quincena */}
-                <div className="mb-2.5">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <label htmlFor="q1-days-input" className="small fw-semibold text-slate-dark" style={{ fontSize: '11.5px' }}>
-                      1.ª Quincena (Días 1 al 15 o corte inicial):
-                    </label>
-                    <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
-                      {15 - q1Days}d trabajados
-                    </span>
-                  </div>
-                  <div className="input-group input-group-sm">
-                    <input
-                      id="q1-days-input"
-                      type="number"
-                      min="0"
-                      max="15"
-                      value={q1Days}
-                      onChange={(e) => setQ1Days(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
-                      className="form-control font-monospace fw-bold"
-                    />
-                    <span className="input-group-text text-muted">días reposo</span>
-                  </div>
-                  <div className="d-flex gap-1 mt-1">
-                    {[2, 3, 4, 5, 7].map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setQ1Days(d)}
-                        className={`btn btn-xs px-1.5 py-0.5 rounded border font-monospace ${q1Days === d ? 'btn-primary' : 'btn-light text-muted'}`}
-                        style={{ fontSize: '10px' }}
-                      >
-                        {d}d
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 2.a Quincena */}
-                <div className="mb-2.5">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <label htmlFor="q2-days-input" className="small fw-semibold text-slate-dark" style={{ fontSize: '11.5px' }}>
-                      2.ª Quincena (Días 16 al 30 o corte siguiente):
-                    </label>
-                    <span className="text-muted small font-monospace" style={{ fontSize: '11px' }}>
-                      {15 - q2Days}d trabajados
-                    </span>
-                  </div>
-                  <div className="input-group input-group-sm">
-                    <input
-                      id="q2-days-input"
-                      type="number"
-                      min="0"
-                      max="15"
-                      value={q2Days}
-                      onChange={(e) => setQ2Days(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
-                      className="form-control font-monospace fw-bold"
-                    />
-                    <span className="input-group-text text-muted">días reposo</span>
-                  </div>
-                  <div className="d-flex gap-1 mt-1">
-                    {[3, 5, 6, 7, 10].map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setQ2Days(d)}
-                        className={`btn btn-xs px-1.5 py-0.5 rounded border font-monospace ${q2Days === d ? 'btn-primary' : 'btn-light text-muted'}`}
-                        style={{ fontSize: '10px' }}
-                      >
-                        {d}d
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Asistente Desplegable de Fechas */}
-                <div className="pt-2 border-top">
+                  },
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                const active = incapacityType === item.id;
+                return (
                   <button
+                    key={item.id}
                     type="button"
-                    onClick={() => setUseDateHelper(!useDateHelper)}
-                    className="btn btn-sm btn-link text-decoration-none p-0 text-primary small d-flex align-items-center gap-1"
-                    style={{ fontSize: '11.5px' }}
+                    onClick={item.onSelect}
+                    className={`w-full text-left p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-colors duration-150 ${
+                      active
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-ink)]'
+                        : 'border-[var(--color-rule)] bg-[var(--color-card)] text-[var(--color-muted)] hover:bg-[var(--color-surface)]'
+                    }`}
                   >
-                    <Clock size={12} />
-                    <span>{useDateHelper ? 'Ocultar asistente por fecha' : 'Calcular días según fecha de boleta'}</span>
+                    <Icon size={16} className={`shrink-0 mt-0.5 ${active ? 'text-[var(--color-accent)]' : ''}`} />
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold block text-xs text-[var(--color-ink)]">
+                        {item.title}
+                      </span>
+                      <span className="text-[11px] text-[var(--color-muted)] block mt-0.5 leading-snug">
+                        {item.desc}
+                      </span>
+                    </div>
                   </button>
-
-                  {useDateHelper && (
-                    <div className="p-2 mt-2 rounded bg-body-tertiary border border-slate-200 space-y-2">
-                      <div>
-                        <label htmlFor="date-helper-start" className="form-label small text-muted mb-0.5" style={{ fontSize: '10.5px' }}>
-                          Fecha en que inicia el reposo médico:
-                        </label>
-                        <input
-                          id="date-helper-start"
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="form-control form-control-sm font-monospace"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="date-helper-total" className="form-label small text-muted mb-0.5" style={{ fontSize: '10.5px' }}>
-                          Total de días de reposo prescritos:
-                        </label>
-                        <input
-                          id="date-helper-total"
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={totalReposoDays}
-                          onChange={(e) => setTotalReposoDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                          className="form-control form-control-sm font-monospace"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleApplyDateHelper}
-                        className="btn btn-xs btn-primary w-100 py-1 fw-semibold font-sans mt-1"
-                        style={{ fontSize: '11px' }}
-                      >
-                        Distribuir automáticamente en Q1 y Q2
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Política Patronal Voluntaria de Primeros Días */}
-            {incapacityType === 'common_illness' && (
-              <div className="p-2.5 rounded bg-light border mt-3">
-                <div className="form-check form-switch mb-0">
-                  <input
-                    id="switch-employer-100"
-                    type="checkbox"
-                    className="form-check-input"
-                    checked={employerPays100FirstDays}
-                    onChange={(e) => setEmployerPays100FirstDays(e.target.checked)}
-                  />
-                  <label htmlFor="switch-employer-100" className="form-check-label small fw-semibold text-slate-dark" style={{ fontSize: '12px' }}>
-                    Mi empresa cubre el 100% de los primeros 3 días
-                  </label>
-                </div>
-                <span className="text-muted d-block small mt-1 font-sans" style={{ fontSize: '11px' }}>
-                  El Art. 307 del Código de Trabajo obliga al 75%. Algunas empresas o contratos colectivos conceden el 100%.
-                </span>
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Panel Derecho: Resultados Financieros y Desglose de Pago */}
-        <div className="col-12 col-lg-7">
-          <div className="card-soft p-3 p-md-4 h-100 d-flex flex-column justify-content-between">
-            {calculationMode === 'single' ? (
-              /* Modo Único (1 Quincena) */
-              <div>
-                <div className="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-3">
-                  <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                    <Wallet size={16} className="text-emerald shrink-0" />
-                    <span>Liquidación Estimada del Período</span>
-                  </h6>
-                  <span className="badge bg-light text-slate-dark border font-monospace shrink-0" style={{ fontSize: '11px' }}>
-                    Total {result.totalDays} día(s)
-                  </span>
-                </div>
-
-                {/* Tarjeta Principal de Monto Total - Directo al Bolsillo */}
-                <div className="p-3 p-sm-3.5 rounded bg-light border mb-3">
-                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-baseline gap-1 gap-sm-3 mb-1">
-                    <div style={{ minWidth: 0 }}>
-                      <span className="text-slate-dark fw-bold d-block text-wrap">
-                        Dinero total que llegará a tu bolsillo:
-                      </span>
-                      <span className="text-muted small font-sans d-block text-wrap" style={{ fontSize: '11.5px' }}>
-                        Suma de lo que te paga tu empresa más lo que te deposita el Seguro Social
-                      </span>
-                    </div>
-                    <span className="fs-3 fw-bold font-monospace text-emerald shrink-0">
-                      {formatUSD(result.totalIncapacityPay)}
-                    </span>
-                  </div>
-
-                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-muted pt-2.5 border-top mt-2 gap-1">
-                    <span className="font-sans">Lo que habrías cobrado trabajando normal:</span>
-                    <span className="text-slate-dark font-monospace fw-semibold shrink-0">{formatUSD(result.regularEquivalentGross)}</span>
-                  </div>
-
-                  {result.wageLoss > 0 && (
-                    <div className="pt-2 border-top mt-2">
-                      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-terracotta gap-1">
-                        <span className="fw-semibold font-sans">Lo que dejas de ganar (no cubierto por ley):</span>
-                        <span className="fw-bold font-monospace shrink-0">-{formatUSD(result.wageLoss)}</span>
-                      </div>
-                      <span className="text-muted d-block font-sans small mt-0.5" style={{ fontSize: '11px' }}>
-                        ¿Por qué dejas de ganar esto? Porque a partir del 4.º día, el ISSS solo te paga el 75% de cada día. El 25% restante nadie lo cubre.
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Desglose: Patrono vs ISSS */}
-                <div className="row g-3 mb-3">
-                  {/* 1. Pago Patronal */}
-                  <div className="col-12 col-sm-6">
-                    <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
-                      <div>
-                        <div className="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-2">
-                          <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                            <Building2 size={14} className="text-secondary shrink-0" />
-                            <span>1. Te paga tu Empresa</span>
-                          </span>
-                          <span className="badge bg-light text-secondary border font-monospace shrink-0" style={{ fontSize: '10px' }}>
-                            {result.employerDays} día(s)
-                          </span>
-                        </div>
-                        <div className="fs-4 fw-bold font-monospace text-slate-dark mb-1">
-                          {formatUSD(result.employerTotalPay)}
-                        </div>
-                      </div>
-
-                      <div className="mt-2 pt-2 border-top small font-sans" style={{ fontSize: '11px' }}>
-                        {result.employerDays > 0 ? (
-                          <>
-                            <div className="mb-1 text-slate-dark">
-                              <strong>{formatUSD(result.employerDailyAmount)}</strong> por cada día de reposo (
-                              {(result.employerRate * 100).toFixed(0)}% de tu sueldo normal).
-                            </div>
-                            <div className="text-muted">
-                              <strong>¿Cómo te lo pagan?</strong> En tu recibo o depósito quincenal de nómina como sueldo normal.
-                            </div>
-                            <div className="text-muted mt-1">
-                              <strong>¿Lleva descuentos?</strong> Sí, tus descuentos normales de planilla (AFP, ISSS y Renta).
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-muted">Tu empresa no paga estos días; el pago corre por cuenta del Seguro Social desde el día 1.</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 2. Subsidio ISSS */}
-                  <div className="col-12 col-sm-6">
-                    <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
-                      <div>
-                        <div className="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-2">
-                          <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5">
-                            <ShieldAlert size={14} className="text-primary shrink-0" />
-                            <span>2. Te paga el Seguro (ISSS)</span>
-                          </span>
-                          <span className="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace shrink-0" style={{ fontSize: '10px' }}>
-                            {result.isssDays} día(s)
-                          </span>
-                        </div>
-                        <div className="fs-4 fw-bold font-monospace text-primary mb-1">
-                          {formatUSD(result.isssTotalSubsidio)}
-                        </div>
-                      </div>
-
-                      {result.isssDays > 0 ? (
-                        <div className="mt-2 pt-2 border-top small font-sans" style={{ fontSize: '11px' }}>
-                          <div className="mb-1 text-slate-dark">
-                            <strong>{formatUSD(result.isssDailySubsidio)}</strong> por cada día de subsidio (el{' '}
-                            {(result.isssRate * 100).toFixed(0)}% que da la ley).
-                          </div>
-                          <div className="text-muted">
-                            <strong>¿Cómo lo calculan?</strong> Tu día normal vale {formatUSD(result.dailyCotizableSalary)}. El Seguro te entrega el 75% y te deja de pagar el 25% (-{formatUSD(round2(result.dailyRealSalary - result.isssDailySubsidio))}/día).
-                          </div>
-                          <div className="text-emerald fw-semibold mt-1">
-                            <strong>¿Lleva descuentos?</strong> No. El Seguro te entrega los {formatUSD(result.isssTotalSubsidio)} limpios (0% AFP, 0% ISSS, 0% Renta).
-                          </div>
-                          <div className="text-muted mt-1">
-                            <strong>¿Cómo te lo pagan?</strong> Te lo deposita el ISSS directo a tu cuenta bancaria o lo cobras con tu DUI en el banco. No viene en el pago de tu empresa.
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mt-2 pt-2 border-top small text-muted font-sans" style={{ fontSize: '11px' }}>
-                          El Seguro Social no paga nada porque la incapacidad duró 3 días o menos (período de espera). Todo lo asume tu empresa.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Advertencia de Techo Salarial ISSS ($1,000) si aplica */}
-                {result.isSalaryCappedByISSS && result.isssDays > 0 && (
-                  <div className="p-3 rounded bg-warning-subtle border border-warning-subtle small d-flex align-items-start gap-2 mb-3">
-                    <AlertCircle size={16} className="text-warning-emphasis shrink-0 mt-0.5" />
-                    <div className="text-slate-dark font-sans" style={{ fontSize: '12px' }}>
-                      <strong>Por qué te pagan menos si ganas más de $1,000:</strong> Tu salario real es de {formatUSD(monthlySalary)} ({formatUSD(result.dailyRealSalary)} al día), pero la Ley del Seguro Social fija un tope máximo de {formatUSD(RATES.ISSS_CAP_MONTHLY)} al mes ($33.33 al día). Aunque ganes más, el Seguro solo calcula tu 75% sobre esos $33.33, pagándote como máximo {formatUSD(result.maxDailySubsidioCap)} al día.
-                    </div>
-                  </div>
-                )}
-
-                {/* Resumen de Descuentos */}
-                <div className="p-3 rounded bg-light border mb-2">
-                  <span className="small fw-bold text-slate-dark d-block mb-1 font-sans" style={{ fontSize: '12px' }}>
-                    Resumen de Descuentos: ¿Cuánto te quitan de cada pago?
-                  </span>
-                  <p className="text-muted small mb-2 font-sans" style={{ fontSize: '11px' }}>
-                    Para que tengas claro por qué recibes cada cantidad y qué retenciones aplican por ley:
-                  </p>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-minimal align-middle mb-0 font-sans" style={{ fontSize: '11.5px', minWidth: '460px' }}>
-                      <thead>
-                        <tr className="text-muted">
-                          <th>Quién te paga</th>
-                          <th className="text-center">Descuento de AFP</th>
-                          <th className="text-center">Descuento de ISSS</th>
-                          <th className="text-center">Descuento de Renta</th>
-                          <th className="text-end">¿Cómo te llega?</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="fw-semibold text-slate-dark">
-                            Tu Empresa (Días 1 a 3)
-                          </td>
-                          <td className="text-center text-secondary">Sí (-7.25%)</td>
-                          <td className="text-center text-secondary">Sí (-3.00%)</td>
-                          <td className="text-center text-secondary">Sí (según tabla)</td>
-                          <td className="text-end font-monospace text-slate-dark">
-                            En tu quincena normal
-                          </td>
-                        </tr>
-                        <tr className="bg-emerald-50 text-emerald-950">
-                          <td className="fw-bold text-emerald-900 d-flex align-items-center gap-1">
-                            <CheckCircle2 size={13} className="text-emerald shrink-0" />
-                            <span>El Seguro ISSS (Día 4 en adelante)</span>
-                          </td>
-                          <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
-                          <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
-                          <td className="text-center fw-bold text-emerald-800">Cero (0%)</td>
-                          <td className="text-end font-monospace fw-bold text-emerald">
-                            {formatUSD(result.isssTotalSubsidio)} (100% limpio)
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+          {calculationMode === 'single' ? (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <label htmlFor="incapacity-days-input" className="font-medium text-[var(--color-ink-2)]">
+                  Días de reposo prescritos
+                </label>
+                <span className="font-mono font-bold text-[var(--color-ink)]">{daysInput} día(s)</span>
               </div>
-            ) : (
-              /* Modo Dividido entre 2 Quincenas (Q1 y Q2) */
-              <div>
-                <div className="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-3">
-                  <h6 className="fw-semibold text-slate-dark mb-0 d-flex align-items-center gap-2">
-                    <Wallet size={16} className="text-emerald shrink-0" />
-                    <span>Liquidación de Incapacidad en Dos Quincenas</span>
-                  </h6>
-                  <span className="badge bg-primary-subtle text-primary border font-monospace shrink-0" style={{ fontSize: '11px' }}>
-                    Total: {splitResult.totalIncapacityDays} días de reposo
-                  </span>
+              <div className="flex items-center gap-2">
+                <PrimeInput
+                  id="incapacity-days-input"
+                  type="number"
+                  mono
+                  min="1"
+                  max="365"
+                  value={daysInput}
+                  onChange={(e) => setDaysInput(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  className="font-bold"
+                />
+                <span className="text-xs text-[var(--color-muted)] shrink-0">días</span>
+              </div>
+
+              {incapacityType !== 'maternity' ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {presetDays.map((p) => (
+                    <PrimeButton
+                      key={p.days}
+                      size="xs"
+                      variant={daysInput === p.days ? 'primary' : 'outline'}
+                      className="font-mono"
+                      onClick={() => setDaysInput(p.days)}
+                    >
+                      {p.label}
+                    </PrimeButton>
+                  ))}
                 </div>
-
-                {/* Tarjeta Principal de Monto Total - Ambas Quincenas */}
-                <div className="p-3 p-sm-3.5 rounded bg-light border mb-3">
-                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-baseline gap-1 gap-sm-3 mb-1">
-                    <div style={{ minWidth: 0 }}>
-                      <span className="text-slate-dark fw-bold d-block text-wrap">
-                        Total que llegará a tu bolsillo (2 Quincenas):
-                      </span>
-                      <span className="text-muted small font-sans d-block text-wrap" style={{ fontSize: '11.5px' }}>
-                        Suma neta acumulada de lo que te pagará tu empresa y lo que te depositará el ISSS
-                      </span>
-                    </div>
-                    <span className="fs-3 fw-bold font-monospace text-emerald shrink-0">
-                      {formatUSD(splitResult.totalPocketPay)}
-                    </span>
-                  </div>
-
-                  <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-muted pt-2.5 border-top mt-2 gap-1">
-                    <span className="font-sans">Salario neto normal de dos quincenas (sin incapacidad):</span>
-                    <span className="text-slate-dark font-monospace fw-semibold shrink-0">
-                      {formatUSD(splitResult.normalTwoQuincenasNet)}
-                    </span>
-                  </div>
-
-                  {splitResult.totalPocketLoss > 0 && (
-                    <div className="pt-2 border-top mt-2">
-                      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center small text-terracotta gap-1">
-                        <span className="fw-semibold font-sans">Pérdida neta de bolsillo acumulada:</span>
-                        <span className="fw-bold font-monospace shrink-0">-{formatUSD(splitResult.totalPocketLoss)}</span>
-                      </div>
-                      <span className="text-muted d-block font-sans small mt-0.5" style={{ fontSize: '11px' }}>
-                        Corresponde al 25% no cubierto por el ISSS en los días subsidiados y/o el tope salarial de $1,000.
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Comparativa Quincena por Quincena */}
-                <div className="row g-3 mb-3">
-                  {/* Tarjeta Q1 */}
-                  <div className="col-12 col-md-6">
-                    <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
-                      <div>
-                        <div className="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                          <span className="fw-bold text-slate-dark d-flex align-items-center gap-1.5" style={{ fontSize: '13px' }}>
-                            <Building2 size={15} className="text-primary" />
-                            <span>1.ª Quincena Afectada</span>
-                          </span>
-                          <span className="badge bg-primary-subtle text-primary border font-monospace" style={{ fontSize: '10px' }}>
-                            {splitResult.q1.workedDays}d trab · {splitResult.q1.incapacityDays}d reposo
-                          </span>
-                        </div>
-
-                        {/* Total Bolsillo Q1 */}
-                        <div className="p-2.5 rounded bg-light border mb-2.5">
-                          <span className="text-muted small d-block" style={{ fontSize: '10.5px' }}>Total en tu bolsillo Q1:</span>
-                          <span className="fs-5 fw-bold font-monospace text-emerald">
-                            {formatUSD(splitResult.q1.totalPocketPay)}
-                          </span>
-                          <span className="text-muted small d-block font-sans mt-0.5" style={{ fontSize: '10.5px' }}>
-                            Normal: {formatUSD(splitResult.q1.normalBiweeklyNetPay)} ({splitResult.q1.pocketDifference > 0 ? `-${formatUSD(splitResult.q1.pocketDifference)}` : '$0.00'})
-                          </span>
-                        </div>
-
-                        {/* Desglose: Empresa vs ISSS */}
-                        <div className="space-y-2 small font-sans" style={{ fontSize: '11px' }}>
-                          <div className="p-2 rounded bg-body-tertiary border border-slate-200">
-                            <div className="d-flex justify-content-between align-items-baseline mb-1">
-                              <strong className="text-slate-dark">1. Pago de Empresa (Planilla):</strong>
-                              <span className="font-monospace fw-bold text-slate-dark">{formatUSD(splitResult.q1.employerNetPay)}</span>
-                            </div>
-                            <ul className="list-unstyled mb-0 text-muted space-y-0.5 font-monospace" style={{ fontSize: '10.5px' }}>
-                              <li className="d-flex justify-content-between">
-                                <span>• Días trabajados ({splitResult.q1.workedDays}d):</span>
-                                <span>{formatUSD(splitResult.q1.workedGrossPay)}</span>
-                              </li>
-                              <li className="d-flex justify-content-between">
-                                <span>• Carencia empresa ({splitResult.q1.employerIncapacityDays}d):</span>
-                                <span>{formatUSD(splitResult.q1.employerIncapacityGrossPay)}</span>
-                              </li>
-                              <li className="d-flex justify-content-between text-terracotta">
-                                <span>• Descuentos ley (AFP/ISSS/Renta):</span>
-                                <span>-{formatUSD(splitResult.q1.totalEmployeeDeductions)}</span>
-                              </li>
-                            </ul>
-                            {splitResult.q1.employerDiscountAmount > 0 && (
-                              <div className="mt-1 pt-1 border-top text-secondary" style={{ fontSize: '10px' }}>
-                                Descuento en colilla: <strong>-{formatUSD(splitResult.q1.employerDiscountAmount)}</strong> ({splitResult.q1.isssIncapacityDays}d no pagados por empresa).
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="p-2 rounded bg-emerald-subtle bg-opacity-25 border border-emerald-subtle">
-                            <div className="d-flex justify-content-between align-items-baseline mb-0.5">
-                              <strong className="text-emerald-900">2. Subsidio del ISSS:</strong>
-                              <span className="font-monospace fw-bold text-emerald">{formatUSD(splitResult.q1.isssTotalSubsidio)}</span>
-                            </div>
-                            <span className="text-muted d-block" style={{ fontSize: '10.5px' }}>
-                              {splitResult.q1.isssIncapacityDays > 0
-                                ? `${splitResult.q1.isssIncapacityDays} día(s) al 75% (${formatUSD(splitResult.q1.isssDailySubsidio)}/d). 0% retenciones.`
-                                : 'No hay subsidio en Q1 porque el reposo cubrió solo carencia patronal.'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                    {/* Tarjeta Q2 */}
-                    <div className="col-12 col-md-6">
-                      <div className="p-3 rounded border h-100 bg-white d-flex flex-column justify-content-between">
-                        <div>
-                          <div className="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-                            <span className="fw-bold text-slate-dark d-flex align-items-center gap-1.5" style={{ fontSize: '13px' }}>
-                              <Building2 size={15} className="text-primary" />
-                              <span>2.ª Quincena Afectada</span>
-                            </span>
-                            <span className="badge bg-primary-subtle text-primary border font-monospace" style={{ fontSize: '10px' }}>
-                              {splitResult.q2.workedDays}d trab · {splitResult.q2.incapacityDays}d reposo
-                            </span>
-                          </div>
-
-                          {/* Total Bolsillo Q2 */}
-                          <div className="p-2.5 rounded bg-light border mb-2.5">
-                            <span className="text-muted small d-block" style={{ fontSize: '10.5px' }}>Total en tu bolsillo Q2:</span>
-                            <span className="fs-5 fw-bold font-monospace text-emerald">
-                              {formatUSD(splitResult.q2.totalPocketPay)}
-                            </span>
-                            <span className="text-muted small d-block font-sans mt-0.5" style={{ fontSize: '10.5px' }}>
-                              Normal: {formatUSD(splitResult.q2.normalBiweeklyNetPay)} ({splitResult.q2.pocketDifference > 0 ? `-${formatUSD(splitResult.q2.pocketDifference)}` : '$0.00'})
-                            </span>
-                          </div>
-
-                          {/* Desglose: Empresa vs ISSS */}
-                          <div className="space-y-2 small font-sans" style={{ fontSize: '11px' }}>
-                            <div className="p-2 rounded bg-body-tertiary border border-slate-200">
-                              <div className="d-flex justify-content-between align-items-baseline mb-1">
-                                <strong className="text-slate-dark">1. Pago de Empresa (Planilla):</strong>
-                                <span className="font-monospace fw-bold text-slate-dark">{formatUSD(splitResult.q2.employerNetPay)}</span>
-                              </div>
-                              <ul className="list-unstyled mb-0 text-muted space-y-0.5 font-monospace" style={{ fontSize: '10.5px' }}>
-                                <li className="d-flex justify-content-between">
-                                  <span>• Días trabajados ({splitResult.q2.workedDays}d):</span>
-                                  <span>{formatUSD(splitResult.q2.workedGrossPay)}</span>
-                                </li>
-                                <li className="d-flex justify-content-between">
-                                  <span>• Carencia empresa ({splitResult.q2.employerIncapacityDays}d):</span>
-                                  <span>{formatUSD(splitResult.q2.employerIncapacityGrossPay)}</span>
-                                </li>
-                                <li className="d-flex justify-content-between text-terracotta">
-                                  <span>• Descuentos ley (AFP/ISSS/Renta):</span>
-                                  <span>-{formatUSD(splitResult.q2.totalEmployeeDeductions)}</span>
-                                </li>
-                              </ul>
-                              {splitResult.q2.employerDiscountAmount > 0 && (
-                                <div className="mt-1 pt-1 border-top text-secondary" style={{ fontSize: '10px' }}>
-                                  Descuento en colilla: <strong>-{formatUSD(splitResult.q2.employerDiscountAmount)}</strong> ({splitResult.q2.isssIncapacityDays}d no pagados por empresa).
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="p-2 rounded bg-emerald-subtle bg-opacity-25 border border-emerald-subtle">
-                              <div className="d-flex justify-content-between align-items-baseline mb-0.5">
-                                <strong className="text-emerald-900">2. Subsidio del ISSS:</strong>
-                                <span className="font-monospace fw-bold text-emerald">{formatUSD(splitResult.q2.isssTotalSubsidio)}</span>
-                              </div>
-                              <span className="text-muted d-block" style={{ fontSize: '10.5px' }}>
-                                {splitResult.q2.isssIncapacityDays > 0
-                                  ? `${splitResult.q2.isssIncapacityDays} día(s) al 75% (${formatUSD(splitResult.q2.isssDailySubsidio)}/d). 0% retenciones.`
-                                  : 'No hay subsidio en Q2.'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumen explicativo sobre los descuentos de nómina y los 3 días de espera */}
-                  <div className="p-3 rounded bg-light border mb-2">
-                    <span className="small fw-bold text-slate-dark d-block mb-1 font-sans" style={{ fontSize: '12px' }}>
-                      ¿Por qué ves un descuento en tu colilla de pago?
-                    </span>
-                    <p className="text-muted small mb-0 font-sans" style={{ fontSize: '11px' }}>
-                      En cada quincena, la empresa descuenta de tu nómina los días que asume el Seguro Social para no duplicar el pago. Esos días los cobras directamente con el ISSS mediante cheque bancario o depósito en tu cuenta (100% libre de retenciones).
-                    </p>
-                  </div>
-                </div>
+              ) : (
+                <PrimeButton
+                  size="xs"
+                  variant="outline"
+                  className="font-mono"
+                  onClick={() => setDaysInput(112)}
+                >
+                  112 días (16 semanas de Ley)
+                </PrimeButton>
               )}
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="surface-well p-3.5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5">
+                  <CalendarDays size={14} className="text-[var(--color-accent)]" />
+                  <span>Días por quincena</span>
+                </span>
+                <PrimeTag severity="info" className="font-mono">
+                  Total: {q1Days + q2Days} días
+                </PrimeTag>
+              </div>
 
-      {/* Guía Informativa y de Trámites Oficiales (Portal del ISSS) */}
-      <div className="card-soft p-3 p-md-4">
-        <h6 className="fw-semibold text-slate-dark mb-3 d-flex align-items-center gap-2">
-          <Info size={16} className="text-primary" />
+              <div>
+                <div className="flex justify-between items-center mb-1 text-xs">
+                  <label htmlFor="q1-days-input" className="font-medium text-[var(--color-ink)]">
+                    1.ª Quincena (Días 1 al 15 o corte inicial)
+                  </label>
+                  <span className="text-[var(--color-muted)] font-mono text-[11px]">
+                    {15 - q1Days}d trabajados
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <PrimeInput
+                    id="q1-days-input"
+                    type="number"
+                    inputSize="sm"
+                    mono
+                    min="0"
+                    max="15"
+                    value={q1Days}
+                    onChange={(e) => setQ1Days(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
+                    className="font-bold"
+                  />
+                  <span className="text-[11px] text-[var(--color-muted)] shrink-0">días reposo</span>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {[2, 3, 4, 5, 7].map((d) => (
+                    <PrimeButton
+                      key={d}
+                      size="xs"
+                      variant={q1Days === d ? 'primary' : 'outline'}
+                      className="font-mono"
+                      onClick={() => setQ1Days(d)}
+                    >
+                      {d}d
+                    </PrimeButton>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1 text-xs">
+                  <label htmlFor="q2-days-input" className="font-medium text-[var(--color-ink)]">
+                    2.ª Quincena (Días 16 al 30 o corte siguiente)
+                  </label>
+                  <span className="text-[var(--color-muted)] font-mono text-[11px]">
+                    {15 - q2Days}d trabajados
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <PrimeInput
+                    id="q2-days-input"
+                    type="number"
+                    inputSize="sm"
+                    mono
+                    min="0"
+                    max="15"
+                    value={q2Days}
+                    onChange={(e) => setQ2Days(Math.max(0, Math.min(15, parseInt(e.target.value, 10) || 0)))}
+                    className="font-bold"
+                  />
+                  <span className="text-[11px] text-[var(--color-muted)] shrink-0">días reposo</span>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {[3, 5, 6, 7, 10].map((d) => (
+                    <PrimeButton
+                      key={d}
+                      size="xs"
+                      variant={q2Days === d ? 'primary' : 'outline'}
+                      className="font-mono"
+                      onClick={() => setQ2Days(d)}
+                    >
+                      {d}d
+                    </PrimeButton>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[var(--color-rule)]">
+                <PrimeButton
+                  variant="ghost"
+                  size="xs"
+                  className="text-[var(--color-accent)] px-0"
+                  onClick={() => setUseDateHelper(!useDateHelper)}
+                >
+                  <Clock size={12} />
+                  <span>
+                    {useDateHelper ? 'Ocultar asistente por fecha' : 'Calcular días según fecha de boleta'}
+                  </span>
+                </PrimeButton>
+
+                {useDateHelper && (
+                  <div className="mt-2 p-2.5 rounded-lg border border-[var(--color-rule)] bg-[var(--color-card)] space-y-2">
+                    <div>
+                      <label htmlFor="date-helper-start" className="block text-[11px] text-[var(--color-muted)] mb-1">
+                        Fecha de inicio del reposo médico
+                      </label>
+                      <PrimeInput
+                        id="date-helper-start"
+                        type="date"
+                        inputSize="sm"
+                        mono
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="date-helper-total" className="block text-[11px] text-[var(--color-muted)] mb-1">
+                        Total de días de reposo prescritos
+                      </label>
+                      <PrimeInput
+                        id="date-helper-total"
+                        type="number"
+                        inputSize="sm"
+                        mono
+                        min="1"
+                        max="30"
+                        value={totalReposoDays}
+                        onChange={(e) => setTotalReposoDays(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      />
+                    </div>
+                    <PrimeButton variant="primary" size="xs" fullWidth onClick={handleApplyDateHelper}>
+                      Distribuir automáticamente en Q1 y Q2
+                    </PrimeButton>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {incapacityType === 'common_illness' && (
+            <div className="surface-well p-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="switch-employer-100" className="text-xs font-semibold text-[var(--color-ink)] cursor-pointer">
+                  Mi empresa cubre el 100% de los primeros 3 días
+                </label>
+                <PrimeSwitch
+                  id="switch-employer-100"
+                  checked={employerPays100FirstDays}
+                  onChange={setEmployerPays100FirstDays}
+                />
+              </div>
+              <span className="text-[11px] text-[var(--color-muted)] block">
+                El Art. 307 del Código de Trabajo obliga al 75%. Algunas empresas conceden el 100%.
+              </span>
+            </div>
+          )}
+        </PrimeCard>
+
+        {/* Panel Derecho */}
+        <PrimeCard padded className="lg:col-span-7 space-y-4">
+          {calculationMode === 'single' ? (
+            <>
+              <div className="flex flex-wrap justify-between items-center gap-2">
+                <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                  <Wallet size={16} className="text-[var(--color-emerald)] shrink-0" />
+                  <span>Liquidación Estimada del Período</span>
+                </h6>
+                <PrimeTag severity="neutral" className="font-mono">
+                  Total {result.totalDays} día(s)
+                </PrimeTag>
+              </div>
+
+              <div className="surface-well p-4 space-y-2.5">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-baseline gap-2">
+                  <div>
+                    <span className="font-bold text-sm text-[var(--color-ink)] block">
+                      Dinero total que llegará a tu bolsillo:
+                    </span>
+                    <span className="text-xs text-[var(--color-muted)]">
+                      Suma de lo que paga tu empresa más lo que deposita el Seguro Social
+                    </span>
+                  </div>
+                  <span className="text-2xl font-bold font-mono text-[var(--color-emerald)] shrink-0">
+                    {formatUSD(result.totalIncapacityPay)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-xs text-[var(--color-muted)] pt-2.5 border-t border-[var(--color-rule)]">
+                  <span>Lo que habrías cobrado trabajando normal:</span>
+                  <span className="font-mono font-semibold text-[var(--color-ink)]">
+                    {formatUSD(result.regularEquivalentGross)}
+                  </span>
+                </div>
+
+                {result.wageLoss > 0 && (
+                  <div className="pt-2 border-t border-[var(--color-rule)]">
+                    <div className="flex justify-between items-center text-xs text-[var(--color-danger)]">
+                      <span className="font-semibold">Lo que dejas de ganar (no cubierto por ley):</span>
+                      <span className="font-mono font-bold">-{formatUSD(result.wageLoss)}</span>
+                    </div>
+                    <span className="text-[var(--color-muted)] text-[11px] block mt-0.5">
+                      A partir del 4.º día, el ISSS cubre el 75% de cada día; el 25% restante no está cubierto.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl border border-[var(--color-rule)] bg-[var(--color-card)] flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex justify-between items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5">
+                        <Building2 size={14} className="text-[var(--color-muted)] shrink-0" />
+                        <span>1. Te paga tu Empresa</span>
+                      </span>
+                      <PrimeTag severity="neutral" className="font-mono">{result.employerDays} día(s)</PrimeTag>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-[var(--color-ink)]">
+                      {formatUSD(result.employerTotalPay)}
+                    </div>
+                  </div>
+                  <div className="pt-2.5 border-t border-[var(--color-rule)] text-[11px] text-[var(--color-muted)] space-y-1">
+                    {result.employerDays > 0 ? (
+                      <>
+                        <div className="text-[var(--color-ink)]">
+                          <strong>{formatUSD(result.employerDailyAmount)}</strong> por día ({(result.employerRate * 100).toFixed(0)}%).
+                        </div>
+                        <div>En tu recibo quincenal con deducciones normales (AFP, ISSS y Renta).</div>
+                      </>
+                    ) : (
+                      <span>El pago corre por cuenta del Seguro Social desde el día 1.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-[var(--color-rule)] bg-[var(--color-card)] flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex justify-between items-center gap-2 mb-2">
+                      <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5">
+                        <ShieldAlert size={14} className="text-[var(--color-accent)] shrink-0" />
+                        <span>2. Te paga el Seguro (ISSS)</span>
+                      </span>
+                      <PrimeTag severity="info" className="font-mono">{result.isssDays} día(s)</PrimeTag>
+                    </div>
+                    <div className="text-xl font-bold font-mono text-[var(--color-accent)]">
+                      {formatUSD(result.isssTotalSubsidio)}
+                    </div>
+                  </div>
+                  <div className="pt-2.5 border-t border-[var(--color-rule)] text-[11px] space-y-1">
+                    {result.isssDays > 0 ? (
+                      <>
+                        <div className="text-[var(--color-ink)]">
+                          <strong>{formatUSD(result.isssDailySubsidio)}</strong> por día ({(result.isssRate * 100).toFixed(0)}%).
+                        </div>
+                        <div className="text-[var(--color-emerald)] font-semibold">
+                          Sin descuentos: {formatUSD(result.isssTotalSubsidio)} limpios (0% AFP, ISSS, Renta).
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-[var(--color-muted)]">
+                        El ISSS no paga incapacidades de 3 días o menos (período de espera).
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {result.isSalaryCappedByISSS && result.isssDays > 0 && (
+                <PrimeMessage severity="warning" icon={<AlertCircle size={16} />}>
+                  <strong>Tope salarial ISSS ({formatUSD(RATES.ISSS_CAP_MONTHLY)}/mes):</strong> Tu salario diario es {formatUSD(result.dailyRealSalary)}, pero el Seguro calcula el 75% sobre el tope de $33.33/día, pagando un máximo de {formatUSD(result.maxDailySubsidioCap)}/día.
+                </PrimeMessage>
+              )}
+
+              <div className="surface-well p-3.5">
+                <span className="text-xs font-semibold text-[var(--color-ink)] block mb-2">
+                  Resumen de descuentos por pagador
+                </span>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-[11.5px] min-w-[460px]">
+                    <thead>
+                      <tr className="border-b border-[var(--color-rule)] text-[var(--color-muted)]">
+                        <th className="py-2 pr-2 font-medium">Pagador</th>
+                        <th className="py-2 px-2 text-center font-medium">AFP</th>
+                        <th className="py-2 px-2 text-center font-medium">ISSS</th>
+                        <th className="py-2 px-2 text-center font-medium">Renta</th>
+                        <th className="py-2 pl-2 text-right font-medium">Entrega</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--color-rule)]">
+                      <tr>
+                        <td className="py-2 pr-2 font-semibold text-[var(--color-ink)]">
+                          Tu Empresa (Días 1 a 3)
+                        </td>
+                        <td className="py-2 px-2 text-center text-[var(--color-muted)]">-7.25%</td>
+                        <td className="py-2 px-2 text-center text-[var(--color-muted)]">-3.00%</td>
+                        <td className="py-2 px-2 text-center text-[var(--color-muted)]">Según tabla</td>
+                        <td className="py-2 pl-2 text-right font-mono text-[var(--color-ink)]">
+                          Quincena normal
+                        </td>
+                      </tr>
+                      <tr className="bg-[var(--color-emerald-soft)]">
+                        <td className="py-2 pr-2 font-bold text-[var(--color-emerald)] flex items-center gap-1">
+                          <CheckCircle2 size={13} className="shrink-0" />
+                          <span>ISSS (Día 4+)</span>
+                        </td>
+                        <td className="py-2 px-2 text-center font-bold text-[var(--color-emerald)]">0%</td>
+                        <td className="py-2 px-2 text-center font-bold text-[var(--color-emerald)]">0%</td>
+                        <td className="py-2 px-2 text-center font-bold text-[var(--color-emerald)]">0%</td>
+                        <td className="py-2 pl-2 text-right font-mono font-bold text-[var(--color-emerald)]">
+                          {formatUSD(result.isssTotalSubsidio)} limpio
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-wrap justify-between items-center gap-2">
+                <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+                  <Wallet size={16} className="text-[var(--color-emerald)] shrink-0" />
+                  <span>Liquidación de Incapacidad en Dos Quincenas</span>
+                </h6>
+                <PrimeTag severity="info" className="font-mono">
+                  Total: {splitResult.totalIncapacityDays} días de reposo
+                </PrimeTag>
+              </div>
+
+              <div className="surface-well p-4 space-y-2.5">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-baseline gap-2">
+                  <div>
+                    <span className="font-bold text-sm text-[var(--color-ink)] block">
+                      Total que llegará a tu bolsillo (2 Quincenas):
+                    </span>
+                    <span className="text-xs text-[var(--color-muted)]">
+                      Suma neta acumulada de empresa e ISSS
+                    </span>
+                  </div>
+                  <span className="text-2xl font-bold font-mono text-[var(--color-emerald)] shrink-0">
+                    {formatUSD(splitResult.totalPocketPay)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs text-[var(--color-muted)] pt-2 border-t border-[var(--color-rule)]">
+                  <span>Salario neto normal de dos quincenas:</span>
+                  <span className="font-mono font-semibold text-[var(--color-ink)]">
+                    {formatUSD(splitResult.normalTwoQuincenasNet)}
+                  </span>
+                </div>
+                {splitResult.totalPocketLoss > 0 && (
+                  <div className="flex justify-between items-center text-xs text-[var(--color-danger)] pt-2 border-t border-[var(--color-rule)]">
+                    <span className="font-semibold">Pérdida neta de bolsillo acumulada:</span>
+                    <span className="font-mono font-bold">-{formatUSD(splitResult.totalPocketLoss)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {renderSplitCard(
+                  '1.ª Quincena Afectada',
+                  splitResult.q1,
+                  'No hay subsidio en Q1 porque el reposo cubrió solo carencia patronal.'
+                )}
+                {renderSplitCard('2.ª Quincena Afectada', splitResult.q2, 'No hay subsidio en Q2.')}
+              </div>
+
+              <div className="surface-well p-3 text-xs text-[var(--color-muted)]">
+                <strong className="text-[var(--color-ink)] block mb-1">
+                  ¿Por qué ves un descuento en tu colilla de pago?
+                </strong>
+                En cada quincena, la empresa descuenta de tu nómina los días que asume el Seguro Social para no duplicar el pago. Esos días los cobras directamente con el ISSS (100% libre de retenciones).
+              </div>
+            </>
+          )}
+        </PrimeCard>
+      </div>
+
+      {/* Guía Informativa */}
+      <PrimeCard padded className="space-y-4">
+        <h6 className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+          <Info size={16} className="text-[var(--color-accent)]" />
           <span>Información Clave de Trámites y Derechos Laborales</span>
         </h6>
 
-        <div className="row g-3">
-          <div className="col-12 col-md-4">
-            <div className="p-3 rounded border bg-light h-100">
-              <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1.5">
-                <Clock size={13} className="text-secondary" />
-                <span>Requisitos de Cotización (Carencia)</span>
-              </span>
-              <p className="text-muted small font-sans mb-0" style={{ fontSize: '12px' }}>
-                Para cobrar subsidio de enfermedad común, debes tener al menos <strong>6 meses de cotización</strong> (continuos o no)
-                en los últimos 12 meses anteriores a la incapacidad. En accidentes de trabajo no se exige tiempo mínimo.
-              </p>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="surface-well p-3.5">
+            <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5 mb-1.5">
+              <Clock size={13} className="text-[var(--color-muted)]" />
+              <span>Requisitos de Cotización (Carencia)</span>
+            </span>
+            <p className="text-xs text-[var(--color-muted)] m-0 leading-relaxed">
+              Para enfermedad común debes tener al menos <strong>6 meses de cotización</strong> en los últimos 12 meses. En accidentes de trabajo no se exige tiempo mínimo.
+            </p>
           </div>
 
-          <div className="col-12 col-md-4">
-            <div className="p-3 rounded border bg-light h-100">
-              <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1.5">
-                <FileText size={13} className="text-secondary" />
-                <span>Incapacidades de Médicos Privados</span>
-              </span>
-              <p className="text-muted small font-sans mb-0" style={{ fontSize: '12px' }}>
-                Si consultaste con un médico particular o clínica privada, debes acudir al centro del ISSS más cercano
-                a <strong>refrendar la incapacidad</strong> presentando la constancia médica y recetas para que tenga validez legal y económica.
-              </p>
-            </div>
+          <div className="surface-well p-3.5">
+            <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5 mb-1.5">
+              <FileText size={13} className="text-[var(--color-muted)]" />
+              <span>Incapacidades de Médicos Privados</span>
+            </span>
+            <p className="text-xs text-[var(--color-muted)] m-0 leading-relaxed">
+              Si consultaste con un médico particular, debes acudir al centro del ISSS más cercano a <strong>refrendar la incapacidad</strong> con constancia y recetas.
+            </p>
           </div>
 
-          <div className="col-12 col-md-4">
-            <div className="p-3 rounded border bg-light h-100">
-              <span className="small fw-semibold text-slate-dark d-flex align-items-center gap-1.5 mb-1.5">
-                <HelpCircle size={13} className="text-secondary" />
-                <span>Modalidad de Cobro del Subsidio</span>
-              </span>
-              <p className="text-muted small font-sans mb-0" style={{ fontSize: '12px' }}>
-                Puedes registrar tu cuenta bancaria personal en el portal en línea del ISSS para recibir el depósito directo,
-                o cobrarlo en las ventanillas de bancos autorizados presentando tu DUI vigente una vez emitida la planilla de subsidio.
-              </p>
-            </div>
+          <div className="surface-well p-3.5">
+            <span className="text-xs font-semibold text-[var(--color-ink)] flex items-center gap-1.5 mb-1.5">
+              <HelpCircle size={13} className="text-[var(--color-muted)]" />
+              <span>Modalidad de Cobro del Subsidio</span>
+            </span>
+            <p className="text-xs text-[var(--color-muted)] m-0 leading-relaxed">
+              Registra tu cuenta bancaria en el portal en línea del ISSS para depósito directo o cóbralo con tu DUI vigente en bancos autorizados.
+            </p>
           </div>
         </div>
 
-        {/* Sección Especial: Retención de Subsidio por Mora Patronal o Planilla no Pagada */}
-        <div className="mt-3 pt-3 border-top">
-          <div className="p-3 rounded border bg-white">
-            <div className="d-flex align-items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-primary shrink-0" />
-              <h6 className="fw-bold text-slate-dark mb-0 font-sans" style={{ fontSize: '13px' }}>
-                ¿Por qué el Seguro Social retiene tu subsidio? (Planilla presentada vs. pagada)
-              </h6>
-            </div>
+        <div className="p-4 rounded-xl border border-[var(--color-rule)] bg-[var(--color-card)] space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-[var(--color-accent)] shrink-0" />
+            <h6 className="text-xs font-bold text-[var(--color-ink)] m-0">
+              ¿Por qué el Seguro Social retiene tu subsidio? (Planilla presentada vs. pagada)
+            </h6>
+          </div>
 
-            <div className="row g-3 small font-sans text-muted" style={{ fontSize: '11.5px' }}>
-              <div className="col-12 col-md-6">
-                <strong className="text-slate-dark d-block mb-1">
-                  1. Planilla presentada en OVISSS no equivale a planilla pagada
-                </strong>
-                <p className="mb-2">
-                  La empresa puede haber cargado la nómina en el Sistema de Planilla Única del ISSS, pero si no ha liquidado el mandamiento de pago (NPE) en el banco, el sistema financiero del ISSS registra a la empresa en estado de mora y <strong>congela el trámite en tránsito</strong> hacia la Sección de Subsidios. El sistema tarda entre 24 y 72 horas hábiles en liberar el subsidio tras la conciliación bancaria del pago.
-                </p>
-                <div className="p-2 rounded bg-light border text-slate-dark">
-                  <strong>Qué pedir a tu empresa:</strong> Solicita al departamento de Recursos Humanos o Contabilidad el comprobante bancario del pago del NPE del mes de tu reposo o la captura de pantalla con estado «Pagada» en OVISSS.
-                </div>
-              </div>
-
-              <div className="col-12 col-md-6">
-                <strong className="text-slate-dark d-block mb-1">
-                  2. Responsabilidad legal patronal (Art. 53 Ley del Seguro Social)
-                </strong>
-                <p className="mb-2">
-                  La Ley del Seguro Social establece que si el trabajador deja de percibir las prestaciones en dinero debido al incumplimiento de obligaciones o mora patronal, <strong>el patrono está obligado a pagar directamente de sus propios fondos el 100% del subsidio que el empleado dejó de recibir</strong>, sin perjuicio de las multas impuestas por el ISSS.
-                </p>
-                <div className="p-2 rounded bg-light border text-slate-dark">
-                  <strong>Plazo de cobro:</strong> Tienes hasta <strong>1 año</strong> a partir de la fecha de cada día de reposo para cobrar el subsidio antes de que prescriba.
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-[var(--color-muted)]">
+            <div className="space-y-2">
+              <strong className="text-[var(--color-ink)] block">
+                1. Planilla presentada en OVISSS no equivale a planilla pagada
+              </strong>
+              <p className="m-0 leading-relaxed">
+                Si la empresa cargó la nómina pero no liquidó el NPE en el banco, el ISSS registra mora y congela el trámite. Tarda 24 a 72 horas hábiles tras la conciliación bancaria.
+              </p>
+              <div className="surface-well p-2.5 text-[var(--color-ink-2)]">
+                <strong>Qué pedir:</strong> Comprobante bancario del NPE del mes o captura con estado «Pagada» en OVISSS.
               </div>
             </div>
 
-            {/* Canales Oficiales de Consulta del ISSS */}
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-3 border-top mt-3">
-              <div className="d-flex flex-wrap align-items-center gap-3 small font-sans text-muted" style={{ fontSize: '11px' }}>
-                <span><strong>Canales Oficiales del ISSS:</strong></span>
-                <span>Teléfono Call Center: <strong className="text-slate-dark">127</strong></span>
-                <span>Correo Subsidios: <strong className="text-slate-dark font-monospace">secre.subsidios@isss.gob.sv</strong></span>
+            <div className="space-y-2">
+              <strong className="text-[var(--color-ink)] block">
+                2. Responsabilidad legal patronal (Art. 53 Ley del Seguro Social)
+              </strong>
+              <p className="m-0 leading-relaxed">
+                Si el trabajador pierde prestaciones por mora patronal, <strong>el patrono está obligado a pagar directamente el 100% del subsidio</strong>.
+              </p>
+              <div className="surface-well p-2.5 text-[var(--color-ink-2)]">
+                <strong>Plazo de cobro:</strong> Tienes hasta <strong>1 año</strong> desde cada día de reposo antes de que prescriba.
               </div>
-              <a
-                href="https://portal.isss.gob.sv"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-xs btn-primary d-inline-flex align-items-center gap-1.5 py-1 px-2.5 fw-semibold"
-                style={{ fontSize: '11px' }}
-              >
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--color-rule)] text-[11px] text-[var(--color-muted)]">
+            <div className="flex flex-wrap items-center gap-3">
+              <span><strong>Canales ISSS:</strong></span>
+              <span>Call Center: <strong className="text-[var(--color-ink)]">127</strong></span>
+              <span>Correo: <strong className="text-[var(--color-ink)] font-mono">secre.subsidios@isss.gob.sv</strong></span>
+            </div>
+            <a
+              href="https://portal.isss.gob.sv"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-underline"
+            >
+              <PrimeButton variant="primary" size="xs">
                 <span>Consultar trámite en portal ISSS con DUI</span>
                 <ExternalLink size={12} />
-              </a>
-            </div>
+              </PrimeButton>
+            </a>
           </div>
         </div>
-      </div>
+      </PrimeCard>
     </motion.div>
   );
 }

@@ -81,6 +81,17 @@ import {
   type DbSalaryHistory,
 } from './lib/supabase.ts';
 import { formatUSD, parseUSDCurrency, formatHours } from './lib/formatters.ts';
+import {
+  PrimeButton,
+  PrimeInput,
+  PrimeCheckbox,
+  PrimeSelectButton,
+  PrimeCard,
+  PrimeTag,
+  PrimeMessage,
+  PrimeDialog,
+  PrimeDivider,
+} from './components/ui/PrimeUI.tsx';
 import LoginPage from './pages/LoginPage.tsx';
 import AdminPanel from './pages/AdminPanel.tsx';
 import TerminosPage from './pages/TerminosPage.tsx';
@@ -979,103 +990,58 @@ function AppShell() {
   const isCalculatorRoute = location.pathname === '/';
 
   return (
-    <div className="min-h-screen d-flex flex-column app-root-layout">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)]">
       {/* Header Institucional Minimalista Sticky */}
-      <header className="sticky-top header-sticky" style={{ zIndex: 1030 }}>
-        <nav className="navbar navbar-expand navbar-institutional py-2 px-3">
-          <div className="container-constrained d-flex justify-content-between align-items-center">
+      <header className="sticky top-0 z-40 surface-nav">
+        <nav className="py-2.5 px-3 sm:px-4">
+          <div className="container-app flex items-center justify-between gap-2">
             {/* Logo sobrio institucional */}
-            <Link to="/" className="navbar-brand d-flex align-items-center gap-2 text-decoration-none me-2">
-              <div
-                className="d-flex align-items-center justify-content-center rounded font-monospace fw-bold shrink-0 navbar-brand-badge"
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  fontSize: '12px',
-                }}
-              >
+            <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-emerald-600 text-white flex items-center justify-center font-mono text-xs font-bold">
                 SV
               </div>
-              <span className="fs-6 fw-semibold navbar-brand-title tracking-tight">MiNominaSV</span>
+              <span className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">
+                MiNominaSV
+              </span>
             </Link>
 
             {/* Enlaces de Navegación Secundarios Centrales (Desktop) */}
-            <div className="d-none d-lg-flex align-items-center gap-1 mx-auto">
-              <button
-                type="button"
-                onClick={() => {
-                  setCalcTab('payroll');
-                  if (!isCalculatorRoute) navigate('/');
-                }}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isCalculatorRoute && calcTab === 'payroll' ? 'active' : ''
-                }`}
-              >
-                <Scale size={14} />
-                <span>Calculadora</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCalcTab('bonuses');
-                  if (!isCalculatorRoute) navigate('/');
-                }}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isCalculatorRoute && calcTab === 'bonuses' ? 'active' : ''
-                }`}
-              >
-                <Calendar size={14} />
-                <span>Bonos de Ley</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCalcTab('hourly');
-                  if (!isCalculatorRoute) navigate('/');
-                }}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isCalculatorRoute && calcTab === 'hourly' ? 'active' : ''
-                }`}
-              >
-                <Clock size={14} />
-                <span>Costo Hora</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCalcTab('incapacity');
-                  if (!isCalculatorRoute) navigate('/');
-                }}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isCalculatorRoute && calcTab === 'incapacity' ? 'active' : ''
-                }`}
-              >
-                <Activity size={14} />
-                <span>Incapacidades</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCalcTab('liquidacion');
-                  if (!isCalculatorRoute) navigate('/');
-                }}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isCalculatorRoute && calcTab === 'liquidacion' ? 'active' : ''
-                }`}
-              >
-                <Scale size={14} />
-                <span>Liquidación</span>
-              </button>
+            <div className="hidden lg:flex items-center gap-1 mx-auto">
+              {[
+                { id: 'payroll' as const, label: 'Calculadora', icon: <Scale size={14} /> },
+                { id: 'bonuses' as const, label: 'Bonos de Ley', icon: <Calendar size={14} /> },
+                { id: 'hourly' as const, label: 'Costo Hora', icon: <Clock size={14} /> },
+                { id: 'incapacity' as const, label: 'Incapacidades', icon: <Activity size={14} /> },
+                { id: 'liquidacion' as const, label: 'Liquidación', icon: <Scale size={14} /> },
+              ].map((item) => {
+                const isActive = isCalculatorRoute && calcTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setCalcTab(item.id);
+                      if (!isCalculatorRoute) navigate('/');
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      isActive
+                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
               <button
                 type="button"
                 onClick={() => navigate('/mis-gastos')}
-                className={`btn btn-sm border-0 nav-link-subtle d-inline-flex align-items-center gap-2 ${
-                  isExpensesRoute ? 'active' : ''
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isExpensesRoute
+                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/70'
                 }`}
               >
                 <Wallet size={14} />
@@ -1084,60 +1050,75 @@ function AppShell() {
             </div>
 
             {/* Selector de Tema Visual y Acceso de Usuario */}
-            <div className="d-flex align-items-center gap-2">
-              <div className="theme-toggle-control" role="group" aria-label="Selector de tema visual">
+            <div className="flex items-center gap-2">
+              <div
+                className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                role="group"
+                aria-label="Selector de tema visual"
+              >
                 <button
                   type="button"
                   title="Tema del sistema (detecta configuración del OS)"
-                  className={`theme-toggle-btn ${themeMode === 'system' ? 'active' : ''}`}
                   onClick={() => setThemeMode('system')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    themeMode === 'system'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
                 >
                   <Monitor size={13} />
                 </button>
                 <button
                   type="button"
                   title="Modo claro"
-                  className={`theme-toggle-btn ${themeMode === 'light' ? 'active' : ''}`}
                   onClick={() => setThemeMode('light')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    themeMode === 'light'
+                      ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
                 >
                   <Sun size={13} />
                 </button>
                 <button
                   type="button"
                   title="Modo oscuro"
-                  className={`theme-toggle-btn ${themeMode === 'dark' ? 'active' : ''}`}
                   onClick={() => setThemeMode('dark')}
+                  className={`p-1.5 rounded-md transition-colors ${
+                    themeMode === 'dark'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
                 >
                   <Moon size={13} />
                 </button>
               </div>
 
               {/* Área de Autenticación Sobria a la Derecha */}
-              <div className="d-flex align-items-center ms-1">
+              <div className="flex items-center">
                 {user?.loggedIn ? (
-                  <div className="position-relative" ref={profileMenuRef}>
-                    <button
-                      type="button"
+                  <div className="relative" ref={profileMenuRef}>
+                    <PrimeButton
+                      variant="outline"
+                      size="sm"
                       onClick={() => setShowProfileMenu((prev) => !prev)}
-                      className="btn btn-sm btn-nav-auth d-inline-flex align-items-center gap-2 py-1 px-2.5"
-                      style={{ fontSize: '12px' }}
+                      className="text-xs py-1 px-2.5"
                     >
                       <User size={13} />
-                      <span className="d-none d-sm-inline">{user.name}</span>
+                      <span className="hidden sm:inline">{user.name}</span>
                       <ChevronDown size={11} className="opacity-75" />
-                    </button>
+                    </PrimeButton>
 
                     {showProfileMenu && (
-                      <div
-                        className="dropdown-menu dropdown-menu-end show shadow-sm p-2 mt-1 border"
-                        style={{ minWidth: '220px', maxWidth: 'calc(100vw - 2rem)', right: 0, left: 'auto', zIndex: 1050, fontSize: '13px' }}
-                      >
-                        <div className="px-2 py-1 mb-1 border-bottom">
-                          <span className="small text-muted d-block" style={{ fontSize: '11px' }}>
+                      <div className="absolute right-0 mt-1.5 w-60 max-w-[calc(100vw-2rem)] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-lg p-2 z-50 text-xs">
+                        <div className="px-2.5 py-1.5 mb-1 border-b border-slate-100 dark:border-slate-800">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                             Sesión activa
                           </span>
-                          <strong className="text-dark d-block">{user.name}</strong>
-                          <span className="text-muted d-block font-monospace" style={{ fontSize: '11px' }}>
+                          <strong className="text-slate-900 dark:text-slate-100 block truncate">
+                            {user.name}
+                          </strong>
+                          <span className="text-slate-500 dark:text-slate-400 block font-mono text-[11px] truncate">
                             {user.email}
                           </span>
                         </div>
@@ -1146,7 +1127,7 @@ function AppShell() {
                           <Link
                             to="/admin"
                             onClick={() => setShowProfileMenu(false)}
-                            className="dropdown-item py-1.5 d-flex align-items-center gap-2 text-dark"
+                            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 no-underline"
                           >
                             <Shield size={13} />
                             <span>Panel de Administración</span>
@@ -1156,7 +1137,7 @@ function AppShell() {
                         <Link
                           to="/terminos"
                           onClick={() => setShowProfileMenu(false)}
-                          className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 no-underline"
                         >
                           <Scale size={13} />
                           <span>Términos de Uso</span>
@@ -1164,13 +1145,13 @@ function AppShell() {
                         <Link
                           to="/privacidad"
                           onClick={() => setShowProfileMenu(false)}
-                          className="dropdown-item py-1.5 text-muted d-flex align-items-center gap-2"
+                          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 no-underline"
                         >
                           <Shield size={13} />
                           <span>Privacidad y Datos ARCO</span>
                         </Link>
 
-                        <div className="dropdown-divider my-1" />
+                        <PrimeDivider className="my-1.5" />
 
                         <button
                           type="button"
@@ -1185,7 +1166,7 @@ function AppShell() {
                             setBonusInput('0.00');
                             setShowProfileMenu(false);
                           }}
-                          className="dropdown-item py-1.5 text-secondary d-flex align-items-center gap-2"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
                         >
                           <RotateCcw size={13} />
                           <span>Reiniciar datos a cero</span>
@@ -1198,7 +1179,7 @@ function AppShell() {
                             await logout();
                             navigate('/');
                           }}
-                          className="dropdown-item py-1.5 text-danger d-flex align-items-center gap-2"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-left"
                         >
                           <LogOut size={13} />
                           <span>Cerrar Sesión</span>
@@ -1209,12 +1190,11 @@ function AppShell() {
                 ) : (
                   <Link
                     to="/login"
-                    className="btn btn-sm btn-nav-auth d-inline-flex align-items-center gap-1.5 py-1 px-2.5 px-sm-3"
-                    style={{ fontSize: '12px', fontWeight: 500 }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium no-underline transition-colors"
                   >
                     <LogIn size={13} />
-                    <span className="d-none d-sm-inline">Iniciar Sesión</span>
-                    <span className="d-inline d-sm-none">Entrar</span>
+                    <span className="hidden sm:inline">Iniciar Sesión</span>
+                    <span className="inline sm:hidden">Entrar</span>
                   </Link>
                 )}
               </div>
@@ -1223,82 +1203,44 @@ function AppShell() {
         </nav>
 
         {/* Barra de navegación horizontal swipeable para móviles */}
-        <div className="mobile-nav-strip d-lg-none">
-          <div className="mobile-nav-scroll">
-            <button
-              type="button"
-              onClick={() => {
-                setCalcTab('payroll');
-                if (!isCalculatorRoute) navigate('/');
-              }}
-              className={`mobile-nav-pill ${
-                isCalculatorRoute && calcTab === 'payroll' ? 'active' : ''
-              }`}
-            >
-              <Scale size={13} />
-              <span>Calculadora</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCalcTab('bonuses');
-                if (!isCalculatorRoute) navigate('/');
-              }}
-              className={`mobile-nav-pill ${
-                isCalculatorRoute && calcTab === 'bonuses' ? 'active' : ''
-              }`}
-            >
-              <Calendar size={13} />
-              <span>Bonos de Ley</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCalcTab('hourly');
-                if (!isCalculatorRoute) navigate('/');
-              }}
-              className={`mobile-nav-pill ${
-                isCalculatorRoute && calcTab === 'hourly' ? 'active' : ''
-              }`}
-            >
-              <Clock size={13} />
-              <span>Costo Hora</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCalcTab('incapacity');
-                if (!isCalculatorRoute) navigate('/');
-              }}
-              className={`mobile-nav-pill ${
-                isCalculatorRoute && calcTab === 'incapacity' ? 'active' : ''
-              }`}
-            >
-              <Activity size={13} />
-              <span>Incapacidades</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCalcTab('liquidacion');
-                if (!isCalculatorRoute) navigate('/');
-              }}
-              className={`mobile-nav-pill ${
-                isCalculatorRoute && calcTab === 'liquidacion' ? 'active' : ''
-              }`}
-            >
-              <Scale size={13} />
-              <span>Liquidación</span>
-            </button>
+        <div className="lg:hidden border-t border-slate-200/80 dark:border-slate-800/80 px-3 py-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'payroll' as const, label: 'Calculadora', icon: <Scale size={13} /> },
+              { id: 'bonuses' as const, label: 'Bonos de Ley', icon: <Calendar size={13} /> },
+              { id: 'hourly' as const, label: 'Costo Hora', icon: <Clock size={13} /> },
+              { id: 'incapacity' as const, label: 'Incapacidades', icon: <Activity size={13} /> },
+              { id: 'liquidacion' as const, label: 'Liquidación', icon: <Scale size={13} /> },
+            ].map((item) => {
+              const isActive = isCalculatorRoute && calcTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setCalcTab(item.id);
+                    if (!isCalculatorRoute) navigate('/');
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
+                    isActive
+                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
 
             <button
               type="button"
               onClick={() => navigate('/mis-gastos')}
-              className={`mobile-nav-pill ${isExpensesRoute ? 'active' : ''}`}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors ${
+                isExpensesRoute
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+              }`}
             >
               <Wallet size={13} />
               <span>Mis Gastos</span>
@@ -1309,980 +1251,866 @@ function AppShell() {
 
       {/* Estado de Carga Inicial para evitar mostrar datos provisionales */}
       {(isCalculatorRoute || isExpensesRoute) && isInitialLoading ? (
-        <section className="py-5 flex-grow-1 d-flex align-items-center">
-          <div className="container-constrained w-100">
-            <div
-              className="card-soft p-5 text-center my-4 d-flex flex-column align-items-center justify-content-center"
-              style={{ minHeight: '340px' }}
-            >
+        <section className="py-12 flex-1 flex items-center">
+          <div className="container-app w-full">
+            <PrimeCard className="p-8 text-center my-4 flex flex-col items-center justify-center min-h-[340px]">
               <div
-                className="spinner-border text-primary mb-3"
+                className="w-9 h-9 rounded-full border-2 border-slate-200 dark:border-slate-700 border-t-emerald-600 animate-spin mb-4"
                 role="status"
-                style={{ width: '2.5rem', height: '2.5rem' }}
-              >
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-              <h5 className="fw-semibold text-slate-dark mb-1">Cargando tu información...</h5>
-              <p className="text-muted small mb-0 font-sans" style={{ maxWidth: '420px' }}>
+                aria-label="Cargando"
+              />
+              <h5 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Cargando tu información...
+              </h5>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md m-0">
                 Sincronizando salario, aumentos y libreta de gastos con Supabase.
               </p>
-            </div>
+            </PrimeCard>
           </div>
         </section>
       ) : (
         <>
           {/* Sección Hero / Calculadora Principal con Jerarquía Limpia */}
           {(isCalculatorRoute || isExpensesRoute) && (
-            <section className="py-4">
-          <div className="container-constrained">
-            {/* Tarjeta Flotante Principal de Entrada y Resultado Líquido */}
-            <div className="card-soft p-4 mb-4">
-              <div className="row g-4 align-items-stretch">
-                {/* Panel Izquierdo: Inputs Limpios y Segmented Control */}
-                <div className="col-12 col-lg-7 d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 className="fw-semibold text-slate-dark mb-1">
-                      Calculadora Laboral de El Salvador
-                    </h5>
-                    <p className="text-slate-muted small mb-3">
-                      Cálculo de deducciones de ley (ISSS, AFP, Renta) para salarios quincenales y mensuales
-                    </p>
+            <section className="pt-5 pb-2">
+              <div className="container-app">
+                <PrimeCard className="p-4 sm:p-5 mb-5">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                    {/* Panel Izquierdo: Inputs Limpios y SelectButton */}
+                    <div className="lg:col-span-7 flex flex-col justify-between">
+                      <div>
+                        <h5 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                          Calculadora Laboral de El Salvador
+                        </h5>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                          Cálculo de deducciones de ley (ISSS, AFP, Renta) para salarios quincenales y mensuales
+                        </p>
 
-                    <div className="row g-3">
-                      {/* Salario Base Input */}
-                      <div className="col-12 col-sm-5">
-                        <label
-                          htmlFor="salary-input"
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
-                          style={{ fontSize: '11px' }}
-                        >
-                          <span>Salario Base Mensual</span>
-                          {period === 'biweekly' && (
-                            <span className="text-secondary fw-normal font-monospace">
-                              {formatUSD(activePayroll.grossTotal)} / qna
-                            </span>
-                          )}
-                        </label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-white border-end-0 text-muted font-monospace fw-semibold">
-                            $
-                          </span>
-                          <input
-                            id="salary-input"
-                            type="number"
-                            min="0"
-                            step="10"
-                            value={salaryInput}
-                            onChange={(e) => handleSalaryTextChange(e.target.value)}
-                            className="form-control border-start-0 font-monospace fw-bold fs-4 text-slate-dark"
-                            placeholder="408.80"
-                          />
-                        </div>
-
-                        {user?.loggedIn ? (
-                          <div className="mt-1.5 d-flex align-items-center justify-content-between">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNewSalaryAmount(String(monthlySalary));
-                                setShowSalaryHistoryModal(true);
-                              }}
-                              className="btn btn-xs btn-outline-secondary py-0.5 px-2 d-inline-flex align-items-center gap-1.5"
-                              style={{ fontSize: '11px' }}
-                              title="Historial de aumentos y salario guardado"
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                          {/* Salario Base Input */}
+                          <div className="sm:col-span-5">
+                            <label
+                              htmlFor="salary-input"
+                              className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1 flex justify-between items-center"
                             >
-                              <TrendingUp size={12} className="text-emerald" />
-                              <span>Historial / Aumentos</span>
-                            </button>
-                            <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
-                              {salaryHistoryList.length > 0
-                                ? `${salaryHistoryList.length} registro(s)`
-                                : 'Sin guardar'}
+                              <span>Salario base mensual</span>
+                              {period === 'biweekly' && (
+                                <span className="text-slate-500 dark:text-slate-400 font-normal font-mono tabular-nums">
+                                  {formatUSD(activePayroll.grossTotal)} / qna
+                                </span>
+                              )}
+                            </label>
+                            <div className="relative flex items-center">
+                              <span className="absolute left-3 text-slate-400 font-mono text-sm font-semibold pointer-events-none">
+                                $
+                              </span>
+                              <PrimeInput
+                                id="salary-input"
+                                type="number"
+                                min="0"
+                                step="10"
+                                mono
+                                value={salaryInput}
+                                onChange={(e) => handleSalaryTextChange(e.target.value)}
+                                className="pl-7 text-xl font-bold h-11"
+                                placeholder="408.80"
+                              />
+                            </div>
+
+                            {user?.loggedIn ? (
+                              <div className="mt-1.5 flex items-center justify-between gap-2">
+                                <PrimeButton
+                                  variant="outline"
+                                  size="xs"
+                                  onClick={() => {
+                                    setNewSalaryAmount(String(monthlySalary));
+                                    setShowSalaryHistoryModal(true);
+                                  }}
+                                  title="Historial de aumentos y salario guardado"
+                                >
+                                  <TrendingUp size={12} className="text-emerald-600 dark:text-emerald-400" />
+                                  <span>Historial / Aumentos</span>
+                                </PrimeButton>
+                                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+                                  {salaryHistoryList.length > 0
+                                    ? `${salaryHistoryList.length} registro(s)`
+                                    : 'Sin guardar'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                <Link to="/login" className="no-underline text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                                  Inicia sesión para guardar tu historial salarial
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Bono / Comisión Opcional */}
+                          <div className="sm:col-span-3">
+                            <label
+                              htmlFor="bonus-input"
+                              className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
+                            >
+                              Bono / Comisión
+                            </label>
+                            <div className="relative flex items-center">
+                              <span className="absolute left-3 text-slate-400 font-mono text-sm pointer-events-none">
+                                $
+                              </span>
+                              <PrimeInput
+                                id="bonus-input"
+                                type="number"
+                                min="0"
+                                step="10"
+                                mono
+                                value={bonusInput}
+                                onChange={(e) => handleBonusTextChange(e.target.value)}
+                                className="pl-7 text-base font-semibold h-11"
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Selector de Frecuencia */}
+                          <div className="sm:col-span-4">
+                            <span className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                              Frecuencia
                             </span>
-                          </div>
-                        ) : (
-                          <div className="mt-1 text-muted" style={{ fontSize: '11px' }}>
-                            <Link to="/login" className="text-decoration-none text-muted">
-                              Inicia sesión para guardar tu historial salarial
-                            </Link>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Bono / Comisión Opcional */}
-                      <div className="col-6 col-sm-3">
-                        <label
-                          htmlFor="bonus-input"
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1"
-                          style={{ fontSize: '11px' }}
-                        >
-                          Bono / Comisión
-                        </label>
-                        <div className="input-group">
-                          <span className="input-group-text bg-white border-end-0 text-muted font-monospace">
-                            $
-                          </span>
-                          <input
-                            id="bonus-input"
-                            type="number"
-                            min="0"
-                            step="10"
-                            value={bonusInput}
-                            onChange={(e) => handleBonusTextChange(e.target.value)}
-                            className="form-control border-start-0 font-monospace fw-semibold fs-5 text-slate-dark"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Selector de Frecuencia Tipo Segmented Control */}
-                      <div className="col-6 col-sm-4">
-                        <label
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1"
-                          style={{ fontSize: '11px' }}
-                        >
-                          Frecuencia
-                        </label>
-                        <div className="segmented-control w-100" style={{ height: '42px' }}>
-                          <button
-                            type="button"
-                            onClick={() => setPeriod('monthly')}
-                            className={period === 'monthly' ? 'active' : ''}
-                          >
-                            Mes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPeriod('biweekly')}
-                            className={period === 'biweekly' ? 'active' : ''}
-                          >
-                            Quincena
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Fila de Fecha de Inicio de Labores & Antigüedad y Aguinaldo */}
-                    <div className="row g-2.5 mt-0.5">
-                      <div className="col-12 col-sm-6">
-                        <label
-                          htmlFor="hire-date-input"
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-block"
-                          style={{ fontSize: '11px' }}
-                        >
-                          Fecha de Inicio de Labores
-                        </label>
-                        <div className="input-group" style={{ height: '42px' }}>
-                          <span className="input-group-text border-end-0 text-muted px-2.5">
-                            <Calendar size={15} />
-                          </span>
-                          <input
-                            id="hire-date-input"
-                            type="date"
-                            value={hireDate}
-                            onChange={(e) => handleHireDateChange(e.target.value)}
-                            className="form-control border-start-0 font-monospace text-slate-dark fw-semibold"
-                            style={{ height: '42px' }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="col-12 col-sm-6">
-                        <label
-                          className="form-label text-slate-muted small fw-semibold text-uppercase mb-1 d-flex justify-content-between align-items-center"
-                          style={{ fontSize: '11px' }}
-                        >
-                          <span>Antigüedad y Aguinaldo</span>
-                          <span className="text-secondary font-monospace" style={{ fontSize: '10.5px' }}>
-                            Arts. 196–202 CT
-                          </span>
-                        </label>
-                        <div
-                          className="px-3 rounded border bg-slate-50 d-flex align-items-center justify-content-between overflow-hidden"
-                          style={{ height: '42px', maxWidth: '100%' }}
-                        >
-                          <div
-                            className="d-flex align-items-center gap-1.5 small font-monospace text-truncate me-2"
-                            style={{ minWidth: 0 }}
-                            title={`Antigüedad exacta: ${seniorityDetails.formattedSeniority}`}
-                          >
-                            <Clock size={13} className="text-secondary shrink-0" />
-                            <span className="text-slate-dark fw-semibold text-truncate" style={{ fontSize: '11.5px' }}>
-                              {seniorityDetails.formattedSeniority}
-                            </span>
-                          </div>
-                          <div
-                            className="d-flex align-items-center gap-1 text-emerald small font-monospace fw-bold shrink-0"
-                            style={{ fontSize: '11.5px', whiteSpace: 'nowrap' }}
-                            title={`Aguinaldo legal: ${seniorityDetails.aguinaldoLabel}`}
-                          >
-                            <Gift size={13} className="shrink-0" />
-                            <span>{seniorityDetails.aguinaldoShortBadge}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Selector de Prestaciones Extraordinarias para el Cálculo */}
-                    <div className="mt-3 p-2.5 rounded bg-slate-50 border border-slate-200">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="d-flex align-items-center gap-1.5">
-                          <Gift size={14} className="text-secondary" />
-                          <span className="fw-semibold text-slate-dark" style={{ fontSize: '11.5px' }}>
-                            Agregar Prestaciones a este Pago ({period === 'monthly' ? 'Mes' : 'Quincena'})
-                          </span>
-                        </div>
-                        {(includeVacationBonus || includeWorkedVacation || includeAguinaldo || includeQ25) && (
-                          <button
-                            type="button"
-                            onClick={handleClearAdditions}
-                            className="btn btn-link btn-xs text-muted text-decoration-none p-0 font-monospace"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Limpiar seleccionados
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="row g-2">
-                        {/* 1. Recargo de Vacación (30%) */}
-                        <div className="col-12 col-sm-6">
-                          <div
-                            onClick={handleToggleVacationBonus}
-                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
-                              includeVacationBonus ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
-                            }`}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={includeVacationBonus}
-                              onChange={handleToggleVacationBonus}
-                              className="form-check-input mt-0.5 shrink-0"
-                              style={{ cursor: 'pointer' }}
+                            <PrimeSelectButton<PayPeriod>
+                              value={period}
+                              onChange={setPeriod}
+                              fullWidth
+                              size="md"
+                              options={[
+                                { value: 'monthly', label: 'Mes' },
+                                { value: 'biweekly', label: 'Quincena' },
+                              ]}
                             />
-                            <div className="w-100" style={{ minWidth: 0 }}>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
-                                  Recargo Vacación (30%)
-                                </span>
-                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
-                                  +{formatUSD(vacationResult.bonus30Gross)}
+                          </div>
+                        </div>
+
+                        {/* Fila de Fecha de Inicio de Labores & Antigüedad y Aguinaldo */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                          <div>
+                            <label
+                              htmlFor="hire-date-input"
+                              className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1"
+                            >
+                              Fecha de inicio de labores
+                            </label>
+                            <div className="relative flex items-center">
+                              <Calendar size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
+                              <PrimeInput
+                                id="hire-date-input"
+                                type="date"
+                                mono
+                                value={hireDate}
+                                onChange={(e) => handleHireDateChange(e.target.value)}
+                                className="pl-9 font-semibold h-10"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1 flex justify-between items-center">
+                              <span>Antigüedad y aguinaldo</span>
+                              <span className="text-slate-500 dark:text-slate-400 font-mono text-[10.5px]">
+                                Arts. 196–202 CT
+                              </span>
+                            </div>
+                            <div className="px-3 rounded-lg border border-slate-200 dark:border-slate-700 surface-well h-10 flex items-center justify-between overflow-hidden">
+                              <div
+                                className="flex items-center gap-1.5 text-xs font-mono truncate mr-2 min-w-0"
+                                title={`Antigüedad exacta: ${seniorityDetails.formattedSeniority}`}
+                              >
+                                <Clock size={13} className="text-slate-400 shrink-0" />
+                                <span className="text-slate-800 dark:text-slate-200 font-semibold truncate text-[11.5px]">
+                                  {seniorityDetails.formattedSeniority}
                                 </span>
                               </div>
-                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
-                                Prima de ley · Cotiza AFP, ISSS y Renta
-                              </span>
+                              <div
+                                className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 text-[11.5px] font-mono font-bold shrink-0 whitespace-nowrap"
+                                title={`Aguinaldo legal: ${seniorityDetails.aguinaldoLabel}`}
+                              >
+                                <Gift size={13} className="shrink-0" />
+                                <span>{seniorityDetails.aguinaldoShortBadge}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* 2. Vacación Trabajada (Paga Doble + 30%) */}
-                        <div className="col-12 col-sm-6">
-                          <div
-                            onClick={handleToggleWorkedVacation}
-                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
-                              includeWorkedVacation ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
-                            }`}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={includeWorkedVacation}
-                              onChange={handleToggleWorkedVacation}
-                              className="form-check-input mt-0.5 shrink-0"
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <div className="w-100" style={{ minWidth: 0 }}>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
-                                  Vacación Trabajada
-                                </span>
-                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
-                                  +{formatUSD(vacationResult.completeVacationGross)}
+                        {/* Selector de Prestaciones Extraordinarias para el Cálculo */}
+                        <div className="mt-3.5 p-3 rounded-xl surface-well border border-slate-200 dark:border-slate-700">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <Gift size={14} className="text-slate-500 dark:text-slate-400" />
+                              <span className="font-semibold text-slate-800 dark:text-slate-200 text-xs">
+                                Agregar prestaciones a este pago ({period === 'monthly' ? 'Mes' : 'Quincena'})
+                              </span>
+                            </div>
+                            {(includeVacationBonus || includeWorkedVacation || includeAguinaldo || includeQ25) && (
+                              <button
+                                type="button"
+                                onClick={handleClearAdditions}
+                                className="text-[11px] font-mono text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                              >
+                                Limpiar seleccionados
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {/* 1. Recargo de Vacación (30%) */}
+                            <div
+                              onClick={handleToggleVacationBonus}
+                              className={`p-2.5 rounded-lg border flex items-start gap-2.5 cursor-pointer transition-colors bg-white dark:bg-slate-900 ${
+                                includeVacationBonus
+                                  ? 'border-emerald-500 dark:border-emerald-500/70 ring-1 ring-emerald-500/20'
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                              }`}
+                            >
+                              <div onClick={(e) => e.stopPropagation()} className="mt-0.5 shrink-0">
+                                <PrimeCheckbox
+                                  checked={includeVacationBonus}
+                                  onChange={handleToggleVacationBonus}
+                                  ariaLabel="Recargo Vacación 30%"
+                                />
+                              </div>
+                              <div className="w-full min-w-0">
+                                <div className="flex justify-between items-center gap-1">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11.5px]">
+                                    Recargo Vacación (30%)
+                                  </span>
+                                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 font-bold shrink-0 text-[11px]">
+                                    +{formatUSD(vacationResult.bonus30Gross)}
+                                  </span>
+                                </div>
+                                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">
+                                  Prima de ley · Cotiza AFP, ISSS y Renta
                                 </span>
                               </div>
-                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
-                                15d vacación ({formatUSD(vacationResult.base15DaysGross)}) + 30% prima ({formatUSD(vacationResult.bonus30Gross)}) · Cotiza AFP, ISSS y Renta
-                              </span>
+                            </div>
+
+                            {/* 2. Vacación Trabajada */}
+                            <div
+                              onClick={handleToggleWorkedVacation}
+                              className={`p-2.5 rounded-lg border flex items-start gap-2.5 cursor-pointer transition-colors bg-white dark:bg-slate-900 ${
+                                includeWorkedVacation
+                                  ? 'border-emerald-500 dark:border-emerald-500/70 ring-1 ring-emerald-500/20'
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                              }`}
+                            >
+                              <div onClick={(e) => e.stopPropagation()} className="mt-0.5 shrink-0">
+                                <PrimeCheckbox
+                                  checked={includeWorkedVacation}
+                                  onChange={handleToggleWorkedVacation}
+                                  ariaLabel="Vacación Trabajada"
+                                />
+                              </div>
+                              <div className="w-full min-w-0">
+                                <div className="flex justify-between items-center gap-1">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11.5px]">
+                                    Vacación Trabajada
+                                  </span>
+                                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 font-bold shrink-0 text-[11px]">
+                                    +{formatUSD(vacationResult.completeVacationGross)}
+                                  </span>
+                                </div>
+                                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">
+                                  15d vacación ({formatUSD(vacationResult.base15DaysGross)}) + 30% prima ({formatUSD(vacationResult.bonus30Gross)}) · Cotiza AFP, ISSS y Renta
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* 3. Aguinaldo de Fin de Año */}
+                            <div
+                              onClick={handleToggleAguinaldo}
+                              className={`p-2.5 rounded-lg border flex items-start gap-2.5 cursor-pointer transition-colors bg-white dark:bg-slate-900 ${
+                                includeAguinaldo
+                                  ? 'border-emerald-500 dark:border-emerald-500/70 ring-1 ring-emerald-500/20'
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                              }`}
+                            >
+                              <div onClick={(e) => e.stopPropagation()} className="mt-0.5 shrink-0">
+                                <PrimeCheckbox
+                                  checked={includeAguinaldo}
+                                  onChange={handleToggleAguinaldo}
+                                  ariaLabel="Pago de Aguinaldo"
+                                />
+                              </div>
+                              <div className="w-full min-w-0">
+                                <div className="flex justify-between items-center gap-1">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11.5px]">
+                                    Pago de Aguinaldo
+                                  </span>
+                                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 font-bold shrink-0 text-[11px]">
+                                    +{formatUSD(aguinaldoResult.grossAguinaldo)}
+                                  </span>
+                                </div>
+                                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">
+                                  Exento ISSS/AFP · Exento Renta ≤ $1,500
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* 4. Quincena 25 (Bono de Enero) */}
+                            <div
+                              onClick={handleToggleQ25}
+                              className={`p-2.5 rounded-lg border flex items-start gap-2.5 cursor-pointer transition-colors bg-white dark:bg-slate-900 ${
+                                includeQ25
+                                  ? 'border-emerald-500 dark:border-emerald-500/70 ring-1 ring-emerald-500/20'
+                                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                              }`}
+                            >
+                              <div onClick={(e) => e.stopPropagation()} className="mt-0.5 shrink-0">
+                                <PrimeCheckbox
+                                  checked={includeQ25}
+                                  onChange={handleToggleQ25}
+                                  ariaLabel="Pago Quincena 25"
+                                />
+                              </div>
+                              <div className="w-full min-w-0">
+                                <div className="flex justify-between items-center gap-1">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 truncate text-[11.5px]">
+                                    Pago Quincena 25 (Q25)
+                                  </span>
+                                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 font-bold shrink-0 text-[11px]">
+                                    +{formatUSD(quincena25Result.grossQuincena25)}
+                                  </span>
+                                </div>
+                                <span className="text-slate-500 dark:text-slate-400 block text-[10px]">
+                                  100% Exento de ISSS, AFP y Renta
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-
-                        {/* 3. Aguinaldo de Fin de Año */}
-                        <div className="col-12 col-sm-6">
-                          <div
-                            onClick={handleToggleAguinaldo}
-                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
-                              includeAguinaldo ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
-                            }`}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={includeAguinaldo}
-                              onChange={handleToggleAguinaldo}
-                              className="form-check-input mt-0.5 shrink-0"
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <div className="w-100" style={{ minWidth: 0 }}>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
-                                  Pago de Aguinaldo
-                                </span>
-                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
-                                  +{formatUSD(aguinaldoResult.grossAguinaldo)}
-                                </span>
-                              </div>
-                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
-                                Exento ISSS/AFP · Exento Renta ≤ $1,500
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 4. Quincena 25 (Bono de Enero) */}
-                        <div className="col-12 col-sm-6">
-                          <div
-                            onClick={handleToggleQ25}
-                            className={`p-2 rounded border d-flex align-items-start gap-2 ${
-                              includeQ25 ? 'bg-white border-emerald shadow-xs' : 'bg-white border-slate-200'
-                            }`}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={includeQ25}
-                              onChange={handleToggleQ25}
-                              className="form-check-input mt-0.5 shrink-0"
-                              style={{ cursor: 'pointer' }}
-                            />
-                            <div className="w-100" style={{ minWidth: 0 }}>
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span className="fw-semibold text-slate-dark text-truncate" style={{ fontSize: '11.5px' }}>
-                                  Pago Quincena 25 (Q25)
-                                </span>
-                                <span className="font-monospace text-emerald fw-bold shrink-0" style={{ fontSize: '11px' }}>
-                                  +{formatUSD(quincena25Result.grossQuincena25)}
-                                </span>
-                              </div>
-                              <span className="text-muted d-block" style={{ fontSize: '10px' }}>
-                                100% Exento de ISSS, AFP y Renta
-                              </span>
-                            </div>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Enlace sutil para parámetros de ley */}
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowLawParamsModal(true)}
-                      className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-inline-flex align-items-center gap-2"
-                      style={{ fontSize: '12px' }}
-                    >
-                      <SlidersHorizontal size={13} className="text-secondary" />
-                      <span>Ver parámetros de ley y salarios mínimos de referencia</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Panel Derecho: Tarjeta de Salario Líquido (Rey de la Pantalla) */}
-                <div className="col-12 col-lg-5">
-                  <div className="card-net-hero p-4 h-100 d-flex flex-column justify-content-between">
-                    <div>
-                      <div className="d-flex justify-content-between align-items-center flex-wrap gap-1">
-                        <span className="small fw-semibold text-emerald text-uppercase d-block" style={{ fontSize: '11px', letterSpacing: '0.04em' }}>
-                          Salario Líquido a Recibir ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
-                        </span>
-                        {activePayroll.additions && activePayroll.additions.totalAdditionsGross > 0 && (
-                          <span className="badge bg-emerald-subtle text-emerald border border-emerald-subtle font-monospace" style={{ fontSize: '10px' }}>
-                            Con prestaciones (+{formatUSD(activePayroll.additions.totalAdditionsGross)})
-                          </span>
-                        )}
-                      </div>
-                      <div className="fs-1 fw-bold font-monospace text-emerald lh-1 my-2">
-                        {formatUSD(activePayroll.netPay)}
-                      </div>
-                      <div className="small text-slate-muted font-monospace" style={{ fontSize: '12px' }}>
-                        <strong>{round2(100 - activePayroll.effectiveDeductionPct)}%</strong> del ingreso bruto ({formatUSD(activePayroll.grossTotal)})
-                        <span> · {period === 'monthly' ? `${formatUSD(biweeklyPayroll.netPay)} por quincena` : `${formatUSD(monthlyPayroll.netPay)} por mes`}</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-top border-emerald-200 mt-3 d-flex justify-content-between align-items-center small font-monospace">
-                      <span className="text-muted" style={{ fontSize: '12px' }}>Total Deducciones:</span>
-                      <span className="fw-semibold text-terracotta" style={{ fontSize: '13px' }}>
-                        -{formatUSD(activePayroll.totalEmployeeDeductions)} ({activePayroll.effectiveDeductionPct}%)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fila Inferior de Métricas Secundarias en Tarjetas de Alto Rendimiento */}
-              <hr className="my-3 text-slate-200" />
-              <div className="row g-2.5 text-start">
-                {/* 1. Desglose de Descuentos de Ley */}
-                <div className="col-12 col-md-4">
-                  <div className="metric-tile">
-                    <div className="d-flex justify-content-between align-items-center mb-1.5">
-                      <span className="metric-tile-title">
-                        Lo que te quitan de ley ({period === 'monthly' ? 'Mes' : 'Qna'})
-                      </span>
-                      <span className="fw-bold text-terracotta font-monospace" style={{ fontSize: '12px' }}>
-                        -{formatUSD(activePayroll.totalEmployeeDeductions)}
-                      </span>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between pt-1.5 border-top gap-1 font-monospace">
-                      <div className="text-center flex-fill" title="Pensión obligatoria (7.25% sin tope)">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Pensión AFP</span>
-                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
-                          -{formatUSD(activePayroll.afpEmployee)}
-                        </span>
-                      </div>
-                      <div className="text-center flex-fill border-start border-end px-1" title="Seguro de salud (3% topado a $30/mes)">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Seguro ISSS</span>
-                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
-                          -{formatUSD(activePayroll.isssEmployee)}
-                        </span>
-                      </div>
-                      <div className="text-center flex-fill" title="Impuesto al Estado (según tabla de tramos)">
-                        <span className="text-muted d-block font-sans" style={{ fontSize: '10px' }}>Impuesto Renta</span>
-                        <span className="text-slate-dark fw-semibold" style={{ fontSize: '11px' }}>
-                          {activePayroll.isr > 0 ? `-${formatUSD(activePayroll.isr)}` : '$0.00'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Valor Hora Neta y Bruta */}
-                <div className="col-12 col-md-4">
-                  <div className="metric-tile">
-                    <div className="d-flex justify-content-between align-items-center mb-1.5">
-                      <span className="metric-tile-title">
-                        Cuánto ganas por cada hora
-                      </span>
-                      <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
-                        44h semanales
-                      </span>
-                    </div>
-                    <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
-                      <div>
-                        <span className="fs-6 fw-bold font-monospace text-slate-dark">
-                          {formatUSD(hourlyResult.netHourly)}
-                        </span>
-                        <span className="text-muted font-sans small"> /hora en mano</span>
-                      </div>
-                      <span className="badge-subtle font-monospace" style={{ fontSize: '10.5px' }}>
-                        Bruto: {formatUSD(hourlyResult.grossHourly)}/h
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Prestaciones Anuales Estimadas */}
-                <div className="col-12 col-md-4">
-                  <div className="metric-tile">
-                    <div className="d-flex justify-content-between align-items-center mb-1.5">
-                      <span className="metric-tile-title">
-                        Bonos extra que te entran al año
-                      </span>
-                      <span className="badge-subtle font-sans" style={{ fontSize: '10px' }}>
-                        Vacación + Aguinaldo + Q25
-                      </span>
-                    </div>
-                    <div className="d-flex align-items-baseline justify-content-between pt-1.5 border-top">
-                      <div>
-                        <span className="fs-6 fw-bold font-monospace text-emerald">
-                          +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
-                        </span>
-                        <span className="text-muted font-sans small"> limpios / año</span>
-                      </div>
-                      <span className="small text-muted font-monospace" style={{ fontSize: '10.5px' }}>
-                        {formatUSD(activePayroll.grossTotal)} total
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Modal Sobrio de Parámetros de Ley */}
-      {showLawParamsModal && (
-        <div
-          className="modal fade show d-block"
-          tabIndex={-1}
-          style={{ backgroundColor: 'rgba(15, 23, 42, 0.55)', zIndex: 1060 }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowLawParamsModal(false);
-            }
-          }}
-        >
-          <div
-            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowLawParamsModal(false);
-              }
-            }}
-          >
-            <div className="modal-content shadow border-0 rounded-3">
-              <div className="modal-header border-bottom py-3 px-4">
-                <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
-                  <SlidersHorizontal size={16} className="text-secondary" />
-                  <span>Parámetros Legales y Salarios Mínimos de Referencia (El Salvador)</span>
-                </h6>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowLawParamsModal(false)}
-                />
-              </div>
-
-              <div className="modal-body p-4">
-                <span className="fw-semibold text-slate-muted small text-uppercase d-block mb-2" style={{ fontSize: '11px' }}>
-                  1. Salarios Mínimos Oficiales Vigentes
-                </span>
-                <div className="table-responsive mb-4">
-                  <table className="table table-minimal table-sm border rounded align-middle small font-monospace">
-                    <thead>
-                      <tr>
-                        <th>Sector Económico</th>
-                        <th>Mensual</th>
-                        <th>Quincenal</th>
-                        <th className="text-center">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="font-sans">Comercio, Servicios e Industria</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.comercio.monthly)}</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.comercio.monthly / 2)}</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.comercio.monthly)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="font-sans">Maquila Textil y Confección</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.maquila.monthly)}</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.maquila.monthly / 2)}</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.maquila.monthly)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="font-sans">Agropecuario (Café / Caña)</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.agropecuario.monthly)}</td>
-                        <td>{formatUSD(MINIMUM_WAGES_2026.agropecuario.monthly / 2)}</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(MINIMUM_WAGES_2026.agropecuario.monthly)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <span className="fw-semibold text-slate-muted small text-uppercase d-block mb-2" style={{ fontSize: '11px' }}>
-                  2. Topes Legales y Umbrales de Exención
-                </span>
-                <div className="table-responsive">
-                  <table className="table table-minimal table-sm border rounded align-middle small font-monospace">
-                    <thead>
-                      <tr>
-                        <th>Concepto Legal</th>
-                        <th>Límite / Techo</th>
-                        <th>Efecto de Ley</th>
-                        <th className="text-center">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="font-sans">Techo Cotizable ISSS</td>
-                        <td>$1,000.00 / mes</td>
-                        <td className="font-sans text-muted">Deducción máxima empleado: $30.00/mes ($15.00/qna)</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(1000)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar $1,000.00
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="font-sans">Techo Quincena 25 (Decreto 499)</td>
-                        <td>$1,500.00 nominal</td>
-                        <td className="font-sans text-muted">100% exento de ISSS, AFP y Renta</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(1500)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar $1,500.00
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="font-sans">Límite Tramo I ISR (Exento)</td>
-                        <td>$550.00 imponible</td>
-                        <td className="font-sans text-muted">Equivale a aprox. $606.06 nominal</td>
-                        <td className="text-center">
-                          <button
-                            type="button"
-                            onClick={() => applyPresetSalary(606.06)}
-                            className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                            style={{ fontSize: '11px' }}
-                          >
-                            Cargar $606.06
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="modal-footer border-top py-2.5 px-4">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={() => setShowLawParamsModal(false)}
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Historial de Salarios y Registro de Aumentos */}
-      {showSalaryHistoryModal && (
-        <div
-          className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(2px)', zIndex: 1055 }}
-          tabIndex={-1}
-          role="dialog"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowSalaryHistoryModal(false);
-            }
-          }}
-        >
-          <div
-            className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowSalaryHistoryModal(false);
-              }
-            }}
-          >
-            <div className="modal-content shadow border-0 rounded-3">
-              <div className="modal-header border-bottom py-3 px-4">
-                <h6 className="modal-title fw-semibold text-slate-dark d-flex align-items-center gap-2 mb-0">
-                  <TrendingUp size={16} className="text-emerald" />
-                  <span>Historial Salarial y Registro de Aumentos</span>
-                </h6>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowSalaryHistoryModal(false)}
-                />
-              </div>
-
-              <div className="modal-body p-4">
-                <p className="small text-muted mb-4">
-                  Registra cada aumento o ajuste salarial con su fecha de vigencia y motivo. La aplicación asociará cada mes a su salario correspondiente para que conserves el historial fiel de tus gastos.
-                </p>
-
-                {/* Formulario para registrar aumento */}
-                <div className="p-3.5 rounded bg-slate-50 border border-slate-200 mb-4">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <h6 className="fw-semibold text-slate-dark mb-0" style={{ fontSize: '13px' }}>
-                      {editingRecordId ? 'Editando Registro Salarial' : 'Registrar Nuevo Aumento o Ajuste'}
-                    </h6>
-                    {editingRecordId && (
-                      <span className="badge bg-warning-subtle text-warning-emphasis fw-medium" style={{ fontSize: '11px' }}>
-                        Modo Edición
-                      </span>
-                    )}
-                  </div>
-                  <form onSubmit={handleSaveSalaryRecord} className="row g-2 align-items-end small">
-                    <div className="col-12 col-sm-4">
-                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                        Nuevo Salario Bruto ($)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="1"
-                        required
-                        value={newSalaryAmount}
-                        onChange={(e) => setNewSalaryAmount(e.target.value)}
-                        placeholder="Ej. 850.00"
-                        className="form-control form-control-sm font-monospace fw-semibold"
-                      />
-                    </div>
-
-                    <div className="col-12 col-sm-4">
-                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                        Fecha de Vigencia
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={newSalaryEffectiveDate}
-                        onChange={(e) => setNewSalaryEffectiveDate(e.target.value)}
-                        className="form-control form-control-sm"
-                      />
-                    </div>
-
-                    <div className="col-12 col-sm-4">
-                      <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                        Motivo / Concepto
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={newSalaryReason}
-                        onChange={(e) => setNewSalaryReason(e.target.value)}
-                        placeholder="Ej. Promoción, Ajuste anual"
-                        className="form-control form-control-sm"
-                      />
-                    </div>
-
-                    <div className="col-12 mt-2">
-                      <div className="form-check">
-                        <input
-                          type="checkbox"
-                          id="isNewJobCheck"
-                          checked={isNewJob}
-                          onChange={(e) => setIsNewJob(e.target.checked)}
-                          className="form-check-input"
-                        />
-                        <label htmlFor="isNewJobCheck" className="form-check-label fw-semibold text-slate-dark" style={{ fontSize: '12px' }}>
-                          ¿Es cambio de empresa / nuevo empleo? (Reinicia fecha de inicio de labores)
-                        </label>
-                      </div>
-                    </div>
-
-                    {isNewJob && (
-                      <>
-                        <div className="col-12 col-sm-6 mt-1">
-                          <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                            Empresa / Empleador
-                          </label>
-                          <input
-                            type="text"
-                            value={newJobCompany}
-                            onChange={(e) => setNewJobCompany(e.target.value)}
-                            placeholder="Ej. Empresa ABC, S.A."
-                            className="form-control form-control-sm"
-                          />
-                        </div>
-
-                        <div className="col-12 col-sm-6 mt-1">
-                          <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                            Fecha de Inicio en este Trabajo
-                          </label>
-                          <input
-                            type="date"
-                            required={isNewJob}
-                            value={newJobHireDate}
-                            onChange={(e) => setNewJobHireDate(e.target.value)}
-                            className="form-control form-control-sm"
-                          />
-                        </div>
-                      </>
-                    )}
-
-                    <div className="col-12 mt-3 d-flex justify-content-between align-items-center">
-                      <div>
-                        {salarySaveFeedback && (
-                          <span className="small text-emerald fw-semibold">
-                            {salarySaveFeedback}
-                          </span>
-                        )}
-                      </div>
-                      <div className="d-flex align-items-center gap-2">
-                        {editingRecordId && (
-                          <button
-                            type="button"
-                            onClick={handleCancelEditSalaryRecord}
-                            className="btn btn-sm btn-outline-secondary px-3 py-1.5 fw-semibold"
-                          >
-                            Cancelar Edición
-                          </button>
-                        )}
+                      {/* Enlace sutil para parámetros de ley */}
+                      <div className="mt-3">
                         <button
-                          type="submit"
-                          disabled={isSavingSalary}
-                          className="btn btn-sm btn-dark px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5"
+                          type="button"
+                          onClick={() => setShowLawParamsModal(true)}
+                          className="inline-flex items-center gap-2 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                         >
-                          <TrendingUp size={13} />
-                          <span>
-                            {isSavingSalary
-                              ? 'Guardando...'
-                              : editingRecordId
-                              ? 'Guardar Cambios'
-                              : 'Guardar Aumento en Supabase'}
-                          </span>
+                          <SlidersHorizontal size={13} />
+                          <span>Ver parámetros de ley y salarios mínimos de referencia</span>
                         </button>
                       </div>
                     </div>
-                  </form>
-                </div>
 
-                {/* Lista de Aumentos Históricos */}
-                <h6 className="fw-semibold text-slate-dark mb-2" style={{ fontSize: '13px' }}>
-                  Línea de Tiempo Salarial ({salaryHistoryList.length})
-                </h6>
+                    {/* Panel Derecho: Tarjeta de Salario Líquido */}
+                    <div className="lg:col-span-5">
+                      <div className="h-full rounded-xl p-5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center flex-wrap gap-1.5">
+                            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                              Salario líquido a recibir ({period === 'monthly' ? 'Mensual' : 'Quincenal'})
+                            </span>
+                            {activePayroll.additions && activePayroll.additions.totalAdditionsGross > 0 && (
+                              <PrimeTag severity="success" className="font-mono text-[10px]">
+                                Con prestaciones (+{formatUSD(activePayroll.additions.totalAdditionsGross)})
+                              </PrimeTag>
+                            )}
+                          </div>
+                          <div className="text-4xl font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400 leading-none my-3">
+                            {formatUSD(activePayroll.netPay)}
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-slate-300 font-mono tabular-nums">
+                            <strong>{round2(100 - activePayroll.effectiveDeductionPct)}%</strong> del ingreso bruto ({formatUSD(activePayroll.grossTotal)})
+                            <span>
+                              {' '}
+                              · {period === 'monthly' ? `${formatUSD(biweeklyPayroll.netPay)} por quincena` : `${formatUSD(monthlyPayroll.netPay)} por mes`}
+                            </span>
+                          </div>
+                        </div>
 
-                {salaryHistoryList.length === 0 ? (
-                  <div className="p-3 text-center text-muted border rounded small bg-white">
-                    Aún no tienes registros de aumentos guardados en tu cuenta. Usa el formulario superior para registrar tu primer sueldo.
+                        <div className="pt-3 border-t border-emerald-200/80 dark:border-emerald-800/50 mt-4 flex justify-between items-center text-xs font-mono tabular-nums">
+                          <span className="text-slate-600 dark:text-slate-400">Total deducciones:</span>
+                          <span className="font-semibold text-rose-600 dark:text-rose-400">
+                            -{formatUSD(activePayroll.totalEmployeeDeductions)} ({activePayroll.effectiveDeductionPct}%)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="table-responsive">
-                    <table className="table table-minimal table-sm border rounded align-middle small">
-                      <thead>
-                        <tr>
-                          <th>Fecha de Vigencia</th>
-                          <th>Salario Bruto</th>
-                          <th>Líquido Estimado</th>
-                          <th>Motivo / Empresa</th>
-                          <th className="text-center">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {salaryHistoryList.map((rec) => {
-                          const estPayroll = calcPayroll(rec.gross_salary, 'monthly', 0);
-                          return (
-                            <tr key={rec.id || `${rec.effective_date}-${rec.gross_salary}`}>
-                              <td className="font-monospace text-slate-dark fw-semibold">
-                                {rec.effective_date}
-                              </td>
-                              <td className="font-monospace text-slate-dark fw-bold">
-                                {formatUSD(rec.gross_salary)}
-                              </td>
-                              <td className="font-monospace text-emerald">
-                                {formatUSD(estPayroll.netPay)}
-                              </td>
-                              <td>
-                                <span className="text-slate-dark d-block">{rec.reason || 'Aumento salarial'}</span>
-                                {rec.company_name && (
-                                  <span className="badge-subtle font-monospace text-slate-dark mt-0.5 d-inline-block" style={{ fontSize: '10px' }}>
-                                    {rec.company_name}
-                                  </span>
-                                )}
-                                {rec.hire_date && (
-                                  <span className="text-muted d-block font-monospace" style={{ fontSize: '10px' }}>
-                                    Inicio: {rec.hire_date}
-                                  </span>
-                                )}
-                              </td>
-                              <td className="text-center">
-                                <div className="d-flex align-items-center justify-content-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setMonthlySalary(rec.gross_salary);
-                                      setSalaryInput(rec.gross_salary.toFixed(2));
-                                      if (rec.hire_date) {
-                                        handleHireDateChange(rec.hire_date);
-                                      }
-                                      setShowSalaryHistoryModal(false);
-                                    }}
-                                    className="btn btn-xs btn-outline-secondary py-0.5 px-2"
-                                    style={{ fontSize: '11px' }}
-                                    title="Cargar salario a la calculadora"
-                                  >
-                                    Cargar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStartEditSalaryRecord(rec)}
-                                    className="btn btn-xs btn-outline-primary py-0.5 px-1.5 d-inline-flex align-items-center"
-                                    style={{ fontSize: '11px' }}
-                                    title="Editar este registro"
-                                  >
-                                    <Pencil size={12} className="me-1" />
-                                    <span>Editar</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (window.confirm('¿Seguro que deseas eliminar este registro del historial salarial?')) {
-                                        handleDeleteSalaryRecord(rec.id);
-                                      }
-                                    }}
-                                    className="btn btn-xs btn-outline-danger py-0.5 px-1.5 d-inline-flex align-items-center"
-                                    style={{ fontSize: '11px' }}
-                                    title="Eliminar este registro"
-                                  >
-                                    <Trash2 size={12} className="me-1" />
-                                    <span>Borrar</span>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
 
-              <div className="modal-footer border-top py-2.5 px-4">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={() => setShowSalaryHistoryModal(false)}
-                >
-                  Cerrar
-                </button>
+                  <PrimeDivider className="my-4" />
+
+                  {/* Fila Inferior de Métricas Secundarias */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+                    {/* 1. Desglose de Descuentos de Ley */}
+                    <div className="p-3 rounded-xl surface-well border border-slate-200 dark:border-slate-700">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Descuentos de ley ({period === 'monthly' ? 'Mes' : 'Qna'})
+                        </span>
+                        <span className="font-bold text-rose-600 dark:text-rose-400 font-mono tabular-nums text-xs">
+                          -{formatUSD(activePayroll.totalEmployeeDeductions)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 pt-2 border-t border-slate-200 dark:border-slate-700 gap-1 font-mono tabular-nums">
+                        <div className="text-center" title="Pensión obligatoria (7.25% sin tope)">
+                          <span className="text-slate-500 dark:text-slate-400 block font-sans text-[10px]">Pensión AFP</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                            -{formatUSD(activePayroll.afpEmployee)}
+                          </span>
+                        </div>
+                        <div className="text-center border-x border-slate-200 dark:border-slate-700 px-1" title="Seguro de salud (3% topado a $30/mes)">
+                          <span className="text-slate-500 dark:text-slate-400 block font-sans text-[10px]">Seguro ISSS</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                            -{formatUSD(activePayroll.isssEmployee)}
+                          </span>
+                        </div>
+                        <div className="text-center" title="Impuesto al Estado (según tabla de tramos)">
+                          <span className="text-slate-500 dark:text-slate-400 block font-sans text-[10px]">Renta ISR</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold text-[11px]">
+                            {activePayroll.isr > 0 ? `-${formatUSD(activePayroll.isr)}` : '$0.00'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. Valor Hora Neta y Bruta */}
+                    <div className="p-3 rounded-xl surface-well border border-slate-200 dark:border-slate-700">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Valor por hora
+                        </span>
+                        <PrimeTag severity="neutral" className="text-[10px]">
+                          44h semanales
+                        </PrimeTag>
+                      </div>
+                      <div className="flex items-baseline justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <div>
+                          <span className="text-base font-bold font-mono tabular-nums text-slate-900 dark:text-slate-100">
+                            {formatUSD(hourlyResult.netHourly)}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs"> /hora neta</span>
+                        </div>
+                        <PrimeTag severity="neutral" className="font-mono tabular-nums text-[10.5px]">
+                          Bruto: {formatUSD(hourlyResult.grossHourly)}/h
+                        </PrimeTag>
+                      </div>
+                    </div>
+
+                    {/* 3. Prestaciones Anuales Estimadas */}
+                    <div className="p-3 rounded-xl surface-well border border-slate-200 dark:border-slate-700">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                          Bonos anuales estimados
+                        </span>
+                        <PrimeTag severity="neutral" className="text-[10px]">
+                          Vacación + Aguinaldo + Q25
+                        </PrimeTag>
+                      </div>
+                      <div className="flex items-baseline justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <div>
+                          <span className="text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                            +{formatUSD(annualBonusesSummary.totalAnnualNetBonuses)}
+                          </span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs"> limpios / año</span>
+                        </div>
+                        <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-mono tabular-nums">
+                          {formatUSD(activePayroll.grossTotal)} total
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </PrimeCard>
               </div>
+            </section>
+          )}
+
+      {/* Modal Sobrio de Parámetros de Ley */}
+      <PrimeDialog
+        open={showLawParamsModal}
+        onClose={() => setShowLawParamsModal(false)}
+        maxWidthClass="max-w-3xl"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <SlidersHorizontal size={16} className="text-slate-500 dark:text-slate-400" />
+            <span>Parámetros legales y salarios mínimos de referencia (El Salvador)</span>
+          </span>
+        }
+        footer={
+          <PrimeButton variant="secondary" size="sm" onClick={() => setShowLawParamsModal(false)}>
+            Cerrar
+          </PrimeButton>
+        }
+      >
+        <div className="space-y-5">
+          <div>
+            <h6 className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+              1. Salarios mínimos oficiales vigentes
+            </h6>
+            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="py-2 px-3 font-semibold">Sector económico</th>
+                    <th className="py-2 px-3 font-semibold">Mensual</th>
+                    <th className="py-2 px-3 font-semibold">Quincenal</th>
+                    <th className="py-2 px-3 font-semibold text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700 font-mono tabular-nums">
+                  {[
+                    { label: 'Comercio, Servicios e Industria', monthly: MINIMUM_WAGES_2026.comercio.monthly },
+                    { label: 'Maquila Textil y Confección', monthly: MINIMUM_WAGES_2026.maquila.monthly },
+                    { label: 'Agropecuario (Café / Caña)', monthly: MINIMUM_WAGES_2026.agropecuario.monthly },
+                  ].map((row) => (
+                    <tr key={row.label} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                      <td className="py-2 px-3 font-sans text-slate-800 dark:text-slate-200">{row.label}</td>
+                      <td className="py-2 px-3 text-slate-900 dark:text-slate-100">{formatUSD(row.monthly)}</td>
+                      <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{formatUSD(row.monthly / 2)}</td>
+                      <td className="py-2 px-3 text-center">
+                        <PrimeButton
+                          variant="outline"
+                          size="xs"
+                          onClick={() => applyPresetSalary(row.monthly)}
+                        >
+                          Cargar
+                        </PrimeButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h6 className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">
+              2. Topes legales y umbrales de exención
+            </h6>
+            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+              <table className="w-full text-xs text-left border-collapse">
+                <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="py-2 px-3 font-semibold">Concepto legal</th>
+                    <th className="py-2 px-3 font-semibold">Límite / Techo</th>
+                    <th className="py-2 px-3 font-semibold">Efecto de ley</th>
+                    <th className="py-2 px-3 font-semibold text-center">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700 font-mono tabular-nums">
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-2 px-3 font-sans text-slate-800 dark:text-slate-200">Techo Cotizable ISSS</td>
+                    <td className="py-2 px-3 text-slate-900 dark:text-slate-100">$1,000.00 / mes</td>
+                    <td className="py-2 px-3 font-sans text-slate-500 dark:text-slate-400">
+                      Deducción máxima empleado: $30.00/mes ($15.00/qna)
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      <PrimeButton variant="outline" size="xs" onClick={() => applyPresetSalary(1000)}>
+                        Cargar $1,000.00
+                      </PrimeButton>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-2 px-3 font-sans text-slate-800 dark:text-slate-200">
+                      Techo Quincena 25 (Decreto 499)
+                    </td>
+                    <td className="py-2 px-3 text-slate-900 dark:text-slate-100">$1,500.00 nominal</td>
+                    <td className="py-2 px-3 font-sans text-slate-500 dark:text-slate-400">
+                      100% exento de ISSS, AFP y Renta
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      <PrimeButton variant="outline" size="xs" onClick={() => applyPresetSalary(1500)}>
+                        Cargar $1,500.00
+                      </PrimeButton>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td className="py-2 px-3 font-sans text-slate-800 dark:text-slate-200">
+                      Límite Tramo I ISR (Exento)
+                    </td>
+                    <td className="py-2 px-3 text-slate-900 dark:text-slate-100">$550.00 imponible</td>
+                    <td className="py-2 px-3 font-sans text-slate-500 dark:text-slate-400">
+                      Equivale a aprox. $606.06 nominal
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      <PrimeButton variant="outline" size="xs" onClick={() => applyPresetSalary(606.06)}>
+                        Cargar $606.06
+                      </PrimeButton>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      )}
+      </PrimeDialog>
+
+      {/* Modal de Historial de Salarios y Registro de Aumentos */}
+      <PrimeDialog
+        open={showSalaryHistoryModal}
+        onClose={() => setShowSalaryHistoryModal(false)}
+        maxWidthClass="max-w-3xl"
+        title={
+          <span className="inline-flex items-center gap-2">
+            <TrendingUp size={16} className="text-emerald-600 dark:text-emerald-400" />
+            <span>Historial salarial y registro de aumentos</span>
+          </span>
+        }
+        footer={
+          <PrimeButton variant="secondary" size="sm" onClick={() => setShowSalaryHistoryModal(false)}>
+            Cerrar
+          </PrimeButton>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+            Registra cada aumento o ajuste salarial con su fecha de vigencia y motivo. La aplicación asociará cada mes a su salario correspondiente para que conserves el historial fiel de tus gastos.
+          </p>
+
+          {/* Formulario para registrar aumento */}
+          <div className="p-3.5 rounded-xl surface-well border border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between items-center mb-3">
+              <h6 className="font-semibold text-slate-800 dark:text-slate-100 text-xs m-0">
+                {editingRecordId ? 'Editando registro salarial' : 'Registrar nuevo aumento o ajuste'}
+              </h6>
+              {editingRecordId && (
+                <PrimeTag severity="warning">Modo edición</PrimeTag>
+              )}
+            </div>
+
+            <form onSubmit={handleSaveSalaryRecord} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end text-xs">
+              <div className="sm:col-span-4">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  Nuevo salario bruto ($)
+                </label>
+                <PrimeInput
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  required
+                  mono
+                  inputSize="sm"
+                  value={newSalaryAmount}
+                  onChange={(e) => setNewSalaryAmount(e.target.value)}
+                  placeholder="Ej. 850.00"
+                />
+              </div>
+
+              <div className="sm:col-span-4">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  Fecha de vigencia
+                </label>
+                <PrimeInput
+                  type="date"
+                  required
+                  inputSize="sm"
+                  value={newSalaryEffectiveDate}
+                  onChange={(e) => setNewSalaryEffectiveDate(e.target.value)}
+                />
+              </div>
+
+              <div className="sm:col-span-4">
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  Motivo / Concepto
+                </label>
+                <PrimeInput
+                  type="text"
+                  required
+                  inputSize="sm"
+                  value={newSalaryReason}
+                  onChange={(e) => setNewSalaryReason(e.target.value)}
+                  placeholder="Ej. Promoción, Ajuste anual"
+                />
+              </div>
+
+              <div className="sm:col-span-12 pt-1">
+                <div className="flex items-center gap-2">
+                  <PrimeCheckbox
+                    id="isNewJobCheck"
+                    checked={isNewJob}
+                    onChange={setIsNewJob}
+                  />
+                  <label htmlFor="isNewJobCheck" className="font-semibold text-slate-700 dark:text-slate-200 text-xs cursor-pointer">
+                    ¿Es cambio de empresa / nuevo empleo? (Reinicia fecha de inicio de labores)
+                  </label>
+                </div>
+              </div>
+
+              {isNewJob && (
+                <>
+                  <div className="sm:col-span-6">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Empresa / Empleador
+                    </label>
+                    <PrimeInput
+                      type="text"
+                      inputSize="sm"
+                      value={newJobCompany}
+                      onChange={(e) => setNewJobCompany(e.target.value)}
+                      placeholder="Ej. Empresa ABC, S.A."
+                    />
+                  </div>
+
+                  <div className="sm:col-span-6">
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      Fecha de inicio en este trabajo
+                    </label>
+                    <PrimeInput
+                      type="date"
+                      required={isNewJob}
+                      inputSize="sm"
+                      value={newJobHireDate}
+                      onChange={(e) => setNewJobHireDate(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="sm:col-span-12 pt-2 flex flex-wrap justify-between items-center gap-2">
+                <div>
+                  {salarySaveFeedback && (
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
+                      {salarySaveFeedback}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editingRecordId && (
+                    <PrimeButton
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancelEditSalaryRecord}
+                    >
+                      Cancelar edición
+                    </PrimeButton>
+                  )}
+                  <PrimeButton
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={isSavingSalary}
+                  >
+                    <TrendingUp size={13} />
+                    <span>
+                      {isSavingSalary
+                        ? 'Guardando...'
+                        : editingRecordId
+                        ? 'Guardar cambios'
+                        : 'Guardar aumento en Supabase'}
+                    </span>
+                  </PrimeButton>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Lista de Aumentos Históricos */}
+          <div>
+            <h6 className="font-semibold text-slate-800 dark:text-slate-100 text-xs mb-2">
+              Línea de tiempo salarial ({salaryHistoryList.length})
+            </h6>
+
+            {salaryHistoryList.length === 0 ? (
+              <div className="p-4 text-center text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-900">
+                Aún no tienes registros de aumentos guardados en tu cuenta. Usa el formulario superior para registrar tu primer sueldo.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead className="bg-slate-50 dark:bg-slate-800/70 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                      <th className="py-2 px-3 font-semibold">Vigencia</th>
+                      <th className="py-2 px-3 font-semibold">Bruto</th>
+                      <th className="py-2 px-3 font-semibold">Líquido est.</th>
+                      <th className="py-2 px-3 font-semibold">Motivo / Empresa</th>
+                      <th className="py-2 px-3 font-semibold text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {salaryHistoryList.map((rec) => {
+                      const estPayroll = calcPayroll(rec.gross_salary, 'monthly', 0);
+                      return (
+                        <tr
+                          key={rec.id || `${rec.effective_date}-${rec.gross_salary}`}
+                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                        >
+                          <td className="py-2 px-3 font-mono tabular-nums text-slate-800 dark:text-slate-200 font-semibold">
+                            {rec.effective_date}
+                          </td>
+                          <td className="py-2 px-3 font-mono tabular-nums text-slate-900 dark:text-slate-100 font-bold">
+                            {formatUSD(rec.gross_salary)}
+                          </td>
+                          <td className="py-2 px-3 font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                            {formatUSD(estPayroll.netPay)}
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className="text-slate-800 dark:text-slate-200 block">
+                              {rec.reason || 'Aumento salarial'}
+                            </span>
+                            {rec.company_name && (
+                              <PrimeTag severity="neutral" className="mt-0.5 text-[10px]">
+                                {rec.company_name}
+                              </PrimeTag>
+                            )}
+                            {rec.hire_date && (
+                              <span className="text-slate-500 dark:text-slate-400 block font-mono text-[10px] mt-0.5">
+                                Inicio: {rec.hire_date}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <PrimeButton
+                                variant="outline"
+                                size="xs"
+                                onClick={() => {
+                                  setMonthlySalary(rec.gross_salary);
+                                  setSalaryInput(rec.gross_salary.toFixed(2));
+                                  if (rec.hire_date) {
+                                    handleHireDateChange(rec.hire_date);
+                                  }
+                                  setShowSalaryHistoryModal(false);
+                                }}
+                                title="Cargar salario a la calculadora"
+                              >
+                                Cargar
+                              </PrimeButton>
+                              <PrimeButton
+                                variant="ghost"
+                                size="xs"
+                                onClick={() => handleStartEditSalaryRecord(rec)}
+                                title="Editar este registro"
+                              >
+                                <Pencil size={12} />
+                                <span>Editar</span>
+                              </PrimeButton>
+                              <PrimeButton
+                                variant="danger"
+                                size="xs"
+                                onClick={() => {
+                                  if (window.confirm('¿Seguro que deseas eliminar este registro del historial salarial?')) {
+                                    handleDeleteSalaryRecord(rec.id);
+                                  }
+                                }}
+                                title="Eliminar este registro"
+                              >
+                                <Trash2 size={12} />
+                                <span>Borrar</span>
+                              </PrimeButton>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </PrimeDialog>
 
       {/* Contenido Principal con Router */}
-      <main className="container-constrained flex-grow-1">
+      <main className="container-app flex-1 pb-8">
         <Routes>
           <Route
             path="/"
@@ -2471,28 +2299,27 @@ function AppShell() {
   )}
 
       {/* Footer Minimalista y Confiable */}
-      <footer className="bg-white border-top py-4 mt-auto">
-        <div className="container-constrained">
-          <div className="p-3 rounded bg-light border border-slate-200 small mb-3 d-flex align-items-start gap-2">
-            <AlertTriangle size={16} className="shrink-0 mt-0.5 text-secondary" />
-            <div className="text-muted" style={{ fontSize: '12px' }}>
-              <strong className="text-slate-dark">Aviso Legal y Exoneración de Responsabilidad:</strong> Los
-              cálculos de ISSS, AFP, Renta (ISR), Vacación 30%, Aguinaldo y Quincena 25 son estrictamente
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-auto">
+        <div className="container-app space-y-4">
+          <PrimeMessage severity="info" icon={<AlertTriangle size={16} className="shrink-0 mt-0.5" />}>
+            <span className="text-xs leading-relaxed">
+              <strong className="text-slate-900 dark:text-slate-100">Aviso Legal y Exoneración de Responsabilidad:</strong>{' '}
+              Los cálculos de ISSS, AFP, Renta (ISR), Vacación 30%, Aguinaldo y Quincena 25 son estrictamente
               informativos, ilustrativos y referenciales. No sustituyen la asesoría legal, contable ni las
               liquidaciones oficiales emitidas por el Ministerio de Trabajo y Previsión Social (MTPS), Ministerio de
               Hacienda, ISSS o instituciones administradoras de pensiones. Sujeto a las leyes de la República de El Salvador.
-            </div>
-          </div>
+            </span>
+          </PrimeMessage>
 
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small text-muted">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <div>
-              <strong className="text-slate-dark">© 2026 MiNominaSV</strong> · Plataforma independiente de cálculo laboral y presupuestario para El Salvador.
+              <strong className="text-slate-800 dark:text-slate-200">© 2026 MiNominaSV</strong> · Plataforma independiente de cálculo laboral y presupuestario para El Salvador.
             </div>
-            <div className="d-flex flex-wrap gap-3">
-              <Link to="/terminos" className="text-decoration-none text-muted">
+            <div className="flex flex-wrap gap-4">
+              <Link to="/terminos" className="no-underline text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                 Términos y Condiciones
               </Link>
-              <Link to="/privacidad" className="text-decoration-none text-muted">
+              <Link to="/privacidad" className="no-underline text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
                 Privacidad y Derechos ARCO
               </Link>
             </div>
@@ -2502,15 +2329,18 @@ function AppShell() {
 
       {/* Botón flotante para volver arriba en pantallas móviles */}
       {showScrollTop && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="btn btn-dark btn-scroll-top d-lg-none"
-          aria-label="Volver arriba"
-        >
-          <ChevronUp size={14} />
-          <span>Arriba</span>
-        </button>
+        <div className="fixed bottom-4 right-4 z-30 lg:hidden">
+          <PrimeButton
+            variant="primary"
+            size="sm"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Volver arriba"
+            className="shadow-lg rounded-full px-3"
+          >
+            <ChevronUp size={14} />
+            <span>Arriba</span>
+          </PrimeButton>
+        </div>
       )}
     </div>
   );

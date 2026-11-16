@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, LogIn, CheckCircle2, UserPlus, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
+import {
+  PrimeButton,
+  PrimeCard,
+  PrimeCheckbox,
+  PrimeInput,
+  PrimeMessage,
+  PrimeSelectButton,
+  PrimeTag,
+} from '../components/ui/PrimeUI.tsx';
 
 type AuthFormMode = 'login' | 'register';
 
@@ -72,192 +81,170 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '480px' }}>
-      <div className="card-soft p-4 p-sm-5">
-        <div className="d-flex align-items-center justify-content-between mb-3">
-          <div className="d-flex align-items-center gap-3">
-            <div
-              className="rounded-3 d-flex align-items-center justify-content-center text-white"
-              style={{ width: '42px', height: '42px', backgroundColor: '#0f172a' }}
-            >
-              <Lock size={20} />
-            </div>
-            <div>
-              <h5 className="fw-semibold text-slate-dark mb-0">Acceso a la Plataforma</h5>
-              <span className="small text-muted" style={{ fontSize: '12px' }}>
-                Gestión salarial y libretas presupuestarias
-              </span>
-            </div>
+    <div className="container-app py-10 flex justify-center">
+      <PrimeCard padded className="max-w-[460px] w-full">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--color-ink)] text-[var(--color-card)] shrink-0">
+            <Lock size={18} />
+          </div>
+          <div>
+            <h5 className="text-base font-semibold text-[var(--color-ink)] mb-0.5">
+              Acceso a la plataforma
+            </h5>
+            <p className="text-xs text-[var(--color-muted)] m-0">
+              Gestión salarial y libretas presupuestarias
+            </p>
           </div>
         </div>
 
-        {/* Estado de conexión con Supabase */}
         <div className="mb-4">
           {isSupabaseConnected ? (
-            <div className="d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-emerald-50 text-emerald border border-emerald-200" style={{ fontSize: '11px' }}>
+            <PrimeTag severity="success" className="w-full justify-start py-1.5 px-3 rounded-xl">
               <CheckCircle2 size={13} />
               <span>Base de datos Supabase conectada con RLS activo</span>
-            </div>
+            </PrimeTag>
           ) : (
-            <div className="d-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-slate-100 text-muted border border-slate-200" style={{ fontSize: '11px' }}>
+            <PrimeTag severity="neutral" className="w-full justify-start py-1.5 px-3 rounded-xl">
               <Sparkles size={13} />
               <span>Modo local autónomo (almacenamiento en navegador)</span>
-            </div>
+            </PrimeTag>
           )}
         </div>
 
         {user?.loggedIn && (
-          <div className="p-3 rounded bg-slate-50 border border-slate-200 small mb-4">
-            <div className="d-flex justify-content-between align-items-center mb-2">
+          <div className="surface-well p-3.5 mb-4 text-xs">
+            <div className="flex justify-between items-center gap-2 mb-2.5">
               <div>
-                <strong className="text-slate-dark d-block">Sesión activa: {user.name}</strong>
-                <span className="text-muted font-monospace" style={{ fontSize: '11px' }}>
+                <strong className="text-[var(--color-ink)] block">Sesión activa: {user.name}</strong>
+                <span className="text-[var(--color-muted)] font-mono text-[11px]">
                   {user.email} · Rol: {user.role.toUpperCase()}
                 </span>
               </div>
-              <span className="badge-subtle font-monospace">Activa</span>
+              <PrimeTag severity="success">Activa</PrimeTag>
             </div>
-            <div className="pt-1 border-top">
-              <button
-                type="button"
+            <div className="pt-2 border-t border-[var(--color-rule)]">
+              <PrimeButton
+                variant="outline"
+                size="xs"
+                fullWidth
+                className="text-[var(--color-danger)] border-[var(--color-danger)]/30"
                 onClick={async () => {
                   await logout();
                 }}
-                className="btn btn-sm btn-outline-danger py-1 px-3 w-100"
-                style={{ fontSize: '11px' }}
               >
                 Cerrar sesión
-              </button>
+              </PrimeButton>
             </div>
           </div>
         )}
 
-        {/* Selector de Modo: Solo Iniciar Sesión o Registrarse */}
-        <div className="segmented-control mb-4">
-          <button
-            type="button"
-            onClick={() => {
-              setFormMode('login');
+        <div className="mb-4">
+          <PrimeSelectButton
+            value={formMode}
+            onChange={(val) => {
+              setFormMode(val);
               setErrorMsg('');
             }}
-            className={formMode === 'login' ? 'active' : ''}
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFormMode('register');
-              setErrorMsg('');
-            }}
-            className={formMode === 'register' ? 'active' : ''}
-          >
-            Registrarse
-          </button>
+            fullWidth
+            options={[
+              { value: 'login', label: 'Iniciar sesión' },
+              { value: 'register', label: 'Registrarse' },
+            ]}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="small">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           {formMode === 'register' && (
-            <div className="mb-3">
-              <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-                Nombre Completo
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-ink-2)] mb-1">
+                Nombre completo
               </label>
-              <input
+              <PrimeInput
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej. Carlos Martínez"
-                className="form-control"
                 autoComplete="name"
               />
             </div>
           )}
 
-          <div className="mb-3">
-            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
-              Correo Electrónico
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-2)] mb-1">
+              Correo electrónico
             </label>
-            <input
+            <PrimeInput
               type="email"
               required
+              mono
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@correo.com"
-              className="form-control font-monospace"
               autoComplete="email"
             />
           </div>
 
-          <div className="mb-3">
-            <label className="form-label text-slate-muted fw-semibold text-uppercase mb-1" style={{ fontSize: '11px' }}>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-ink-2)] mb-1">
               Contraseña
             </label>
-            <input
+            <PrimeInput
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Ingresa tu contraseña"
-              className="form-control"
               autoComplete={formMode === 'register' ? 'new-password' : 'current-password'}
             />
           </div>
 
-          <div className="form-check mb-3">
-            <input
-              type="checkbox"
+          <div className="flex items-start gap-2 pt-1">
+            <PrimeCheckbox
               id="acceptTermsCheck"
               checked={acceptedTerms}
-              onChange={(e) => setAcceptedTerms(e.target.checked)}
-              className="form-check-input"
+              onChange={setAcceptedTerms}
+              className="mt-0.5"
             />
-            <label htmlFor="acceptTermsCheck" className="form-check-label text-muted" style={{ fontSize: '12px' }}>
+            <label htmlFor="acceptTermsCheck" className="text-xs text-[var(--color-muted)] leading-snug cursor-pointer">
               Acepto los{' '}
-              <Link to="/terminos" className="text-slate-dark fw-semibold text-decoration-underline">
+              <Link to="/terminos" className="text-[var(--color-ink)] font-semibold underline">
                 Términos y Condiciones
               </Link>{' '}
               y la{' '}
-              <Link to="/privacidad" className="text-slate-dark fw-semibold text-decoration-underline">
+              <Link to="/privacidad" className="text-[var(--color-ink)] font-semibold underline">
                 Política de Privacidad
               </Link>
               .
             </label>
           </div>
 
-          {errorMsg && (
-            <div className="p-2.5 rounded bg-light border border-danger text-danger mb-3 font-medium small">
-              {errorMsg}
-            </div>
-          )}
+          {errorMsg && <PrimeMessage severity="danger">{errorMsg}</PrimeMessage>}
+          {successMsg && <PrimeMessage severity="success">{successMsg}</PrimeMessage>}
 
-          {successMsg && (
-            <div className="p-2.5 rounded bg-light border border-success text-success mb-3 font-medium small">
-              {successMsg}
-            </div>
-          )}
-
-          <button
+          <PrimeButton
             type="submit"
+            variant="secondary"
+            size="md"
+            fullWidth
             disabled={isSubmitting}
-            className="btn btn-dark w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold"
           >
             {isSubmitting ? (
               <span>Procesando...</span>
             ) : formMode === 'login' ? (
               <>
                 <LogIn size={15} />
-                <span>Iniciar Sesión</span>
+                <span>Iniciar sesión</span>
               </>
             ) : (
               <>
                 <UserPlus size={15} />
-                <span>Crear Cuenta</span>
+                <span>Crear cuenta</span>
               </>
             )}
-          </button>
+          </PrimeButton>
         </form>
-      </div>
+      </PrimeCard>
     </div>
   );
 }

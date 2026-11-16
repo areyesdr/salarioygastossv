@@ -10,12 +10,13 @@
     "test": "node --experimental-strip-types --test src/lib/svLaborLaw.test.ts src/lib/formatters.test.ts src/lib/monthlyLedger.test.ts"
   },
   "dependencies": {
+    "@primereact/core": "^11.2.3",
     "@supabase/server": "^1.9.2",
     "@supabase/supabase-js": "^2.118.0",
-    "bootstrap": "^5.3.8",
-    "bootswatch": "^5.3.8",
+    "chart.js": "^4.6.1",
     "lucide-react": "^1.16.0",
     "motion": "^12.38.0",
+    "primereact": "^11.2.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-error-boundary": "^6.1.6",

@@ -1,50 +1,40 @@
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Wallet, Home } from 'lucide-react';
+import { PrimeButton, PrimeCard, PrimeTag } from '../../components/ui/PrimeUI.tsx';
 
 export default function Error403() {
   const navigate = useNavigate();
 
   return (
-    <div className="container py-5 d-flex justify-content-center align-items-center flex-grow-1" style={{ minHeight: '65vh' }}>
-      <div className="card-soft p-4 p-sm-5 text-center" style={{ maxWidth: '440px', width: '100%' }}>
-        <div
-          className="rounded-circle d-flex align-items-center justify-content-center bg-danger-subtle text-danger mx-auto mb-3"
-          style={{ width: '48px', height: '48px' }}
-        >
-          <ShieldAlert size={22} className="text-danger" />
+    <div className="container-app py-12 flex justify-center items-center flex-1 min-h-[65vh]">
+      <PrimeCard padded className="max-w-[440px] w-full text-center">
+        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--color-danger-soft)] mx-auto mb-3">
+          <ShieldAlert size={22} className="text-[var(--color-danger)]" />
         </div>
 
-        <span className="badge bg-danger-subtle text-danger border font-monospace text-uppercase mb-2" style={{ fontSize: '10px' }}>
-          Estado HTTP 403 · Acceso Denegado
-        </span>
+        <PrimeTag severity="danger" className="mb-2">
+          HTTP 403 · Acceso denegado
+        </PrimeTag>
 
-        <h5 className="fw-semibold text-slate-dark mb-2">
-          Acceso Restringido (403)
+        <h5 className="text-lg font-semibold text-[var(--color-ink)] mb-2">
+          Acceso restringido (403)
         </h5>
 
-        <p className="text-muted small mb-4" style={{ fontSize: '13px' }}>
-          No posees credenciales de administrador para ingresar a esta sección. Tu sesión cuenta únicamente con acceso a tus propios registros financieros.
+        <p className="text-[var(--color-muted)] text-xs leading-relaxed mb-5">
+          No cuentas con permisos de administrador para ingresar a esta sección. Tu sesión tiene acceso únicamente a tus propios registros.
         </p>
 
-        <div className="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-          <button
-            type="button"
-            onClick={() => navigate('/mis-gastos')}
-            className="btn btn-dark btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-3 fw-semibold"
-          >
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <PrimeButton variant="secondary" size="sm" onClick={() => navigate('/mis-gastos')}>
             <Wallet size={14} />
-            <span>Ir a Mis Gastos</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center gap-2 py-2 px-3"
-          >
+            <span>Ir a Mis gastos</span>
+          </PrimeButton>
+          <PrimeButton variant="outline" size="sm" onClick={() => navigate('/')}>
             <Home size={14} />
-            <span>Volver al Inicio</span>
-          </button>
+            <span>Volver al inicio</span>
+          </PrimeButton>
         </div>
-      </div>
+      </PrimeCard>
     </div>
   );
 }

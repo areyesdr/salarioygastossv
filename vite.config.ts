@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     rollupOptions: {
       output: {
@@ -10,6 +11,8 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-error-boundary'],
           'vendor-motion': ['motion'],
           'vendor-icons': ['lucide-react'],
+          'vendor-prime': ['@primereact/core', 'primereact/button', 'primereact/dialog', 'primereact/tabs'],
+          'vendor-charts': ['chart.js'],
         },
       },
     },
