@@ -13,11 +13,20 @@ import {
   X,
   Layers,
   BarChart3,
+  PieChart,
+  Clock,
+  ListFilter,
+  Zap,
 } from 'lucide-react';
 import {
   type MonthLedger,
   type LedgerItem,
   type LedgerEntryType,
+  type ExpenseCategory,
+  EXPENSE_CATEGORIES,
+  autoCategorizeExpense,
+  groupMonthExpensesByCategory,
+  importFixedTemplateToMonth,
   computeQuincenaBalance,
   copyRecurringToMonth,
   createEmptyMonthLedger,
@@ -25,7 +34,7 @@ import {
   groupAllMonthsExpenses,
   MONTH_NAMES_ES,
 } from '../lib/monthlyLedger.ts';
-import { formatUSD } from '../lib/formatters.ts';
+import { formatUSD as defaultFormatUSD } from '../lib/formatters.ts';
 import { round2 } from '../lib/svLaborLaw.ts';
 import {
   PrimeButton,
@@ -64,6 +73,11 @@ interface MonthlyLedgerViewProps {
   monthLedgers: MonthLedger[];
   onSaveMonthLedger: (updated: MonthLedger) => void;
   legalBonuses?: LegalBonusesPayload;
+  netHourly?: number;
+  totalHoursPerMonth?: number;
+  formatHours?: (val: number) => string;
+  formatUSD?: (val: number) => string;
+  fixedTemplateExpenses?: any[];
 }
 
 export function MonthlyLedgerView({
@@ -73,6 +87,11 @@ export function MonthlyLedgerView({
   monthLedgers,
   onSaveMonthLedger,
   legalBonuses,
+  netHourly = 0,
+  totalHoursPerMonth = 240,
+  formatHours = (h: number) => `${h.toFixed(1)} h`,
+  formatUSD = defaultFormatUSD,
+  fixedTemplateExpenses,
 }: MonthlyLedgerViewProps) {
   const today = new Date();
   const currentYear = today.getFullYear() >= 2026 ? today.getFullYear() : 2026;
@@ -87,12 +106,14 @@ export function MonthlyLedgerView({
   const [q1Day, setQ1Day] = useState<string>('15');
   const [q1Desc, setQ1Desc] = useState<string>('');
   const [q1Amount, setQ1Amount] = useState<string>('');
+  const [q1Category, setQ1Category] = useState<ExpenseCategory>('Alimentación');
   const [q1Type, setQ1Type] = useState<LedgerEntryType>('expense');
   const [q1Recurring, setQ1Recurring] = useState<boolean>(false);
 
   const [q2Day, setQ2Day] = useState<string>('30');
   const [q2Desc, setQ2Desc] = useState<string>('');
   const [q2Amount, setQ2Amount] = useState<string>('');
+  const [q2Category, setQ2Category] = useState<ExpenseCategory>('Servicios');
   const [q2Type, setQ2Type] = useState<LedgerEntryType>('expense');
   const [q2Recurring, setQ2Recurring] = useState<boolean>(false);
 
@@ -108,6 +129,7 @@ export function MonthlyLedgerView({
     amount: string;
     day: number;
     type: LedgerEntryType;
+    category?: ExpenseCategory;
     isRecurring: boolean;
     checked: boolean;
   } | null>(null);
@@ -188,6 +210,53 @@ export function MonthlyLedgerView({
     [q1Available, q2Available, q1Balance.totalExpenses, q2Balance.totalExpenses, q1Sobrante, q2Sobrante]
   );
 
+  const monthCategorySummary = useMemo(
+    () => groupMonthExpensesByCategory(activeMonthLedger),
+    [activeMonthLedger]
+  );
+
+  const activeCategoriesInMonth = useMemo(
+    () => EXPENSE_CATEGORIES.filter((cat) => monthCategorySummary.byCategory[cat] > 0),
+    [monthCategorySummary]
+  );
+
+  const categoryColors: Record<ExpenseCategory, string> = {
+    Vivienda: '#3b82f6',
+    Alimentación: '#10b981',
+    Transporte: '#f59e0b',
+    Servicios: '#8b5cf6',
+    Deudas: '#f43f5e',
+    Salud: '#06b6d4',
+    Educación: '#6366f1',
+    Ahorro: '#14b8a6',
+    Ocio: '#ec4899',
+  };
+
+  const categoryDoughnutData = useMemo(
+    () => ({
+      labels: activeCategoriesInMonth,
+      datasets: [
+        {
+          data: activeCategoriesInMonth.map((c) => monthCategorySummary.byCategory[c]),
+          backgroundColor: activeCategoriesInMonth.map((c) => categoryColors[c]),
+          borderWidth: 0,
+        },
+      ],
+    }),
+    [activeCategoriesInMonth, monthCategorySummary]
+  );
+
+  const totalMonthlyHoursRequired = useMemo(() => {
+    if (!netHourly || netHourly <= 0) return 0;
+    return round2(monthCategorySummary.totalExpenses / netHourly);
+  }, [monthCategorySummary.totalExpenses, netHourly]);
+
+  const handleImportFixedTemplate = () => {
+    if (!fixedTemplateExpenses || fixedTemplateExpenses.length === 0) return;
+    const updated = importFixedTemplateToMonth(fixedTemplateExpenses, activeMonthLedger);
+    onSaveMonthLedger(updated);
+  };
+
   const handleToggleItemCheck = (itemId: string, quincena: 'q1' | 'q2') => {
     const updatedItems = activeMonthLedger[quincena].items.map((i) =>
       i.id === itemId ? { ...i, checked: !i.checked } : i
@@ -235,15 +304,19 @@ export function MonthlyLedgerView({
     const rawDay = quincena === 'q1' ? q1Day : q2Day;
     const rawType = quincena === 'q1' ? q1Type : q2Type;
     const rawRec = quincena === 'q1' ? q1Recurring : q2Recurring;
+    const rawCat = quincena === 'q1' ? q1Category : q2Category;
 
     const amt = parseFloat(rawAmt);
     if (!rawDesc.trim() || Number.isNaN(amt) || amt <= 0) return;
+
+    const cat = rawType === 'expense' ? (rawCat || autoCategorizeExpense(rawDesc.trim())) : undefined;
 
     const newItem: LedgerItem = {
       id: `${quincena}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       desc: rawDesc.trim(),
       amount: amt,
       type: rawType,
+      category: cat,
       day: parseInt(rawDay, 10) || (quincena === 'q1' ? 15 : 30),
       isRecurring: rawRec,
       checked: false,
@@ -285,6 +358,7 @@ export function MonthlyLedgerView({
       amount: String(item.amount),
       day: item.day,
       type: item.type,
+      category: item.category || (item.type === 'expense' ? autoCategorizeExpense(item.desc) : undefined),
       isRecurring: Boolean(item.isRecurring),
       checked: Boolean(item.checked),
     });
@@ -304,6 +378,7 @@ export function MonthlyLedgerView({
         amount: round2(amt),
         day: editingEntry.day,
         type: editingEntry.type,
+        category: editingEntry.type === 'expense' ? (editingEntry.category || autoCategorizeExpense(editingEntry.desc)) : undefined,
         isRecurring: editingEntry.isRecurring,
         checked: editingEntry.checked,
       };
@@ -490,6 +565,8 @@ export function MonthlyLedgerView({
     const setTypeVal = isQ1 ? setQ1Type : setQ2Type;
     const recVal = isQ1 ? q1Recurring : q2Recurring;
     const setRecVal = isQ1 ? setQ1Recurring : setQ2Recurring;
+    const catVal = isQ1 ? q1Category : q2Category;
+    const setCatVal = isQ1 ? setQ1Category : setQ2Category;
 
     const allChecked =
       expenseItems.length > 0 && expenseItems.every((i) => Boolean(i.checked));
@@ -667,23 +744,45 @@ export function MonthlyLedgerView({
                             />
                           </td>
                           <td className="py-1.5 px-1.5 font-sans">
-                            <PrimeInput
-                              type="text"
-                              inputSize="sm"
-                              value={editingEntry.desc}
-                              onChange={(e) =>
-                                setEditingEntry({ ...editingEntry, desc: e.target.value })
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  handleSaveEditItem();
-                                } else if (e.key === 'Escape') {
-                                  e.preventDefault();
-                                  handleCancelEditItem();
+                            <div className="flex flex-col sm:flex-row gap-1">
+                              <PrimeInput
+                                type="text"
+                                inputSize="sm"
+                                value={editingEntry.desc}
+                                onChange={(e) =>
+                                  setEditingEntry({ ...editingEntry, desc: e.target.value })
                                 }
-                              }}
-                            />
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSaveEditItem();
+                                  } else if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    handleCancelEditItem();
+                                  }
+                                }}
+                                className="flex-1"
+                              />
+                              {editingEntry.type === 'expense' && (
+                                <PrimeSelect
+                                  selectSize="sm"
+                                  value={editingEntry.category || 'Alimentación'}
+                                  onChange={(e) =>
+                                    setEditingEntry({
+                                      ...editingEntry,
+                                      category: e.target.value as ExpenseCategory,
+                                    })
+                                  }
+                                  className="text-[11px] sm:w-28"
+                                >
+                                  {EXPENSE_CATEGORIES.map((c) => (
+                                    <option key={c} value={c}>
+                                      {c}
+                                    </option>
+                                  ))}
+                                </PrimeSelect>
+                              )}
+                            </div>
                           </td>
                           <td className="py-1.5 px-1.5 text-center">
                             <PrimeInput
@@ -790,19 +889,34 @@ export function MonthlyLedgerView({
                           {isIncome ? `+${formatUSD(item.amount)}` : `-${formatUSD(item.amount)}`}
                         </td>
                         <td className="py-2 px-2 font-sans">
-                          <span className={isPaid ? 'line-through text-[var(--color-muted)]' : 'text-[var(--color-ink)]'}>
-                            {item.desc}
-                          </span>
-                          {item.isRecurring && (
-                            <PrimeTag severity="neutral" className="ml-1 text-[9px] py-0 px-1.5">
-                              Fijo
-                            </PrimeTag>
-                          )}
-                          {isPaid && (
-                            <PrimeTag severity="success" className="ml-1 text-[9px] py-0 px-1.5">
-                              Pagado
-                            </PrimeTag>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={isPaid ? 'line-through text-[var(--color-muted)]' : 'text-[var(--color-ink)]'}>
+                              {item.desc}
+                            </span>
+                            {!isIncome && (
+                              <PrimeTag severity="info" className="text-[9.5px] py-0 px-1.5 font-normal">
+                                {item.category || autoCategorizeExpense(item.desc)}
+                              </PrimeTag>
+                            )}
+                            {!isIncome && netHourly && netHourly > 0 && formatHours && (
+                              <span
+                                className="text-[10px] text-slate-500 dark:text-slate-400 font-mono"
+                                title={`Costo en horas de trabajo neto: ${formatHours(item.amount / netHourly)}`}
+                              >
+                                · {formatHours(item.amount / netHourly)}
+                              </span>
+                            )}
+                            {item.isRecurring && (
+                              <PrimeTag severity="neutral" className="text-[9px] py-0 px-1.5 font-normal">
+                                Fijo
+                              </PrimeTag>
+                            )}
+                            {isPaid && (
+                              <PrimeTag severity="success" className="text-[9px] py-0 px-1.5">
+                                Pagado
+                              </PrimeTag>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2 px-2 text-center text-[var(--color-muted)]">
                           {item.day}
@@ -852,7 +966,7 @@ export function MonthlyLedgerView({
               className="p-3 bg-[var(--color-surface)] border-t border-[var(--color-rule)] space-y-2"
             >
               <div className="grid grid-cols-12 gap-1.5 items-center">
-                <div className="col-span-3 sm:col-span-2">
+                <div className="col-span-3 sm:col-span-1">
                   <PrimeInput
                     type="number"
                     inputSize="sm"
@@ -862,7 +976,7 @@ export function MonthlyLedgerView({
                     value={dayVal}
                     onChange={(e) => setDayVal(e.target.value)}
                     placeholder="Día"
-                    className="text-center"
+                    className="text-center px-1"
                   />
                 </div>
                 <div className="col-span-9 sm:col-span-4">
@@ -871,11 +985,16 @@ export function MonthlyLedgerView({
                     inputSize="sm"
                     required
                     value={descVal}
-                    onChange={(e) => setDescVal(e.target.value)}
+                    onChange={(e) => {
+                      setDescVal(e.target.value);
+                      if (typeVal === 'expense') {
+                        setCatVal(autoCategorizeExpense(e.target.value));
+                      }
+                    }}
                     placeholder={isQ1 ? 'Descripción (ej. Luz, Tarjeta)' : 'Descripción (ej. Alquiler, Agua)'}
                   />
                 </div>
-                <div className="col-span-6 sm:col-span-3">
+                <div className="col-span-6 sm:col-span-2">
                   <PrimeInput
                     type="number"
                     inputSize="sm"
@@ -888,7 +1007,22 @@ export function MonthlyLedgerView({
                     placeholder="$0.00"
                   />
                 </div>
-                <div className="col-span-6 sm:col-span-3 flex gap-1">
+                <div className="col-span-6 sm:col-span-3">
+                  <PrimeSelect
+                    selectSize="sm"
+                    value={catVal}
+                    onChange={(e) => setCatVal(e.target.value as ExpenseCategory)}
+                    disabled={typeVal === 'income'}
+                    className="text-xs"
+                  >
+                    {EXPENSE_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </PrimeSelect>
+                </div>
+                <div className="col-span-12 sm:col-span-2 flex gap-1">
                   <PrimeSelect
                     selectSize="sm"
                     value={typeVal}
@@ -897,15 +1031,24 @@ export function MonthlyLedgerView({
                     <option value="expense">Gasto (-)</option>
                     <option value="income">Ingreso (+)</option>
                   </PrimeSelect>
-                  <PrimeButton type="submit" variant="secondary" size="xs" title="Agregar movimiento">
+                  <PrimeButton type="submit" variant="secondary" size="xs" title="Agregar movimiento" className="shrink-0 px-2.5">
                     <Plus size={14} />
                   </PrimeButton>
                 </div>
               </div>
-              <label className="inline-flex items-center gap-1.5 text-[11px] text-[var(--color-muted)] cursor-pointer">
-                <PrimeCheckbox checked={recVal} onChange={setRecVal} />
-                <span>Gasto fijo mensual (recurrente)</span>
-              </label>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                <label className="inline-flex items-center gap-1.5 text-[11px] text-[var(--color-muted)] cursor-pointer select-none">
+                  <PrimeCheckbox checked={recVal} onChange={setRecVal} />
+                  <span>Gasto fijo mensual (recurrente)</span>
+                </label>
+
+                {typeVal === 'expense' && parseFloat(amountVal) > 0 && netHourly && netHourly > 0 && formatHours && (
+                  <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <Zap size={11} />
+                    <span>Equivale a {formatHours(parseFloat(amountVal) / netHourly)} de trabajo neto</span>
+                  </span>
+                )}
+              </div>
             </form>
 
             {/* Sobrante Footer */}
@@ -1017,6 +1160,17 @@ export function MonthlyLedgerView({
               Copiar fijos de {selectedMonth === 1 ? 'Diciembre' : MONTH_NAMES_ES[selectedMonth - 2]}
             </span>
           </PrimeButton>
+          {fixedTemplateExpenses && fixedTemplateExpenses.length > 0 && (
+            <PrimeButton
+              variant="outline"
+              size="xs"
+              onClick={handleImportFixedTemplate}
+              title="Importar plantilla de gastos fijos configurados a este mes"
+            >
+              <ListFilter size={13} className="text-emerald-600 dark:text-emerald-400" />
+              <span>Plantilla de fijos ({fixedTemplateExpenses.length})</span>
+            </PrimeButton>
+          )}
         </div>
       </div>
 
@@ -1248,6 +1402,96 @@ export function MonthlyLedgerView({
         {renderQuincenaColumn('q1')}
         {renderQuincenaColumn('q2')}
       </div>
+
+      {/* Distribución por Categorías y Costo en Horas de Trabajo */}
+      {monthCategorySummary.totalExpenses > 0 && (
+        <PrimeCard>
+          <div className="px-4 py-3 border-b border-[var(--color-rule)] bg-[var(--color-surface)] flex flex-wrap justify-between items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <PieChart size={16} className="text-[var(--color-accent)]" />
+              <h6 className="text-sm font-bold text-[var(--color-ink)] m-0">
+                Distribución por Categorías y Horas de Trabajo — {MONTH_NAMES_ES[selectedMonth - 1]} {selectedYear}
+              </h6>
+              <PrimeTag severity="neutral" className="font-mono">
+                {activeCategoriesInMonth.length} categorías activas
+              </PrimeTag>
+            </div>
+            {netHourly > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--color-ink-muted)]">Costo de gastos del mes:</span>
+                <PrimeTag severity="warning" className="font-mono font-bold flex items-center gap-1">
+                  <Clock size={12} />
+                  {formatHours(totalMonthlyHoursRequired)}
+                  {totalHoursPerMonth > 0 && (
+                    <span className="opacity-75">
+                      ({Math.round((totalMonthlyHoursRequired / totalHoursPerMonth) * 100)}% del mes)
+                    </span>
+                  )}
+                </PrimeTag>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            {/* Gráfico Doughnut */}
+            <div className="md:col-span-5 flex flex-col items-center justify-center">
+              <div className="w-full max-w-[260px] h-[220px]">
+                <PrimeChart type="doughnut" data={categoryDoughnutData} height={220} />
+              </div>
+            </div>
+
+            {/* Desglose por Categoría con Horas */}
+            <div className="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {activeCategoriesInMonth.map((cat) => {
+                const amount = monthCategorySummary.byCategory[cat];
+                const pct =
+                  monthCategorySummary.totalExpenses > 0
+                    ? Math.round((amount / monthCategorySummary.totalExpenses) * 100)
+                    : 0;
+                const hours = netHourly > 0 ? round2(amount / netHourly) : 0;
+                const color = categoryColors[cat];
+
+                return (
+                  <div
+                    key={cat}
+                    className="p-3 rounded-lg border border-[var(--color-rule)] bg-[var(--color-paper)] flex flex-col gap-1.5 transition-colors hover:border-[var(--color-accent)]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-ink)]">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: color }}
+                        />
+                        {cat}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-[var(--color-ink)]">
+                        {formatUSD(amount)}
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-[var(--color-paper-2)] h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: color }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)] font-mono">
+                      <span>{pct}% del gasto</span>
+                      {netHourly > 0 && (
+                        <span className="flex items-center gap-1 text-[var(--color-accent)]">
+                          <Clock size={10} />
+                          {formatHours(hours)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </PrimeCard>
+      )}
 
       {/* Suma Total de Gastos Agrupados del Mes */}
       <PrimeCard>

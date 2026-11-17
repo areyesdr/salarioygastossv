@@ -6,7 +6,11 @@ import {
   createEmptyMonthLedger,
   groupLedgerExpenses,
   groupAllMonthsExpenses,
+  autoCategorizeExpense,
+  groupMonthExpensesByCategory,
+  importFixedTemplateToMonth,
   type QuincenaLedger,
+  type FixedTemplateItem,
 } from './monthlyLedger.ts';
 
 describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
@@ -190,5 +194,70 @@ describe('Monthly Ledger - Libreta Quincenal de Gastos', () => {
     assert.equal(copied.q2.items.length, 1);
     assert.equal(copied.q2.items[0].desc, 'Internet');
     assert.equal(copied.q2.items[0].paid, false);
+  });
+
+  it('auto-categorizes expenses from keywords and preserves categories on copy', () => {
+    assert.equal(autoCategorizeExpense('Pago Alquiler Depto'), 'Vivienda');
+    assert.equal(autoCategorizeExpense('Supermercado Selectos'), 'Alimentación');
+    assert.equal(autoCategorizeExpense('Gasolina Texaco'), 'Transporte');
+    assert.equal(autoCategorizeExpense('Internet Tigo Residencial'), 'Servicios');
+    assert.equal(autoCategorizeExpense('Cuota Tarjeta Cuscatlan'), 'Deudas');
+    assert.equal(autoCategorizeExpense('Medicina Farmacia San Nicolas'), 'Salud');
+    assert.equal(autoCategorizeExpense('Matrícula Universidad'), 'Educación');
+    assert.equal(autoCategorizeExpense('Aporte Fondo de Ahorro'), 'Ahorro');
+    assert.equal(autoCategorizeExpense('Suscripción Netflix'), 'Ocio');
+
+    const m1 = createEmptyMonthLedger('usr-test-01', 2026, 1);
+    m1.q1.items = [
+      { id: '1', desc: 'Renta', amount: 300, type: 'expense', day: 15, isRecurring: true, category: 'Vivienda' },
+    ];
+    const m2 = createEmptyMonthLedger('usr-test-01', 2026, 2);
+    const copied = copyRecurringToMonth(m1, m2);
+    assert.equal(copied.q1.items[0].category, 'Vivienda');
+  });
+
+  it('groups month expenses by category correctly', () => {
+    const m = createEmptyMonthLedger('usr-test-01', 2026, 1);
+    m.q1.items = [
+      { id: '1', desc: 'Alquiler', amount: 300, type: 'expense', day: 15, category: 'Vivienda' },
+      { id: '2', desc: 'Super', amount: 150, type: 'expense', day: 15, category: 'Alimentación' },
+    ];
+    m.q2.items = [
+      { id: '3', desc: 'Luz y Agua', amount: 50, type: 'expense', day: 30, category: 'Servicios' },
+      { id: '4', desc: 'Comida fuera', amount: 40, type: 'expense', day: 28, category: 'Alimentación' },
+    ];
+
+    const grouped = groupMonthExpensesByCategory(m);
+    assert.equal(grouped.totalExpenses, 540);
+    assert.equal(grouped.byCategory.Vivienda, 300);
+    assert.equal(grouped.byCategory.Alimentación, 190);
+    assert.equal(grouped.byCategory.Servicios, 50);
+    assert.equal(grouped.byCategory.Transporte, 0);
+  });
+
+  it('imports fixed template expenses into quincenas with monthly split handling', () => {
+    const template: FixedTemplateItem[] = [
+      { name: 'Cuota Casa', amount: 300, category: 'Vivienda', cycle: 'quincena_1' },
+      { name: 'Luz e Internet', amount: 80, category: 'Servicios', cycle: 'quincena_2' },
+      { name: 'Despensa', amount: 200, category: 'Alimentación', cycle: 'mensual' },
+    ];
+
+    const target = createEmptyMonthLedger('usr-test-01', 2026, 3);
+    const result = importFixedTemplateToMonth(template, target);
+
+    assert.equal(result.q1.items.length, 2); // Cuota Casa (300) + Despensa split (100)
+    assert.equal(result.q2.items.length, 2); // Luz e Internet (80) + Despensa split (100)
+
+    const q1Casa = result.q1.items.find((i) => i.desc === 'Cuota Casa')!;
+    assert.equal(q1Casa.amount, 300);
+    assert.equal(q1Casa.category, 'Vivienda');
+
+    const q1Despensa = result.q1.items.find((i) => i.desc === 'Despensa')!;
+    assert.equal(q1Despensa.amount, 100);
+    assert.equal(q1Despensa.category, 'Alimentación');
+
+    const q2Despensa = result.q2.items.find((i) => i.desc === 'Despensa')!;
+    assert.equal(q2Despensa.amount, 100);
+    assert.equal(q2Despensa.category, 'Alimentación');
   });
 });

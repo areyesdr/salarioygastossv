@@ -2,12 +2,36 @@ import { round2 } from './svLaborLaw.ts';
 
 export type LedgerEntryType = 'expense' | 'income';
 
+export type ExpenseCategory =
+  | 'Vivienda'
+  | 'Alimentación'
+  | 'Transporte'
+  | 'Servicios'
+  | 'Deudas'
+  | 'Salud'
+  | 'Educación'
+  | 'Ahorro'
+  | 'Ocio';
+
+export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'Vivienda',
+  'Alimentación',
+  'Transporte',
+  'Servicios',
+  'Deudas',
+  'Salud',
+  'Educación',
+  'Ahorro',
+  'Ocio',
+];
+
 export interface LedgerItem {
   id: string;
   desc: string;
   amount: number;
   type: LedgerEntryType;
   day: number;
+  category?: ExpenseCategory;
   isRecurring?: boolean;
   checked?: boolean;
   paid?: boolean;
@@ -326,5 +350,159 @@ export function groupAllMonthsExpenses(
     totalGroupedAmount,
     totalGroupedCount,
     monthsRepresented: Array.from(monthsRepresentedSet).sort((a, b) => a - b),
+  };
+}
+
+/**
+ * Infiere automáticamente la categoría de un gasto a partir de palabras clave en su descripción.
+ */
+export function autoCategorizeExpense(desc: string): ExpenseCategory {
+  const text = desc.toLowerCase().trim();
+
+  if (/(alquiler|renta|casa|vivienda|apartamento|cuota\s*vivienda|hipoteca|condominio)/i.test(text)) {
+    return 'Vivienda';
+  }
+  if (/(super|súper|comida|mercado|alimento|despensa|víveres|viveres|almuerzo|cena|desayuno|restaurante|pupusa|pan)/i.test(text)) {
+    return 'Alimentación';
+  }
+  if (/(gasolina|combustible|diesel|diésel|uber|taxi|pasaje|bus|ruta|parqueo|taller|llanta|mecanico|mecánico)/i.test(text)) {
+    return 'Transporte';
+  }
+  if (/(luz|agua|energia|energía|internet|claro|tigo|movistar|digicel|cable|telefono|teléfono|celular|gas|caess|delsur|anda)/i.test(text)) {
+    return 'Servicios';
+  }
+  if (/(tarjeta|prestamo|préstamo|credito|crédito|deuda|cuota\s*banco|banco|interes|interés)/i.test(text)) {
+    return 'Deudas';
+  }
+  if (/(medicina|farmacia|medico|médico|doctor|consulta|clinica|clínica|hospital|laboratorio|lente|dental|diente)/i.test(text)) {
+    return 'Salud';
+  }
+  if (/(colegio|escuela|universidad|matricula|matrícula|mensualidad|libro|útil|util|curso|capacitacion|capacitación)/i.test(text)) {
+    return 'Educación';
+  }
+  if (/(ahorro|fondo|cooperativa|emergencia|inversion|inversión|aportacion|aportación)/i.test(text)) {
+    return 'Ahorro';
+  }
+  if (/(netflix|spotify|cine|salida|paseo|viaje|fiesta|juego|diversion|diversión|ocio)/i.test(text)) {
+    return 'Ocio';
+  }
+
+  return 'Servicios';
+}
+
+/**
+ * Agrupa los gastos de un mes por categoría sumando montos y calculando porcentajes.
+ */
+export function groupMonthExpensesByCategory(
+  monthLedger: MonthLedger
+): {
+  byCategory: Record<ExpenseCategory, number>;
+  totalExpenses: number;
+} {
+  const byCategory: Record<ExpenseCategory, number> = {
+    Vivienda: 0,
+    Alimentación: 0,
+    Transporte: 0,
+    Servicios: 0,
+    Deudas: 0,
+    Salud: 0,
+    Educación: 0,
+    Ahorro: 0,
+    Ocio: 0,
+  };
+
+  let totalExpenses = 0;
+
+  const processItems = (items: LedgerItem[]) => {
+    for (const item of items) {
+      if (item.type !== 'expense') continue;
+      const amt = round2(item.amount);
+      if (amt <= 0) continue;
+
+      const cat = item.category || autoCategorizeExpense(item.desc);
+      byCategory[cat] = round2(byCategory[cat] + amt);
+      totalExpenses = round2(totalExpenses + amt);
+    }
+  };
+
+  processItems(monthLedger.q1.items);
+  processItems(monthLedger.q2.items);
+
+  return {
+    byCategory,
+    totalExpenses,
+  };
+}
+
+export interface FixedTemplateItem {
+  name: string;
+  amount: number;
+  category: ExpenseCategory;
+  cycle: 'quincena_1' | 'quincena_2' | 'mensual';
+  isFixed?: boolean;
+}
+
+/**
+ * Importa la plantilla de gastos fijos a un mes determinado distribuyéndolos en Q1, Q2 o divididos (mensual).
+ */
+export function importFixedTemplateToMonth(
+  templateItems: FixedTemplateItem[],
+  targetMonth: MonthLedger
+): MonthLedger {
+  const existingQ1Descs = new Set(targetMonth.q1.items.map((i) => i.desc.trim().toLowerCase()));
+  const existingQ2Descs = new Set(targetMonth.q2.items.map((i) => i.desc.trim().toLowerCase()));
+
+  const newQ1Items = [...targetMonth.q1.items];
+  const newQ2Items = [...targetMonth.q2.items];
+
+  for (const item of templateItems) {
+    const norm = item.name.trim().toLowerCase();
+    const isMonthlySplit = item.cycle === 'mensual';
+
+    if (item.cycle === 'quincena_1' || isMonthlySplit) {
+      if (!existingQ1Descs.has(norm)) {
+        newQ1Items.push({
+          id: `tpl-q1-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          desc: item.name.trim(),
+          amount: isMonthlySplit ? round2(item.amount / 2) : item.amount,
+          type: 'expense',
+          day: 15,
+          category: item.category,
+          isRecurring: true,
+          checked: false,
+          paid: false,
+        });
+        existingQ1Descs.add(norm);
+      }
+    }
+
+    if (item.cycle === 'quincena_2' || isMonthlySplit) {
+      if (!existingQ2Descs.has(norm)) {
+        newQ2Items.push({
+          id: `tpl-q2-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          desc: item.name.trim(),
+          amount: isMonthlySplit ? round2(item.amount / 2) : item.amount,
+          type: 'expense',
+          day: 30,
+          category: item.category,
+          isRecurring: true,
+          checked: false,
+          paid: false,
+        });
+        existingQ2Descs.add(norm);
+      }
+    }
+  }
+
+  return {
+    ...targetMonth,
+    q1: {
+      ...targetMonth.q1,
+      items: newQ1Items,
+    },
+    q2: {
+      ...targetMonth.q2,
+      items: newQ2Items,
+    },
   };
 }

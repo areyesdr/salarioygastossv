@@ -29,16 +29,8 @@ import {
   PrimeTag,
 } from './ui/PrimeUI.tsx';
 
-export type ExpenseCategory =
-  | 'Vivienda'
-  | 'Alimentación'
-  | 'Transporte'
-  | 'Servicios'
-  | 'Deudas'
-  | 'Salud'
-  | 'Educación'
-  | 'Ahorro'
-  | 'Ocio';
+import { type ExpenseCategory, EXPENSE_CATEGORIES } from '../lib/monthlyLedger.ts';
+export { type ExpenseCategory, EXPENSE_CATEGORIES };
 
 export type ExpenseCycle = 'quincena_1' | 'quincena_2' | 'mensual';
 
@@ -60,18 +52,6 @@ export interface BonusGoalItem {
   source: 'quincena25' | 'vacacion' | 'aguinaldo' | 'pool';
   amount: number;
 }
-
-export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  'Vivienda',
-  'Alimentación',
-  'Transporte',
-  'Servicios',
-  'Deudas',
-  'Salud',
-  'Educación',
-  'Ahorro',
-  'Ocio',
-];
 
 const CHART_PALETTE = [
   '#2563eb',
@@ -300,6 +280,11 @@ export function ExpensesView({
           monthLedgers={monthLedgers}
           onSaveMonthLedger={onSaveMonthLedger}
           legalBonuses={legalBonuses}
+          netHourly={netHourly}
+          totalHoursPerMonth={totalHoursPerMonth}
+          formatHours={formatHours}
+          formatUSD={formatUSD}
+          fixedTemplateExpenses={filteredExpenses}
         />
       ) : (
         <div className="space-y-5">
