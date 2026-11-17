@@ -213,7 +213,7 @@ const LEDGERS_STORAGE_KEY = 'salarioygastossv_ledgers_v1';
 
 function AppShell() {
   const { user, logout, isAuthReady } = useAuth();
-  const { themeMode, setThemeMode } = useTheme();
+  const { themeMode, setThemeMode, resolvedTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -1093,23 +1093,17 @@ function AppShell() {
 
         {/* Bottom: Tema y Perfil de Usuario */}
         <div className="flex flex-col items-center gap-3 w-full px-2">
-          {/* Theme switcher */}
+          {/* Theme switcher rápido (claro / oscuro) */}
           <button
             type="button"
-            onClick={() => {
-              if (themeMode === 'light') setThemeMode('dark');
-              else if (themeMode === 'dark') setThemeMode('system');
-              else setThemeMode('light');
-            }}
-            title={`Tema visual: ${themeMode} (clic para alternar)`}
+            onClick={toggleTheme}
+            title={resolvedTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
           >
-            {themeMode === 'light' ? (
-              <Sun size={18} className="text-amber-500" />
-            ) : themeMode === 'dark' ? (
-              <Moon size={18} className="text-indigo-400" />
+            {resolvedTheme === 'dark' ? (
+              <Sun size={18} className="text-amber-400 hover:scale-110 transition-transform" />
             ) : (
-              <Monitor size={18} />
+              <Moon size={18} className="text-indigo-600 hover:scale-110 transition-transform" />
             )}
           </button>
 
@@ -1231,14 +1225,48 @@ function AppShell() {
               </Link>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  title="Cambiar tema"
-                  onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                <div
+                  className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                  role="group"
+                  aria-label="Selector de tema visual móvil"
                 >
-                  {themeMode === 'light' ? <Sun size={15} /> : <Moon size={15} />}
-                </button>
+                  <button
+                    type="button"
+                    title="Tema del sistema"
+                    onClick={() => setThemeMode('system')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      themeMode === 'system'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    <Monitor size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Modo claro"
+                    onClick={() => setThemeMode('light')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      themeMode === 'light'
+                        ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    <Sun size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Modo oscuro"
+                    onClick={() => setThemeMode('dark')}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      themeMode === 'dark'
+                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    <Moon size={13} />
+                  </button>
+                </div>
 
                 {user?.loggedIn ? (
                   <button
@@ -1340,6 +1368,50 @@ function AppShell() {
                     { value: 'biweekly', label: 'Quincenal' },
                   ]}
                 />
+              </div>
+
+              {/* Selector de Tema Visual Desktop */}
+              <div
+                className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                role="group"
+                aria-label="Selector de tema visual"
+              >
+                <button
+                  type="button"
+                  title="Tema del sistema (detecta preferencia del OS)"
+                  onClick={() => setThemeMode('system')}
+                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                    themeMode === 'system'
+                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Monitor size={14} />
+                </button>
+                <button
+                  type="button"
+                  title="Modo claro"
+                  onClick={() => setThemeMode('light')}
+                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                    themeMode === 'light'
+                      ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Sun size={14} />
+                </button>
+                <button
+                  type="button"
+                  title="Modo oscuro"
+                  onClick={() => setThemeMode('dark')}
+                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                    themeMode === 'dark'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  <Moon size={14} />
+                </button>
               </div>
 
               <PrimeButton
@@ -1460,7 +1532,7 @@ function AppShell() {
                   </div>
 
                   {/* KPI 4: Monto Líquido en Bolsillo */}
-                  <div className="p-4 rounded-2xl surface-card hover-panel flex flex-col justify-between bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-800/80">
+                  <div className="p-4 rounded-2xl hover-panel flex flex-col justify-between bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/80 dark:border-emerald-800/80 shadow-xs">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
                         Monto Líquido en Bolsillo

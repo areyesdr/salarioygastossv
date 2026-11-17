@@ -51,6 +51,9 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+:root.dark,
+:root[data-theme="dark"],
+html.dark,
 .dark {
   --color-paper: var(--dark-paper);
   --color-paper-2: var(--dark-paper-2);
