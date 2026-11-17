@@ -225,7 +225,7 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                   <PrimeButton
                     key={preset.label}
                     size="xs"
-                    variant={Math.abs(salary - preset.amount) < 0.01 ? 'primary' : 'outline'}
+                    variant={Math.abs(salary - preset.amount) < 0.01 ? 'secondary' : 'outline'}
                     onClick={() => {
                       setSalary(preset.amount);
                       setSalaryInput(preset.amount.toFixed(2));
@@ -256,7 +256,7 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                   <PrimeButton
                     key={item.label}
                     size="xs"
-                    variant={salarioPendienteDias === item.days ? 'success' : 'outline'}
+                    variant={salarioPendienteDias === item.days ? 'secondary' : 'outline'}
                     onClick={() => setSalarioPendienteDias(item.days)}
                   >
                     {item.label}
@@ -483,10 +483,10 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
 
         {/* Panel Derecho */}
         <PrimeCard className="lg:col-span-7">
-          <div className="p-4 sm:p-5 bg-[var(--color-ink)] text-[var(--color-card)] space-y-3">
+          <div className="p-4 sm:p-5 bg-slate-900 text-white rounded-t-2xl space-y-3 border-b border-slate-800">
             <div>
-              <span className="text-xs opacity-75 block mb-1">Total a recibir en tu finiquito</span>
-              <div className="text-3xl sm:text-4xl font-bold font-mono tracking-tight">
+              <span className="text-xs text-slate-400 block mb-1">Total a recibir en tu finiquito</span>
+              <div className="text-3xl sm:text-4xl font-bold font-mono tracking-tight text-white">
                 {formatUSD(result.totalLiquidacion)}
               </div>
             </div>
@@ -496,22 +496,22 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
               <PrimeTag severity="neutral">Antigüedad: {result.seniority.formattedSeniority}</PrimeTag>
             </div>
 
-            <div className="p-3 rounded-xl bg-white/10 border border-white/15 space-y-2.5">
-              <span className="text-xs font-semibold block">
+            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-2.5">
+              <span className="text-xs font-semibold text-slate-300 block">
                 Desglose del total ({formatUSD(result.totalLiquidacion)}):
               </span>
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-ink)] text-center flex-1 min-w-[110px]">
-                  <span className="block text-[10px] text-[var(--color-muted)] font-medium">
+                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-700/60 text-white text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] text-slate-400 font-medium">
                     1. Indemnización
                   </span>
                   <strong className="font-mono text-sm">{formatUSD(result.indemnizacion.amount)}</strong>
                 </div>
 
-                <Plus size={16} className="shrink-0 opacity-80" />
+                <Plus size={16} className="shrink-0 text-slate-400" />
 
-                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-ink)] text-center flex-1 min-w-[110px]">
-                  <span className="block text-[10px] text-[var(--color-muted)] font-medium">
+                <div className="p-2.5 rounded-lg bg-slate-900/90 border border-slate-700/60 text-white text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] text-slate-400 font-medium">
                     2. Prestaciones de ley
                   </span>
                   <strong className="font-mono text-sm">
@@ -519,23 +519,23 @@ export function LiquidacionView({ monthlySalary: initialSalary, formatUSD }: Liq
                   </strong>
                 </div>
 
-                <Equal size={16} className="shrink-0 opacity-80" />
+                <Equal size={16} className="shrink-0 text-slate-400" />
 
-                <div className="p-2.5 rounded-lg bg-[var(--color-card)] text-[var(--color-emerald)] text-center flex-1 min-w-[110px]">
-                  <span className="block text-[10px] font-semibold">Total cheque</span>
+                <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-center flex-1 min-w-[110px]">
+                  <span className="block text-[10px] font-semibold text-emerald-300">Total cheque</span>
                   <strong className="font-mono text-sm">{formatUSD(result.totalLiquidacion)}</strong>
                 </div>
               </div>
 
-              <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-white/15 text-[11px] opacity-90">
+              <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-700/60 text-[11px] text-slate-300">
                 <span className="inline-flex items-center gap-1">
-                  <ShieldCheck size={12} />
+                  <ShieldCheck size={12} className="text-emerald-400" />
                   <span>Libre de Renta / ISSS / AFP:</span>
-                  <strong className="font-mono">{formatUSD(result.totalExentoISR)}</strong>
+                  <strong className="font-mono text-emerald-400">{formatUSD(result.totalExentoISR)}</strong>
                 </span>
                 <span>
                   Sujeto a deducciones ordinarias:{' '}
-                  <strong className="font-mono">{formatUSD(result.totalGravadoISR)}</strong>
+                  <strong className="font-mono text-slate-200">{formatUSD(result.totalGravadoISR)}</strong>
                 </span>
               </div>
             </div>

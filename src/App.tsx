@@ -1038,7 +1038,7 @@ function AppShell() {
         <div className="flex flex-col items-center gap-5 w-full">
           <Link
             to="/"
-            className="w-11 h-11 rounded-xl bg-slate-900 dark:bg-emerald-600 text-white flex items-center justify-center font-mono font-bold text-sm shadow-sm hover:scale-105 transition-transform no-underline"
+            className="w-11 h-11 rounded-xl bg-slate-900 text-white dark:bg-slate-800 dark:text-emerald-400 dark:border dark:border-slate-700/80 flex items-center justify-center font-mono font-bold text-sm shadow-sm hover:scale-105 transition-transform no-underline"
             title="MiNominaSV - Inicio"
           >
             SV
@@ -1065,7 +1065,7 @@ function AppShell() {
                   title={item.label}
                   className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 shadow-md ring-2 ring-emerald-500/30'
+                      ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-emerald-400 dark:border dark:border-emerald-500/40 shadow-sm'
                       : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
                 >
@@ -1082,7 +1082,7 @@ function AppShell() {
               title="Mis Gastos y Presupuesto"
               className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                 isExpensesRoute
-                  ? 'bg-slate-900 text-white dark:bg-emerald-500 dark:text-slate-950 shadow-md ring-2 ring-emerald-500/30'
+                  ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-emerald-400 dark:border dark:border-emerald-500/40 shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
               }`}
             >
@@ -1465,8 +1465,8 @@ function AppShell() {
         </section>
       ) : (
         <>
-          {/* Fila de 4 Tarjetas Métricas KPI estilo Command Dashboard */}
-          {(isCalculatorRoute || isExpensesRoute) && (
+          {/* Fila de 4 Tarjetas Métricas KPI e Inputs exclusiva de la Calculadora de Nómina */}
+          {isCalculatorRoute && calcTab === 'payroll' && (
             <section className="pt-5 pb-2">
               <div className="container-app">
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
@@ -1532,7 +1532,7 @@ function AppShell() {
                   </div>
 
                   {/* KPI 4: Monto Líquido en Bolsillo */}
-                  <div className="p-4 rounded-2xl hover-panel flex flex-col justify-between bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/80 dark:border-emerald-800/80 shadow-xs">
+                  <div className="p-4 rounded-2xl hover-panel flex flex-col justify-between bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-300/60 dark:border-emerald-800/50 shadow-xs">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
                         Monto Líquido en Bolsillo

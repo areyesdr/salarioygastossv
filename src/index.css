@@ -35,17 +35,17 @@
   --dark-ink-2: #cbd5e1;
   --dark-muted: #8493a8;
   --dark-rule: #1e283a;
-  --dark-accent: #38bdf8;
-  --dark-accent-hi: #7dd3fc;
-  --dark-accent-soft: rgba(56, 189, 248, 0.12);
-  --dark-accent-ink: #08101a;
-  --dark-emerald: #34d399;
-  --dark-emerald-soft: rgba(52, 211, 153, 0.12);
-  --dark-amber: #fbbf24;
-  --dark-amber-soft: rgba(251, 191, 36, 0.12);
-  --dark-danger: #f87171;
-  --dark-danger-soft: rgba(248, 113, 113, 0.12);
-  --dark-focus: #38bdf8;
+  --dark-accent: #10b981;
+  --dark-accent-hi: #059669;
+  --dark-accent-soft: rgba(16, 185, 129, 0.12);
+  --dark-accent-ink: #ffffff;
+  --dark-emerald: #10b981;
+  --dark-emerald-soft: rgba(16, 185, 129, 0.12);
+  --dark-amber: #f59e0b;
+  --dark-amber-soft: rgba(245, 158, 11, 0.12);
+  --dark-danger: #f43f5e;
+  --dark-danger-soft: rgba(244, 63, 94, 0.12);
+  --dark-focus: #10b981;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

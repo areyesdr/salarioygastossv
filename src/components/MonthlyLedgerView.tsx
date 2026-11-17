@@ -168,19 +168,19 @@ export function MonthlyLedgerView({
         {
           label: 'Disponible',
           data: [q1Available, q2Available],
-          backgroundColor: '#2563eb',
+          backgroundColor: '#3b82f6',
           borderRadius: 6,
         },
         {
           label: 'Gastos',
           data: [q1Balance.totalExpenses, q2Balance.totalExpenses],
-          backgroundColor: '#dc2626',
+          backgroundColor: '#f43f5e',
           borderRadius: 6,
         },
         {
           label: 'Sobrante',
           data: [Math.max(0, q1Sobrante), Math.max(0, q2Sobrante)],
-          backgroundColor: '#059669',
+          backgroundColor: '#10b981',
           borderRadius: 6,
         },
       ],
@@ -960,8 +960,8 @@ export function MonthlyLedgerView({
           {MONTH_NAMES_ES.map((mName, idx) => {
             const mNum = idx + 1;
             const isSelected = selectedMonth === mNum;
-            const hasSaved = monthLedgers.some(
-              (l) => l.year === selectedYear && l.month === mNum && (l.q1.items.length > 0 || l.q2.items.length > 0)
+            const hasActivity = monthLedgers.some(
+              (l) => l.year === selectedYear && l.month === mNum && (l.q1.items.some((i) => i.paid) || l.q2.items.some((i) => i.paid))
             );
             return (
               <PrimeButton
@@ -972,7 +972,7 @@ export function MonthlyLedgerView({
                 onClick={() => setSelectedMonth(mNum)}
               >
                 <span>{mName.slice(0, 3)}</span>
-                {hasSaved && !isSelected && (
+                {hasActivity && !isSelected && (
                   <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[var(--color-emerald)] inline-block" />
                 )}
               </PrimeButton>

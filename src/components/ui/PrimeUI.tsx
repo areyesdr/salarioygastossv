@@ -40,17 +40,17 @@ interface PrimeButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 
 const BUTTON_VARIANTS: Record<PrimeButtonVariant, string> = {
   primary:
-    'bg-[var(--color-accent)] text-[var(--color-accent-ink)] border border-transparent hover:bg-[var(--color-accent-hi)] shadow-xs hover:shadow-sm active:translate-y-[0.5px]',
+    'bg-emerald-600 dark:bg-emerald-600 text-white border border-transparent hover:bg-emerald-500 dark:hover:bg-emerald-500 shadow-xs hover:shadow-sm active:translate-y-[0.5px]',
   secondary:
-    'bg-[var(--color-ink)] text-[var(--color-card)] border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
+    'bg-slate-900 text-white dark:bg-slate-800 dark:text-slate-100 dark:border dark:border-slate-700 hover:bg-slate-800 dark:hover:bg-slate-700 shadow-xs active:translate-y-[0.5px]',
   outline:
-    'bg-transparent text-[var(--color-ink)] border border-[var(--color-rule)] hover:bg-[var(--color-surface)] hover:border-[var(--color-muted)] active:translate-y-[0.5px]',
+    'bg-transparent text-[var(--color-ink)] border border-[var(--color-rule)] hover:bg-[var(--color-surface)] hover:border-slate-400 dark:hover:border-slate-600 active:translate-y-[0.5px]',
   ghost:
     'bg-transparent text-[var(--color-muted)] border border-transparent hover:text-[var(--color-ink)] hover:bg-[var(--color-surface)] active:translate-y-[0.5px]',
   danger:
-    'bg-[var(--color-danger)] text-white border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
+    'bg-rose-600 text-white border border-transparent hover:bg-rose-500 shadow-xs active:translate-y-[0.5px]',
   success:
-    'bg-[var(--color-emerald)] text-white border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
+    'bg-emerald-600 text-white border border-transparent hover:bg-emerald-500 shadow-xs active:translate-y-[0.5px]',
 };
 
 const BUTTON_SIZES: Record<PrimeButtonSize, string> = {
@@ -90,11 +90,15 @@ export function PrimeButton({
 interface PrimeInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   inputSize?: 'sm' | 'md' | 'lg';
   mono?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 export function PrimeInput({
   inputSize = 'md',
   mono = false,
+  leftIcon,
+  rightIcon,
   className = '',
   ...rest
 }: PrimeInputProps) {
@@ -105,13 +109,34 @@ export function PrimeInput({
         ? 'px-3.5 py-2.5 text-base rounded-xl'
         : 'px-3 py-2 text-sm rounded-lg';
 
-  return (
+  const padLeft = leftIcon ? (inputSize === 'sm' ? 'pl-8' : 'pl-9') : '';
+  const padRight = rightIcon ? (inputSize === 'sm' ? 'pr-8' : 'pr-9') : '';
+
+  const inputEl = (
     <input
-      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] placeholder:text-[var(--color-muted)] hover:border-[var(--color-muted)] focus:border-[var(--color-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] transition-colors duration-150 disabled:opacity-60 ${sizeCls} ${
+      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] placeholder:text-[var(--color-muted)] hover:border-slate-400 dark:hover:border-slate-600 focus:border-[var(--color-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] transition-colors duration-150 disabled:opacity-60 ${sizeCls} ${padLeft} ${padRight} ${
         mono ? 'font-mono tabular-nums' : ''
       } ${className}`}
       {...rest}
     />
+  );
+
+  if (!leftIcon && !rightIcon) return inputEl;
+
+  return (
+    <div className="relative w-full flex items-center">
+      {leftIcon && (
+        <span className="absolute left-3 text-[var(--color-muted)] pointer-events-none flex items-center justify-center">
+          {leftIcon}
+        </span>
+      )}
+      {inputEl}
+      {rightIcon && (
+        <span className="absolute right-3 text-[var(--color-muted)] flex items-center justify-center">
+          {rightIcon}
+        </span>
+      )}
+    </div>
   );
 }
 
