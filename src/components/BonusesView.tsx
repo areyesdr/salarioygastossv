@@ -533,10 +533,10 @@ export function BonusesView({
                 <button
                   type="button"
                   onClick={() => setVacationMode('bonus_only')}
-                  className={`text-left p-3.5 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-colors duration-150 ${
+                  className={`text-left p-4 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     vacationMode === 'bonus_only'
                       ? 'bg-[var(--color-surface)] border-[var(--color-accent)] shadow-xs'
-                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:bg-[var(--color-surface)]'
+                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface)]'
                   }`}
                 >
                   <div>
@@ -575,10 +575,10 @@ export function BonusesView({
                 <button
                   type="button"
                   onClick={() => setVacationMode('full_advance')}
-                  className={`text-left p-3.5 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-colors duration-150 ${
+                  className={`text-left p-4 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     vacationMode === 'full_advance'
                       ? 'bg-[var(--color-surface)] border-[var(--color-accent)] shadow-xs'
-                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:bg-[var(--color-surface)]'
+                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface)]'
                   }`}
                 >
                   <div>
@@ -619,10 +619,10 @@ export function BonusesView({
                 <button
                   type="button"
                   onClick={() => setVacationMode('worked_vacation')}
-                  className={`text-left p-3.5 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-colors duration-150 ${
+                  className={`text-left p-4 rounded-xl border flex flex-col justify-between gap-3 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                     vacationMode === 'worked_vacation'
                       ? 'bg-[var(--color-surface)] border-[var(--color-accent)] shadow-xs'
-                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:bg-[var(--color-surface)]'
+                      : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:border-[var(--color-accent)]/60 hover:bg-[var(--color-surface)]'
                   }`}
                 >
                   <div>

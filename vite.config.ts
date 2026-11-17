@@ -11,7 +11,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-error-boundary'],
           'vendor-motion': ['motion'],
           'vendor-icons': ['lucide-react'],
-          'vendor-prime': ['@primereact/core', 'primereact/button', 'primereact/dialog', 'primereact/tabs'],
+          'vendor-prime': ['@primereact/core'],
           'vendor-charts': ['chart.js'],
         },
       },

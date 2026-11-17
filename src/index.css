@@ -1,50 +1,51 @@
-/* Hallmark: dusk / slate-emerald · modern-minimal · PrimeReact v11 + Tailwind v4 */
-/* critique: Migración integral a PrimeReact v11 + Tailwind v4 + Lucide; sin Bootstrap */
+/* Hallmark: dusk / obsidian-emerald · modern-minimal · PrimeUI + Tailwind v4 */
+/* critique: Estética Dark Command Dashboard inspirada en la consola de referencia, fluida y con micro-interacciones hover */
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-paper: #eef2f6;
-  --color-paper-2: #e3e9f0;
-  --color-card: #fdfefe;
-  --color-surface: #f5f7fa;
-  --color-ink: #10192b;
+  --color-paper: #f0f3f7;
+  --color-paper-2: #e4e9f0;
+  --color-card: #ffffff;
+  --color-surface: #f6f8fb;
+  --color-ink: #0f172a;
   --color-ink-2: #334155;
-  --color-muted: #5b697c;
-  --color-rule: #d5dde7;
-  --color-accent: #1e40af;
-  --color-accent-hi: #1d4ed8;
-  --color-accent-soft: #dbeafe;
+  --color-muted: #64748b;
+  --color-rule: #e2e8f0;
+  --color-accent: #0284c7;
+  --color-accent-hi: #0369a1;
+  --color-accent-soft: #e0f2fe;
   --color-accent-ink: #f8fafd;
-  --color-emerald: #047857;
+  --color-emerald: #059669;
   --color-emerald-soft: #d1fae5;
-  --color-amber: #b45309;
+  --color-amber: #d97706;
   --color-amber-soft: #fef3c7;
-  --color-danger: #b91c1c;
+  --color-danger: #dc2626;
   --color-danger-soft: #fee2e2;
-  --color-focus: #2563eb;
-  --shadow-card: 0 1px 2px rgba(16, 25, 43, 0.04);
+  --color-focus: #0284c7;
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06);
 
-  --dark-paper: #0b1120;
-  --dark-paper-2: #11192c;
-  --dark-card: #131c31;
-  --dark-surface: #18233c;
-  --dark-ink: #f1f5f9;
+  /* Obsidian Command Dark Theme */
+  --dark-paper: #090d15;
+  --dark-paper-2: #0f1420;
+  --dark-card: #131926;
+  --dark-surface: #182030;
+  --dark-ink: #f8fafc;
   --dark-ink-2: #cbd5e1;
-  --dark-muted: #94a3b8;
-  --dark-rule: #24324c;
-  --dark-accent: #60a5fa;
-  --dark-accent-hi: #93c5fd;
-  --dark-accent-soft: rgba(59, 130, 246, 0.16);
-  --dark-accent-ink: #09111f;
+  --dark-muted: #8493a8;
+  --dark-rule: #1e283a;
+  --dark-accent: #38bdf8;
+  --dark-accent-hi: #7dd3fc;
+  --dark-accent-soft: rgba(56, 189, 248, 0.12);
+  --dark-accent-ink: #08101a;
   --dark-emerald: #34d399;
-  --dark-emerald-soft: rgba(16, 185, 129, 0.16);
+  --dark-emerald-soft: rgba(52, 211, 153, 0.12);
   --dark-amber: #fbbf24;
-  --dark-amber-soft: rgba(245, 158, 11, 0.16);
+  --dark-amber-soft: rgba(251, 191, 36, 0.12);
   --dark-danger: #f87171;
-  --dark-danger-soft: rgba(239, 68, 68, 0.16);
-  --dark-focus: #60a5fa;
+  --dark-danger-soft: rgba(248, 113, 113, 0.12);
+  --dark-focus: #38bdf8;
 
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -122,44 +123,78 @@ a:active {
   }
 }
 
+/* Lienzo Fluido Amplio en Pantalla Completa */
 .container-app {
   width: 100%;
-  max-width: 1220px;
+  max-width: 1720px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 
 @media (min-width: 768px) {
   .container-app {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 }
 
-/* Superficies semánticas Hallmark + Tailwind */
+@media (min-width: 1440px) {
+  .container-app {
+    padding-left: 2.75rem;
+    padding-right: 2.75rem;
+  }
+}
+
+/* Superficies Semánticas estilo Command Dashboard */
 .surface-card {
   background-color: var(--color-card);
   border: 1px solid var(--color-rule);
-  border-radius: 0.875rem;
+  border-radius: 1rem;
   box-shadow: var(--shadow-card);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.surface-card:hover {
+  border-color: color-mix(in srgb, var(--color-rule) 65%, var(--color-accent) 35%);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+.dark .surface-card:hover {
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.35);
 }
 
 .surface-well {
   background-color: var(--color-surface);
   border: 1px solid var(--color-rule);
-  border-radius: 0.75rem;
+  border-radius: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.surface-well:hover {
+  border-color: color-mix(in srgb, var(--color-rule) 60%, var(--color-accent) 40%);
 }
 
 .surface-nav {
-  background-color: color-mix(in srgb, var(--color-card) 92%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: color-mix(in srgb, var(--color-card) 95%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--color-rule);
 }
 
-/* Scrollbar limpio para tiras horizontales en móvil */
+/* Micro-interacciones hover para paneles y tarjetas interactivas */
+.hover-panel {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-panel:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.25);
+}
+
+/* Scrollbar invisible para listas horizontales */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

@@ -1,17 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { Button as PRButton } from 'primereact/button';
-import { InputText as PRInputText } from 'primereact/inputtext';
-import { Checkbox as PRCheckbox } from 'primereact/checkbox';
-import { ToggleSwitch as PRToggleSwitch } from 'primereact/toggleswitch';
-import { ToggleButton as PRToggleButton } from 'primereact/togglebutton';
-import { ToggleButtonGroup as PRToggleButtonGroup } from 'primereact/togglebuttongroup';
-import { Tabs as PRTabs } from 'primereact/tabs';
-import { Dialog as PRDialog } from 'primereact/dialog';
-import { Card as PRCard } from 'primereact/card';
-import { Tag as PRTag } from 'primereact/tag';
-import { Message as PRMessage } from 'primereact/message';
-import { ProgressBar as PRProgressBar } from 'primereact/progressbar';
-import { Divider as PRDivider } from 'primereact/divider';
 import { Check, X } from 'lucide-react';
 import {
   Chart,
@@ -53,17 +40,17 @@ interface PrimeButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 
 const BUTTON_VARIANTS: Record<PrimeButtonVariant, string> = {
   primary:
-    'bg-[var(--color-accent)] text-[var(--color-accent-ink)] border border-transparent hover:bg-[var(--color-accent-hi)] shadow-xs',
+    'bg-[var(--color-accent)] text-[var(--color-accent-ink)] border border-transparent hover:bg-[var(--color-accent-hi)] shadow-xs hover:shadow-sm active:translate-y-[0.5px]',
   secondary:
-    'bg-[var(--color-ink)] text-[var(--color-card)] border border-transparent hover:opacity-90 shadow-xs',
+    'bg-[var(--color-ink)] text-[var(--color-card)] border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
   outline:
-    'bg-transparent text-[var(--color-ink)] border border-[var(--color-rule)] hover:bg-[var(--color-surface)]',
+    'bg-transparent text-[var(--color-ink)] border border-[var(--color-rule)] hover:bg-[var(--color-surface)] hover:border-[var(--color-muted)] active:translate-y-[0.5px]',
   ghost:
-    'bg-transparent text-[var(--color-muted)] border border-transparent hover:text-[var(--color-ink)] hover:bg-[var(--color-surface)]',
+    'bg-transparent text-[var(--color-muted)] border border-transparent hover:text-[var(--color-ink)] hover:bg-[var(--color-surface)] active:translate-y-[0.5px]',
   danger:
-    'bg-[var(--color-danger)] text-white border border-transparent hover:opacity-90',
+    'bg-[var(--color-danger)] text-white border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
   success:
-    'bg-[var(--color-emerald)] text-white border border-transparent hover:opacity-90',
+    'bg-[var(--color-emerald)] text-white border border-transparent hover:opacity-90 shadow-xs active:translate-y-[0.5px]',
 };
 
 const BUTTON_SIZES: Record<PrimeButtonSize, string> = {
@@ -80,18 +67,20 @@ export function PrimeButton({
   className = '',
   type = 'button',
   children,
+  disabled,
   ...rest
 }: PrimeButtonProps) {
   return (
-    <PRButton
+    <button
       type={type}
-      className={`inline-flex items-center justify-center font-medium cursor-pointer select-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
+      disabled={disabled}
+      className={`inline-flex items-center justify-center font-medium cursor-pointer select-none transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed ${
         BUTTON_VARIANTS[variant]
       } ${BUTTON_SIZES[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      {...(rest as any)}
+      {...rest}
     >
       {children}
-    </PRButton>
+    </button>
   );
 }
 
@@ -117,11 +106,11 @@ export function PrimeInput({
         : 'px-3 py-2 text-sm rounded-lg';
 
   return (
-    <PRInputText
-      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-focus)] focus:outline-none transition-colors duration-150 disabled:opacity-60 ${sizeCls} ${
+    <input
+      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] placeholder:text-[var(--color-muted)] hover:border-[var(--color-muted)] focus:border-[var(--color-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] transition-colors duration-150 disabled:opacity-60 ${sizeCls} ${
         mono ? 'font-mono tabular-nums' : ''
       } ${className}`}
-      {...(rest as any)}
+      {...rest}
     />
   );
 }
@@ -142,7 +131,7 @@ export function PrimeSelect({
   const sizeCls = selectSize === 'sm' ? 'px-2.5 py-1.5 text-xs rounded-lg' : 'px-3 py-2 text-sm rounded-lg';
   return (
     <select
-      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] focus:border-[var(--color-focus)] focus:outline-none transition-colors duration-150 cursor-pointer ${sizeCls} ${className}`}
+      className={`w-full bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-rule)] hover:border-[var(--color-muted)] focus:border-[var(--color-focus)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)] transition-colors duration-150 cursor-pointer ${sizeCls} ${className}`}
       {...rest}
     >
       {children}
@@ -173,28 +162,23 @@ export function PrimeCheckbox({
   className = '',
 }: PrimeCheckboxProps) {
   return (
-    <PRCheckbox.Root
-      checked={checked}
-      onCheckedChange={(e: { checked?: boolean }) => onChange(Boolean(e.checked))}
-      disabled={disabled}
-      inputId={id}
-      ariaLabel={ariaLabel}
-      inputClassName="sr-only"
-      className={`relative inline-flex items-center justify-center shrink-0 cursor-pointer ${className}`}
+    <button
+      type="button"
+      role="checkbox"
+      id={id}
+      aria-checked={checked}
+      aria-label={ariaLabel}
       title={title}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`w-4 h-4 rounded border flex items-center justify-center transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
+        checked
+          ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-[var(--color-accent-ink)]'
+          : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:border-[var(--color-muted)]'
+      } ${className}`}
     >
-      <PRCheckbox.Box
-        className={`w-4 h-4 rounded border flex items-center justify-center transition-colors duration-150 ${
-          checked
-            ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-[var(--color-accent-ink)]'
-            : 'bg-[var(--color-card)] border-[var(--color-rule)] hover:border-[var(--color-muted)]'
-        }`}
-      >
-        <PRCheckbox.Indicator className="flex items-center justify-center">
-          {checked && <Check size={11} strokeWidth={3} />}
-        </PRCheckbox.Indicator>
-      </PRCheckbox.Box>
-    </PRCheckbox.Root>
+      {checked && <Check size={11} strokeWidth={3} />}
+    </button>
   );
 }
 
@@ -217,25 +201,22 @@ export function PrimeSwitch({
   ariaLabel,
 }: PrimeSwitchProps) {
   return (
-    <PRToggleSwitch.Root
-      checked={checked}
-      onCheckedChange={(e: { value?: unknown }) => onChange(Boolean(e.value))}
-      disabled={disabled}
-      inputId={id}
+    <button
+      type="button"
+      role="switch"
+      id={id}
+      aria-checked={checked}
       aria-label={ariaLabel}
-      inputClassName="sr-only"
-      className="relative inline-flex items-center cursor-pointer shrink-0"
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${
+        checked
+          ? 'bg-[var(--color-accent)] border-[var(--color-accent)] justify-end'
+          : 'bg-[var(--color-paper-2)] border-[var(--color-rule)] justify-start'
+      }`}
     >
-      <PRToggleSwitch.Control
-        className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-150 flex items-center border ${
-          checked
-            ? 'bg-[var(--color-accent)] border-[var(--color-accent)] justify-end'
-            : 'bg-[var(--color-paper-2)] border-[var(--color-rule)] justify-start'
-        }`}
-      >
-        <PRToggleSwitch.Handle className="w-3.5 h-3.5 rounded-full bg-white shadow-xs" />
-      </PRToggleSwitch.Control>
-    </PRToggleSwitch.Root>
+      <span className="w-3.5 h-3.5 rounded-full bg-white shadow-xs transition-transform duration-200" />
+    </button>
   );
 }
 
@@ -272,13 +253,8 @@ export function PrimeSelectButton<T extends string>({
         : 'px-4 py-2 text-sm';
 
   return (
-    <PRToggleButtonGroup
-      value={value}
-      onValueChange={(e: { value?: unknown }) => {
-        if (e.value !== null && e.value !== undefined) {
-          onChange(e.value as T);
-        }
-      }}
+    <div
+      role="group"
       className={`inline-flex items-center p-1 rounded-xl bg-[var(--color-surface)] border border-[var(--color-rule)] gap-1 ${
         fullWidth ? 'w-full' : ''
       } ${className}`}
@@ -286,22 +262,23 @@ export function PrimeSelectButton<T extends string>({
       {options.map((opt) => {
         const active = value === opt.value;
         return (
-          <PRToggleButton.Root
+          <button
             key={opt.value}
-            value={opt.value}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium cursor-pointer transition-colors duration-150 ${padCls} ${
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium cursor-pointer transition-all duration-150 ${padCls} ${
               fullWidth ? 'flex-1' : ''
             } ${
               active
                 ? 'bg-[var(--color-card)] text-[var(--color-ink)] shadow-xs border border-[var(--color-rule)]'
-                : 'bg-transparent text-[var(--color-muted)] border border-transparent hover:text-[var(--color-ink)]'
+                : 'bg-transparent text-[var(--color-muted)] border border-transparent hover:text-[var(--color-ink)] hover:bg-[var(--color-paper-2)]/50'
             }`}
           >
             {opt.label}
-          </PRToggleButton.Root>
+          </button>
         );
       })}
-    </PRToggleButtonGroup>
+    </div>
   );
 }
 
@@ -316,9 +293,9 @@ interface PrimeCardProps {
 
 export function PrimeCard({ children, className = '', padded = false }: PrimeCardProps) {
   return (
-    <PRCard.Root className={`surface-card overflow-hidden ${padded ? 'p-4 sm:p-5' : ''} ${className}`}>
+    <div className={`surface-card overflow-hidden transition-all duration-200 ${padded ? 'p-4 sm:p-5' : ''} ${className}`}>
       {children}
-    </PRCard.Root>
+    </div>
   );
 }
 
@@ -343,11 +320,11 @@ const TAG_SEVERITIES: Record<PrimeTagSeverity, string> = {
 
 export function PrimeTag({ children, severity = 'neutral', className = '' }: PrimeTagProps) {
   return (
-    <PRTag
+    <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[11px] font-medium ${TAG_SEVERITIES[severity]} ${className}`}
     >
       {children}
-    </PRTag>
+    </span>
   );
 }
 
@@ -375,12 +352,13 @@ export function PrimeMessage({
   className = '',
 }: PrimeMessageProps) {
   return (
-    <PRMessage.Root
+    <div
+      role="alert"
       className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs leading-relaxed ${MESSAGE_SEVERITIES[severity]} ${className}`}
     >
-      {icon && <PRMessage.Icon className="shrink-0 mt-0.5">{icon}</PRMessage.Icon>}
-      <PRMessage.Text className="flex-1 min-w-0">{children}</PRMessage.Text>
-    </PRMessage.Root>
+      {icon && <span className="shrink-0 mt-0.5">{icon}</span>}
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
   );
 }
 
@@ -402,17 +380,18 @@ export function PrimeProgressBar({
 }: PrimeProgressBarProps) {
   const safeVal = Math.max(0, Math.min(100, value));
   return (
-    <PRProgressBar.Root
-      value={safeVal}
+    <div
+      role="progressbar"
+      aria-valuenow={safeVal}
+      aria-valuemin={0}
+      aria-valuemax={100}
       className={`w-full rounded-full overflow-hidden bg-[var(--color-paper-2)] ${heightClass} ${className}`}
     >
-      <PRProgressBar.Track className="w-full h-full">
-        <PRProgressBar.Value
-          className={`h-full rounded-full transition-[width] duration-300 ${colorClass}`}
-          style={{ width: `${safeVal}%` }}
-        />
-      </PRProgressBar.Track>
-    </PRProgressBar.Root>
+      <div
+        className={`h-full rounded-full transition-[width] duration-300 ${colorClass}`}
+        style={{ width: `${safeVal}%` }}
+      />
+    </div>
   );
 }
 
@@ -436,36 +415,52 @@ export function PrimeDialog({
   footer,
   maxWidthClass = 'max-w-2xl',
 }: PrimeDialogProps) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
   return (
-    <PRDialog.Root open={open} onOpenChange={(e: { value?: unknown }) => !e.value && onClose()}>
-      <PRDialog.Portal>
-        <PRDialog.Backdrop className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs" />
-        <PRDialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <PRDialog.Popup
-            className={`w-full ${maxWidthClass} surface-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Dialog Body */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={`relative z-10 w-full ${maxWidthClass} surface-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-150`}
+      >
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-[var(--color-rule)] bg-[var(--color-surface)]">
+          <div className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
+            {title}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-paper-2)] cursor-pointer border-0 bg-transparent"
+            aria-label="Cerrar"
           >
-            <PRDialog.Header className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-[var(--color-rule)] bg-[var(--color-surface)]">
-              <PRDialog.Title className="text-sm font-semibold text-[var(--color-ink)] flex items-center gap-2 m-0">
-                {title}
-              </PRDialog.Title>
-              <PRDialog.Close
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-paper-2)] cursor-pointer border-0 bg-transparent"
-                aria-label="Cerrar"
-              >
-                <X size={16} />
-              </PRDialog.Close>
-            </PRDialog.Header>
-            <PRDialog.Content className="p-5 overflow-y-auto flex-1">{children}</PRDialog.Content>
-            {footer && (
-              <PRDialog.Footer className="px-5 py-3 border-t border-[var(--color-rule)] bg-[var(--color-surface)] flex justify-end gap-2">
-                {footer}
-              </PRDialog.Footer>
-            )}
-          </PRDialog.Popup>
-        </PRDialog.Positioner>
-      </PRDialog.Portal>
-    </PRDialog.Root>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-5 overflow-y-auto flex-1">{children}</div>
+        {footer && (
+          <div className="px-5 py-3 border-t border-[var(--color-rule)] bg-[var(--color-surface)] flex justify-end gap-2">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -492,20 +487,15 @@ export function PrimeTabs<T extends string>({
   className = '',
 }: PrimeTabsProps<T>) {
   return (
-    <PRTabs.Root
-      value={value}
-      onValueChange={(e: { value?: unknown }) => {
-        if (e.value !== undefined) onChange(e.value as T);
-      }}
-      className={className}
-    >
-      <PRTabs.List className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-[var(--color-rule)]">
+    <div className={className}>
+      <div className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-[var(--color-rule)]">
         {items.map((item) => {
           const active = value === item.value;
           return (
-            <PRTabs.Tab
+            <button
               key={item.value}
-              value={item.value}
+              type="button"
+              onClick={() => onChange(item.value)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 cursor-pointer transition-colors duration-150 bg-transparent ${
                 active
                   ? 'border-[var(--color-accent)] text-[var(--color-accent)] font-semibold'
@@ -514,11 +504,11 @@ export function PrimeTabs<T extends string>({
             >
               {item.icon}
               <span>{item.label}</span>
-            </PRTabs.Tab>
+            </button>
           );
         })}
-      </PRTabs.List>
-    </PRTabs.Root>
+      </div>
+    </div>
   );
 }
 
@@ -526,7 +516,7 @@ export function PrimeTabs<T extends string>({
 /*                                PrimeDivider                                */
 /* -------------------------------------------------------------------------- */
 export function PrimeDivider({ className = '' }: { className?: string }) {
-  return <PRDivider className={`border-t border-[var(--color-rule)] my-3 ${className}`} />;
+  return <hr className={`border-0 border-t border-[var(--color-rule)] my-3 ${className}`} />;
 }
 
 /* -------------------------------------------------------------------------- */
